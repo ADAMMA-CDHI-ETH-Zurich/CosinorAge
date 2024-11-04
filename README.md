@@ -1,4 +1,4 @@
-# Cosinorage Package
+# CosinorAge 
 
 A Python package that calculates **CosinorAge**.
 
