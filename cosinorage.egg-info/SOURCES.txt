@@ -1,8 +1,0 @@
-README.md
-setup.py
-cosinorage.egg-info/PKG-INFO
-cosinorage.egg-info/SOURCES.txt
-cosinorage.egg-info/dependency_links.txt
-cosinorage.egg-info/top_level.txt
-tests/__init__.py
-tests/test_csv2enmo.py
