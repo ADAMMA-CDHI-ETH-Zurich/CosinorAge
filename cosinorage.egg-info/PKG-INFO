@@ -1,0 +1,4 @@
+Metadata-Version: 2.1
+Name: cosinorage
+Version: 0.1
+Summary: A package for computing the ConsinorAge from raw accelerometer data.
