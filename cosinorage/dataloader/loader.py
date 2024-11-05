@@ -99,12 +99,17 @@ class AccelerometerDataLoader(DataLoader):
         Returns:
             None
         """
-        self.data = concatenate_csv(self.input_dir_path)
-        self.data["TIMESTAMP"] = get_posix_timestamps(self.data["HEADER_TIMESTAMP"])
-        self.data = calculate_enmo(self.data)
-        self.data = filter_incomplete_days(self.data)
-        self.enmo_per_minute = calculate_minute_level_enmo(self.data)
-        self.enmo_per_minute.reset_index(drop=True, inplace=True)
+
+        # Load, process, and filter data
+        self.data = (
+            concatenate_csv(self.input_dir_path)
+            .assign(TIMESTAMP=get_posix_timestamps(concatenate_csv(self.input_dir_path)["HEADER_TIMESTAMP"]))
+            .pipe(calculate_enmo)
+            .pipe(filter_incomplete_days)
+        )
+
+        # Calculate minute-level ENMO and reset index
+        self.enmo_per_minute = calculate_minute_level_enmo(self.data).reset_index(drop=True)
 
     def save_data(self, output_file_path: str):
         """
@@ -158,15 +163,23 @@ class ENMODataLoader(DataLoader):
         Returns:
             None
         """
-        self.enmo_per_minute = pd.read_csv(self.input_file_path)
-        self.enmo_per_minute = self.enmo_per_minute[['time', 'ENMO_t']]
-        self.enmo_per_minute['TIMESTAMP'] = get_posix_timestamps(self.enmo_per_minute['time'], sample_rate=1 / 60)
-        self.enmo_per_minute = self.enmo_per_minute.rename(columns={'ENMO_t': 'ENMO'})
-        self.enmo_per_minute = self.enmo_per_minute.drop(columns=['time'])
 
-        self.enmo_per_minute = filter_incomplete_days(self.enmo_per_minute)
-        self.enmo_per_minute = self.enmo_per_minute.drop(columns=['DATE'])
-        self.enmo_per_minute.reset_index(drop=True, inplace=True)
+        # Load and preprocess data
+        self.enmo_per_minute = (
+            pd.read_csv(self.input_file_path)[['time', 'ENMO_t']]
+            .assign(
+                TIMESTAMP=get_posix_timestamps(pd.read_csv(self.input_file_path)['time'], sample_rate=1 / 60)
+            )
+            .rename(columns={'ENMO_t': 'ENMO'})
+            .drop(columns=['time'])
+        )
+
+        # Filter for complete days and reset index
+        self.enmo_per_minute = (
+            filter_incomplete_days(self.enmo_per_minute)
+            .drop(columns=['DATE'])
+            .reset_index(drop=True)
+        )
 
     def save_data(self, output_file_path: str):
         """
