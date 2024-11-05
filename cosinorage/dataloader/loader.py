@@ -31,6 +31,7 @@ class AccelerometerDataLoader(DataLoader):
         self.data = calculate_enmo(self.data)
         self.data = filter_incomplete_days(self.data)
         self.enmo_per_minute = calculate_minute_level_enmo(self.data)
+        self.enmo_per_minute.reset_index(drop=True, inplace=True)
 
     def save_data(self, output_file_path):
         self.enmo_per_minute.to_csv(output_file_path, index=False)
@@ -49,6 +50,8 @@ class ENMODataLoader(DataLoader):
         self.enmo_per_minute = self.enmo_per_minute.drop(columns=['time'])
 
         self.enmo_per_minute = filter_incomplete_days(self.enmo_per_minute)
+        self.enmo_per_minute = self.enmo_per_minute.drop(columns=['DATE'])
+        self.enmo_per_minute.reset_index(drop=True, inplace=True)
 
 
     def save_data(self, output_file_path):
