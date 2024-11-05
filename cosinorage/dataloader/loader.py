@@ -108,6 +108,10 @@ class AccelerometerDataLoader(DataLoader):
             .pipe(filter_incomplete_days)
         )
 
+        # if dataframe is empty return function
+        if self.data.empty:
+            return
+
         # Calculate minute-level ENMO and reset index
         self.enmo_per_minute = calculate_minute_level_enmo(self.data).reset_index(drop=True)
 
@@ -175,11 +179,13 @@ class ENMODataLoader(DataLoader):
         )
 
         # Filter for complete days and reset index
-        self.enmo_per_minute = (
-            filter_incomplete_days(self.enmo_per_minute)
-            .drop(columns=['DATE'])
-            .reset_index(drop=True)
-        )
+        self.enmo_per_minute = filter_incomplete_days(self.enmo_per_minute)
+
+        # if dataframe is empty return function
+        if self.enmo_per_minute.empty:
+            return
+
+        self.enmo_per_minute = self.enmo_per_minute.drop(columns=['DATE']).reset_index(drop=True)[['TIMESTAMP', 'ENMO']]
 
     def save_data(self, output_file_path: str):
         """
