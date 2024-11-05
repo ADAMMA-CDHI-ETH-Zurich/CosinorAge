@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+
+<html lang="Python" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>dataloader.loader &#8212; CosinorAge 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=12dfc556" />
+    <script src="../../_static/documentation_options.js?v=0ea5f55c"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for dataloader.loader</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">.utility</span> <span class="kn">import</span> <span class="n">concatenate_csv</span><span class="p">,</span> <span class="n">get_posix_timestamps</span><span class="p">,</span> <span class="n">filter_incomplete_days</span>
+<span class="kn">from</span> <span class="nn">.enmo</span> <span class="kn">import</span> <span class="n">calculate_enmo</span><span class="p">,</span> <span class="n">calculate_minute_level_enmo</span>
+
+<div class="viewcode-block" id="DataLoader">
+<a class="viewcode-back" href="../../dataloader.html#dataloader.loader.DataLoader">[docs]</a>
+<span class="k">class</span> <span class="nc">DataLoader</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+
+<div class="viewcode-block" id="DataLoader.load_data">
+<a class="viewcode-back" href="../../dataloader.html#dataloader.loader.DataLoader.load_data">[docs]</a>
+    <span class="k">def</span> <span class="nf">load_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Method intended to be overridden by subclasses.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Subclasses must implement this method&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DataLoader.get_enmo_per_minute">
+<a class="viewcode-back" href="../../dataloader.html#dataloader.loader.DataLoader.get_enmo_per_minute">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_enmo_per_minute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span></div>
+
+
+<div class="viewcode-block" id="DataLoader.save_data">
+<a class="viewcode-back" href="../../dataloader.html#dataloader.loader.DataLoader.save_data">[docs]</a>
+    <span class="k">def</span> <span class="nf">save_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Method intended to be overridden by subclasses.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Subclasses must implement this method&quot;</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="AccelerometerDataLoader">
+<a class="viewcode-back" href="../../dataloader.html#dataloader.loader.AccelerometerDataLoader">[docs]</a>
+<span class="k">class</span> <span class="nc">AccelerometerDataLoader</span><span class="p">(</span><span class="n">DataLoader</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A data loader for processing accelerometer data. This class loads, processes,</span>
+<span class="sd">    and saves accelerometer data, calculating ENMO (Euclidean Norm Minus One)</span>
+<span class="sd">    values at the minute level.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        input_dir_path (str): Path to the directory containing input CSV files.</span>
+<span class="sd">        data (pd.DataFrame): DataFrame containing raw and processed accelerometer data.</span>
+<span class="sd">        enmo_per_minute (pd.DataFrame): DataFrame containing ENMO values aggregated at the minute level.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dir_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the AccelerometerDataLoader with the path to the input data directory.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            input_dir_path (str): The path to the directory containing input CSV files.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_dir_path</span> <span class="o">=</span> <span class="n">input_dir_path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+
+<div class="viewcode-block" id="AccelerometerDataLoader.load_data">
+<a class="viewcode-back" href="../../dataloader.html#dataloader.loader.AccelerometerDataLoader.load_data">[docs]</a>
+    <span class="k">def</span> <span class="nf">load_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loads and processes accelerometer data from CSV files in the specified directory.</span>
+<span class="sd">        This method performs several transformations, including timestamp conversion,</span>
+<span class="sd">        ENMO calculation, and filtering of incomplete days. It then aggregates ENMO</span>
+<span class="sd">        values at the minute level and stores the result in `self.enmo_per_minute`.</span>
+
+<span class="sd">        Processing steps include:</span>
+<span class="sd">            1. Concatenating CSV files from the input directory.</span>
+<span class="sd">            2. Converting timestamps to POSIX format.</span>
+<span class="sd">            3. Calculating the ENMO metric.</span>
+<span class="sd">            4. Filtering out incomplete days.</span>
+<span class="sd">            5. Aggregating ENMO values at the minute level.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">concatenate_csv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_dir_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;TIMESTAMP&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_posix_timestamps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;HEADER_TIMESTAMP&quot;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">calculate_enmo</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">filter_incomplete_days</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span> <span class="o">=</span> <span class="n">calculate_minute_level_enmo</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AccelerometerDataLoader.save_data">
+<a class="viewcode-back" href="../../dataloader.html#dataloader.loader.AccelerometerDataLoader.save_data">[docs]</a>
+    <span class="k">def</span> <span class="nf">save_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Saves the processed minute-level ENMO data to a CSV file.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            output_file_path (str): The file path where the minute-level ENMO data will be saved.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_file_path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ENMODataLoader">
+<a class="viewcode-back" href="../../dataloader.html#dataloader.loader.ENMODataLoader">[docs]</a>
+<span class="k">class</span> <span class="nc">ENMODataLoader</span><span class="p">(</span><span class="n">DataLoader</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A data loader for processing ENMO data from a single CSV file. This class</span>
+<span class="sd">    loads, processes, and saves ENMO (Euclidean Norm Minus One) values at the</span>
+<span class="sd">    minute level.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        input_file_path (str): Path to the input CSV file containing ENMO data.</span>
+<span class="sd">        enmo_per_minute (pd.DataFrame): DataFrame containing processed ENMO values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the ENMODataLoader with the path to the input data file.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            input_file_path (str): The path to the CSV file containing ENMO data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_file_path</span> <span class="o">=</span> <span class="n">input_file_path</span>
+
+<div class="viewcode-block" id="ENMODataLoader.load_data">
+<a class="viewcode-back" href="../../dataloader.html#dataloader.loader.ENMODataLoader.load_data">[docs]</a>
+    <span class="k">def</span> <span class="nf">load_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loads and processes ENMO data from the specified CSV file. This method</span>
+<span class="sd">        performs several transformations, including timestamp conversion, data</span>
+<span class="sd">        renaming, and filtering of incomplete days. It then stores the processed</span>
+<span class="sd">        data in `self.enmo_per_minute`.</span>
+
+<span class="sd">        Processing steps include:</span>
+<span class="sd">            1. Loading data from a CSV file.</span>
+<span class="sd">            2. Selecting &#39;time&#39; and &#39;ENMO_t&#39; columns.</span>
+<span class="sd">            3. Converting timestamps to POSIX format.</span>
+<span class="sd">            4. Renaming &#39;ENMO_t&#39; to &#39;ENMO&#39;.</span>
+<span class="sd">            5. Dropping unnecessary columns.</span>
+<span class="sd">            6. Filtering out incomplete days.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_file_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span><span class="p">[[</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;ENMO_t&#39;</span><span class="p">]]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span><span class="p">[</span><span class="s1">&#39;TIMESTAMP&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_posix_timestamps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">],</span> <span class="n">sample_rate</span><span class="o">=</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">60</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;ENMO_t&#39;</span><span class="p">:</span> <span class="s1">&#39;ENMO&#39;</span><span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span> <span class="o">=</span> <span class="n">filter_incomplete_days</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;DATE&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ENMODataLoader.save_data">
+<a class="viewcode-back" href="../../dataloader.html#dataloader.loader.ENMODataLoader.save_data">[docs]</a>
+    <span class="k">def</span> <span class="nf">save_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Saves the processed minute-level ENMO data to a CSV file.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            output_file_path (str): The file path where the minute-level ENMO data will be saved.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_file_path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+</div>
+
+
+
+
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">CosinorAge</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">cosinorage</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, Jacob Leo Oskar Hunecke.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

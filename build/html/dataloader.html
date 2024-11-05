@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+
+<html lang="Python" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>dataloader package &#8212; CosinorAge 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <script src="_static/documentation_options.js?v=0ea5f55c"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="cosinorage" href="modules.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="dataloader-package">
+<h1>dataloader package<a class="headerlink" href="#dataloader-package" title="Link to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
+</section>
+<section id="module-dataloader.enmo">
+<span id="dataloader-enmo-module"></span><h2>dataloader.enmo module<a class="headerlink" href="#module-dataloader.enmo" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="dataloader.enmo.calculate_enmo">
+<span class="sig-prename descclassname"><span class="pre">dataloader.enmo.</span></span><span class="sig-name descname"><span class="pre">calculate_enmo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_all</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataloader/enmo.html#calculate_enmo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dataloader.enmo.calculate_enmo" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate the ENMO metric from raw accelerometer data.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dataloader.enmo.calculate_minute_level_enmo">
+<span class="sig-prename descclassname"><span class="pre">dataloader.enmo.</span></span><span class="sig-name descname"><span class="pre">calculate_minute_level_enmo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_all</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">80</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataloader/enmo.html#calculate_minute_level_enmo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dataloader.enmo.calculate_minute_level_enmo" title="Link to this definition">¶</a></dt>
+<dd><p>Resample to minute-level ENMO.</p>
+</dd></dl>
+
+</section>
+<section id="module-dataloader.loader">
+<span id="dataloader-loader-module"></span><h2>dataloader.loader module<a class="headerlink" href="#module-dataloader.loader" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="dataloader.loader.AccelerometerDataLoader">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dataloader.loader.</span></span><span class="sig-name descname"><span class="pre">AccelerometerDataLoader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_dir_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataloader/loader.html#AccelerometerDataLoader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dataloader.loader.AccelerometerDataLoader" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dataloader.loader.DataLoader" title="dataloader.loader.DataLoader"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code></a></p>
+<p>A data loader for processing accelerometer data. This class loads, processes,
+and saves accelerometer data, calculating ENMO (Euclidean Norm Minus One)
+values at the minute level.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dataloader.loader.AccelerometerDataLoader.input_dir_path">
+<span class="sig-name descname"><span class="pre">input_dir_path</span></span><a class="headerlink" href="#dataloader.loader.AccelerometerDataLoader.input_dir_path" title="Link to this definition">¶</a></dt>
+<dd><p>Path to the directory containing input CSV files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dataloader.loader.AccelerometerDataLoader.data">
+<span class="sig-name descname"><span class="pre">data</span></span><a class="headerlink" href="#dataloader.loader.AccelerometerDataLoader.data" title="Link to this definition">¶</a></dt>
+<dd><p>DataFrame containing raw and processed accelerometer data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dataloader.loader.AccelerometerDataLoader.enmo_per_minute">
+<span class="sig-name descname"><span class="pre">enmo_per_minute</span></span><a class="headerlink" href="#dataloader.loader.AccelerometerDataLoader.enmo_per_minute" title="Link to this definition">¶</a></dt>
+<dd><p>DataFrame containing ENMO values aggregated at the minute level.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dataloader.loader.AccelerometerDataLoader.load_data">
+<span class="sig-name descname"><span class="pre">load_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataloader/loader.html#AccelerometerDataLoader.load_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dataloader.loader.AccelerometerDataLoader.load_data" title="Link to this definition">¶</a></dt>
+<dd><p>Loads and processes accelerometer data from CSV files in the specified directory.
+This method performs several transformations, including timestamp conversion,
+ENMO calculation, and filtering of incomplete days. It then aggregates ENMO
+values at the minute level and stores the result in <cite>self.enmo_per_minute</cite>.</p>
+<dl class="simple">
+<dt>Processing steps include:</dt><dd><ol class="arabic simple">
+<li><p>Concatenating CSV files from the input directory.</p></li>
+<li><p>Converting timestamps to POSIX format.</p></li>
+<li><p>Calculating the ENMO metric.</p></li>
+<li><p>Filtering out incomplete days.</p></li>
+<li><p>Aggregating ENMO values at the minute level.</p></li>
+</ol>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dataloader.loader.AccelerometerDataLoader.save_data">
+<span class="sig-name descname"><span class="pre">save_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataloader/loader.html#AccelerometerDataLoader.save_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dataloader.loader.AccelerometerDataLoader.save_data" title="Link to this definition">¶</a></dt>
+<dd><p>Saves the processed minute-level ENMO data to a CSV file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>output_file_path</strong> (<em>str</em>) -- The file path where the minute-level ENMO data will be saved.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="dataloader.loader.DataLoader">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dataloader.loader.</span></span><span class="sig-name descname"><span class="pre">DataLoader</span></span><a class="reference internal" href="_modules/dataloader/loader.html#DataLoader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dataloader.loader.DataLoader" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="dataloader.loader.DataLoader.get_enmo_per_minute">
+<span class="sig-name descname"><span class="pre">get_enmo_per_minute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataloader/loader.html#DataLoader.get_enmo_per_minute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dataloader.loader.DataLoader.get_enmo_per_minute" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dataloader.loader.DataLoader.load_data">
+<span class="sig-name descname"><span class="pre">load_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataloader/loader.html#DataLoader.load_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dataloader.loader.DataLoader.load_data" title="Link to this definition">¶</a></dt>
+<dd><p>Method intended to be overridden by subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dataloader.loader.DataLoader.save_data">
+<span class="sig-name descname"><span class="pre">save_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataloader/loader.html#DataLoader.save_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dataloader.loader.DataLoader.save_data" title="Link to this definition">¶</a></dt>
+<dd><p>Method intended to be overridden by subclasses.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="dataloader.loader.ENMODataLoader">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dataloader.loader.</span></span><span class="sig-name descname"><span class="pre">ENMODataLoader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataloader/loader.html#ENMODataLoader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dataloader.loader.ENMODataLoader" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dataloader.loader.DataLoader" title="dataloader.loader.DataLoader"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code></a></p>
+<p>A data loader for processing ENMO data from a single CSV file. This class
+loads, processes, and saves ENMO (Euclidean Norm Minus One) values at the
+minute level.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dataloader.loader.ENMODataLoader.input_file_path">
+<span class="sig-name descname"><span class="pre">input_file_path</span></span><a class="headerlink" href="#dataloader.loader.ENMODataLoader.input_file_path" title="Link to this definition">¶</a></dt>
+<dd><p>Path to the input CSV file containing ENMO data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dataloader.loader.ENMODataLoader.enmo_per_minute">
+<span class="sig-name descname"><span class="pre">enmo_per_minute</span></span><a class="headerlink" href="#dataloader.loader.ENMODataLoader.enmo_per_minute" title="Link to this definition">¶</a></dt>
+<dd><p>DataFrame containing processed ENMO values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dataloader.loader.ENMODataLoader.load_data">
+<span class="sig-name descname"><span class="pre">load_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataloader/loader.html#ENMODataLoader.load_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dataloader.loader.ENMODataLoader.load_data" title="Link to this definition">¶</a></dt>
+<dd><p>Loads and processes ENMO data from the specified CSV file. This method
+performs several transformations, including timestamp conversion, data
+renaming, and filtering of incomplete days. It then stores the processed
+data in <cite>self.enmo_per_minute</cite>.</p>
+<dl class="simple">
+<dt>Processing steps include:</dt><dd><ol class="arabic simple">
+<li><p>Loading data from a CSV file.</p></li>
+<li><p>Selecting 'time' and 'ENMO_t' columns.</p></li>
+<li><p>Converting timestamps to POSIX format.</p></li>
+<li><p>Renaming 'ENMO_t' to 'ENMO'.</p></li>
+<li><p>Dropping unnecessary columns.</p></li>
+<li><p>Filtering out incomplete days.</p></li>
+</ol>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dataloader.loader.ENMODataLoader.save_data">
+<span class="sig-name descname"><span class="pre">save_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataloader/loader.html#ENMODataLoader.save_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dataloader.loader.ENMODataLoader.save_data" title="Link to this definition">¶</a></dt>
+<dd><p>Saves the processed minute-level ENMO data to a CSV file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>output_file_path</strong> (<em>str</em>) -- The file path where the minute-level ENMO data will be saved.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-dataloader.utility">
+<span id="dataloader-utility-module"></span><h2>dataloader.utility module<a class="headerlink" href="#module-dataloader.utility" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="dataloader.utility.concatenate_csv">
+<span class="sig-prename descclassname"><span class="pre">dataloader.utility.</span></span><span class="sig-name descname"><span class="pre">concatenate_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataloader/utility.html#concatenate_csv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dataloader.utility.concatenate_csv" title="Link to this definition">¶</a></dt>
+<dd><p>Concatenate all CSV files in a directory into a single DataFrame.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dataloader.utility.filter_incomplete_days">
+<span class="sig-prename descclassname"><span class="pre">dataloader.utility.</span></span><span class="sig-name descname"><span class="pre">filter_incomplete_days</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_all</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataloader/utility.html#filter_incomplete_days"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dataloader.utility.filter_incomplete_days" title="Link to this definition">¶</a></dt>
+<dd><p>Remove data from the first and last day to ensure complete 24-hour data.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dataloader.utility.get_posix_timestamps">
+<span class="sig-prename descclassname"><span class="pre">dataloader.utility.</span></span><span class="sig-name descname"><span class="pre">get_posix_timestamps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timestamps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">80</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataloader/utility.html#get_posix_timestamps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dataloader.utility.get_posix_timestamps" title="Link to this definition">¶</a></dt>
+<dd><p>Add a POSIX timestamp column named TIMESTAMP at a given sampling rate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_all</strong> -- DataFrame with a 'HEADER_TIMESTAMP' column containing the start timestamp.</p></li>
+<li><p><strong>sample_rate</strong> -- Sampling rate in Hz (samples per second).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with a 'TIMESTAMP' column and 'X', 'Y', 'Z' columns.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-dataloader">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-dataloader" title="Link to this heading">¶</a></h2>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">CosinorAge</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">cosinorage</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">dataloader package</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">cosinorage</a><ul>
+      <li>Previous: <a href="modules.html" title="previous chapter">cosinorage</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, Jacob Leo Oskar Hunecke.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="_sources/dataloader.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
