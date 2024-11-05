@@ -2,22 +2,59 @@ import pandas as pd
 from .utility import concatenate_csv, get_posix_timestamps, filter_incomplete_days
 from .enmo import calculate_enmo, calculate_minute_level_enmo
 
+
 class DataLoader:
+    """
+    A base class for data loaders that process and store ENMO data at the minute level.
+
+    This class provides a common interface for data loaders with methods to load
+    data, retrieve processed ENMO values, and save data. The `load_data` and
+    `save_data` methods are intended to be overridden by subclasses.
+
+    Attributes:
+        enmo_per_minute (pd.DataFrame): A DataFrame storing minute-level ENMO values.
+    """
+
     def __init__(self):
+        """
+        Initializes an empty DataLoader instance with an empty DataFrame
+        for storing minute-level ENMO values.
+        """
         self.enmo_per_minute = pd.DataFrame()
 
     def load_data(self):
         """
-        Method intended to be overridden by subclasses.
+        Load data into the DataLoader instance.
+
+        This method is intended to be implemented by subclasses. It should load data
+        and store the minute-level ENMO values in `self.enmo_per_minute`.
+
+        Raises:
+            NotImplementedError: This is a placeholder method and must be implemented in a subclass.
         """
         raise NotImplementedError("Subclasses must implement this method")
 
     def get_enmo_per_minute(self):
+        """
+        Retrieve the minute-level ENMO values.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the minute-level ENMO values.
+        """
         return self.enmo_per_minute
 
     def save_data(self, output_path: str):
         """
-        Method intended to be overridden by subclasses.
+        Save minute-level ENMO data to a specified output path.
+
+        This method is intended to be implemented by subclasses, specifying
+        the format and structure for saving data.
+
+        Args:
+            output_path (str): The file path where the minute-level ENMO data will be saved.
+
+        Raises:
+            NotImplementedError: This is a placeholder method and must be implemented in a subclass.
         """
         raise NotImplementedError("Subclasses must implement this method")
 
