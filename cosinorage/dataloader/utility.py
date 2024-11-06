@@ -5,12 +5,13 @@ import os
 import numpy as np
 from glob import glob
 from tqdm import tqdm
+from typing import Tuple, Optional
 
 from numpy import ndarray, dtype
-from pandas import DataFrame, Series
+from pandas import DataFrame
 
 
-def read_acc_csvs(directory_path: str) -> Union[DataFrame, tuple[Any, Union[float, Any]]]:
+def read_acc_csvs(directory_path: str) -> Tuple[pd.DataFrame, Optional[float]]:
     """
     Concatenate all CSV files in a directory into a single DataFrame.
 
@@ -33,29 +34,30 @@ def read_acc_csvs(directory_path: str) -> Union[DataFrame, tuple[Any, Union[floa
         return pd.DataFrame(), None
 
     # Read all CSV files and concatenate into a single DataFrame
+    data_frames = []
     try:
-        # Use tqdm to add a progress bar for reading files
-        data_frames = [pd.read_csv(file) for file in tqdm(file_names, desc="Loading CSV files")]
-
-        # Concatenate, select columns, and sort by timestamp
+        for file in tqdm(file_names, desc="Loading CSV files"):
+            try:
+                df = pd.read_csv(file, usecols=['HEADER_TIMESTAMP', 'X', 'Y', 'Z'])
+                data_frames.append(df)
+            except Exception as e:
+                print(f"Error reading {file}: {e}")
         data = pd.concat(data_frames, ignore_index=True)
-        data = data[['HEADER_TIMESTAMP', 'X', 'Y', 'Z']]
-        data = data.sort_values(by='HEADER_TIMESTAMP')
-
     except Exception as e:
-        print(f"Error reading files: {e}")
+        print(f"Error concatenating CSV files: {e}")
         return pd.DataFrame(), None
 
     # Convert timestamps to datetime format
     try:
         data['HEADER_TIMESTAMP'] = pd.to_datetime(data['HEADER_TIMESTAMP'])
+        data = data.sort_values(by='HEADER_TIMESTAMP')
         data.rename(columns={'HEADER_TIMESTAMP': 'TIMESTAMP'}, inplace=True)
     except Exception as e:
         print(f"Error converting timestamps: {e}")
         return pd.DataFrame(), None
 
     # check if timestamp frequency is consistent up to 1ms
-    time_diffs = data['TIMESTAMP'].diff().dropna().dt.round('1ms')
+    time_diffs = data['TIMESTAMP'].diff().dt.round('1ms')
     unique_diffs = time_diffs.unique()
     if (not len(unique_diffs) == 1) and (not (len(unique_diffs) == 2) and unique_diffs[0] - unique_diffs[1] <= pd.Timedelta('1ms')):
         raise ValueError("Inconsistent timestamp frequency detected.")
