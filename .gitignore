@@ -1,3 +1,7 @@
 /cosinorage.egg-info/
 /R/
 /.idea/
+/examples/acc_loader.pkl
+/examples/enmo_loader.pkl
+
+*.pkl
