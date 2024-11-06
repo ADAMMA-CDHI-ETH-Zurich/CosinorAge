@@ -1,5 +1,5 @@
 import pandas as pd
-from .utility import concatenate_csv, get_posix_timestamps, filter_incomplete_days
+from .utility import read_acc_csvs, get_posix_timestamps, filter_incomplete_days
 from .enmo import calculate_enmo, calculate_minute_level_enmo
 
 
@@ -12,7 +12,7 @@ class DataLoader:
     `save_data` methods are intended to be overridden by subclasses.
 
     Attributes:
-        enmo_per_minute (pd.DataFrame): A DataFrame storing minute-level ENMO values.
+        enmo (pd.DataFrame): A DataFrame storing minute-level ENMO values.
     """
 
     def __init__(self):
@@ -20,14 +20,15 @@ class DataLoader:
         Initializes an empty DataLoader instance with an empty DataFrame
         for storing minute-level ENMO values.
         """
-        self.enmo_per_minute = pd.DataFrame()
+        self.enmo = None
+        self.preproc_enmo = None
 
     def load_data(self):
         """
         Load data into the DataLoader instance.
 
         This method is intended to be implemented by subclasses. It should load data
-        and store the minute-level ENMO values in `self.enmo_per_minute`.
+        and store the minute-level ENMO values in `self.enmo`.
 
         Raises:
             NotImplementedError: This is a placeholder method and must be implemented in a subclass.
@@ -41,7 +42,11 @@ class DataLoader:
         Returns:
             pd.DataFrame: A DataFrame containing the minute-level ENMO values.
         """
-        return self.enmo_per_minute
+
+        if self.enmo is None:
+            raise ValueError("Data has not been loaded. Please call `load_data()` first.")
+
+        return self.enmo
 
     def save_data(self, output_path: str):
         """
@@ -67,8 +72,8 @@ class AccelerometerDataLoader(DataLoader):
 
     Attributes:
         input_dir_path (str): Path to the directory containing input CSV files.
-        data (pd.DataFrame): DataFrame containing raw and processed accelerometer data.
-        enmo_per_minute (pd.DataFrame): DataFrame containing ENMO values aggregated at the minute level.
+        acc (pd.DataFrame): DataFrame containing raw and processed accelerometer data.
+        enmo (pd.DataFrame): DataFrame containing ENMO values aggregated at the minute level.
     """
 
     def __init__(self, input_dir_path: str):
@@ -80,14 +85,14 @@ class AccelerometerDataLoader(DataLoader):
         """
         super().__init__()
         self.input_dir_path = input_dir_path
-        self.data = pd.DataFrame()
+        self.acc = None
 
     def load_data(self):
         """
         Loads and processes accelerometer data from CSV files in the specified directory.
         This method performs several transformations, including timestamp conversion,
         ENMO calculation, and filtering of incomplete days. It then aggregates ENMO
-        values at the minute level and stores the result in `self.enmo_per_minute`.
+        values at the minute level and stores the result in `self.enmo`.
 
         Processing steps include:
             1. Concatenating CSV files from the input directory.
@@ -99,21 +104,46 @@ class AccelerometerDataLoader(DataLoader):
         Returns:
             None
         """
+        self.acc = read_acc_csvs(self.input_dir_path)
 
-        # Load, process, and filter data
-        self.data = (
-            concatenate_csv(self.input_dir_path)
-            .assign(TIMESTAMP=get_posix_timestamps(concatenate_csv(self.input_dir_path)["HEADER_TIMESTAMP"]))
-            .pipe(calculate_enmo)
-            .pipe(filter_incomplete_days)
-        )
+        self.enmo = calculate_enmo(self.acc)
+
+        self.enmo = filter_incomplete_days(self.enmo)
 
         # if dataframe is empty return function
-        if self.data.empty:
+        if self.enmo.empty:
             return
 
         # Calculate minute-level ENMO and reset index
-        self.enmo_per_minute = calculate_minute_level_enmo(self.data).reset_index(drop=True)
+        self.enmo = calculate_minute_level_enmo(self.enmo).reset_index(drop=True)
+
+
+
+        #if self.acc is not None and self.enmo is not None:
+        #    raise ValueError("Data has already been loaded. Please create a new instance to load new data.")
+#
+        #self.acc = concatenate_csv(self.input_dir_path)
+        #if self.acc is None:
+        #    raise ValueError("Failed to load data from CSV files.")
+#
+        #self.acc = self.acc.assign(TIMESTAMP=get_posix_timestamps(self.acc["HEADER_TIMESTAMP"]))
+        #if self.acc is None:
+        #    raise ValueError("Failed to assign TIMESTAMP.")
+#
+        ## if dataframe is empty return function
+        #if self.acc.empty:
+        #    return
+#
+        #self.enmo = self.acc.pipe(calculate_enmo)
+        #if self.enmo is None:
+        #    raise ValueError("ENMO calculation failed.")
+#
+        #self.enmo = self.enmo.pipe(filter_incomplete_days)
+        #if self.enmo is None:
+        #    raise ValueError("Filtering incomplete days failed.")
+#
+        ## Calculate minute-level ENMO and reset index
+        #self.enmo = calculate_minute_level_enmo(self.acc).reset_index(drop=True)
 
     def save_data(self, output_file_path: str):
         """
@@ -125,7 +155,11 @@ class AccelerometerDataLoader(DataLoader):
         Returns:
             None
         """
-        self.enmo_per_minute.to_csv(output_file_path, index=False)
+
+        if self.enmo is None:
+            raise ValueError("Data has not been loaded. Please call `load_data()` first.")
+
+        self.enmo.to_csv(output_file_path, index=False)
 
 
 class ENMODataLoader(DataLoader):
@@ -136,7 +170,7 @@ class ENMODataLoader(DataLoader):
 
     Attributes:
         input_file_path (str): Path to the input CSV file containing ENMO data.
-        enmo_per_minute (pd.DataFrame): DataFrame containing processed ENMO values.
+        enmo (pd.DataFrame): DataFrame containing processed ENMO values.
     """
 
     def __init__(self, input_file_path: str):
@@ -154,7 +188,7 @@ class ENMODataLoader(DataLoader):
         Loads and processes ENMO data from the specified CSV file. This method
         performs several transformations, including timestamp conversion, data
         renaming, and filtering of incomplete days. It then stores the processed
-        data in `self.enmo_per_minute`.
+        data in `self.enmo`.
 
         Processing steps include:
             1. Loading data from a CSV file.
@@ -168,8 +202,11 @@ class ENMODataLoader(DataLoader):
             None
         """
 
+        if self.enmo is not None:
+            raise ValueError("Data has already been loaded. Please create a new instance to load new data.")
+
         # Load and preprocess data
-        self.enmo_per_minute = (
+        self.enmo = (
             pd.read_csv(self.input_file_path)[['time', 'ENMO_t']]
             .assign(
                 TIMESTAMP=get_posix_timestamps(pd.read_csv(self.input_file_path)['time'], sample_rate=1 / 60)
@@ -179,13 +216,13 @@ class ENMODataLoader(DataLoader):
         )
 
         # Filter for complete days and reset index
-        self.enmo_per_minute = filter_incomplete_days(self.enmo_per_minute)
+        self.enmo = filter_incomplete_days(self.enmo)
 
         # if dataframe is empty return function
-        if self.enmo_per_minute.empty:
+        if self.enmo.empty:
             return
 
-        self.enmo_per_minute = self.enmo_per_minute.drop(columns=['DATE']).reset_index(drop=True)[['TIMESTAMP', 'ENMO']]
+        self.enmo = self.enmo.drop(columns=['DATE']).reset_index(drop=True)[['TIMESTAMP', 'ENMO']]
 
     def save_data(self, output_file_path: str):
         """
@@ -197,7 +234,11 @@ class ENMODataLoader(DataLoader):
         Returns:
             None
         """
-        self.enmo_per_minute.to_csv(output_file_path, index=False)
+
+        if self.enmo is None:
+            raise ValueError("Data has not been loaded. Please call `load_data()` first.")
+
+        self.enmo.to_csv(output_file_path, index=False)
 
 
 
