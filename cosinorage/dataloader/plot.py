@@ -38,3 +38,5 @@ def plot_enmo_difference(loader_1: DataLoader, loader_2: DataLoader):
     plt.ylabel('Time')
     plt.title('ENMO Difference per Minute')
     plt.show()
+
+    print(data['ENMO_DIFF'].describe())

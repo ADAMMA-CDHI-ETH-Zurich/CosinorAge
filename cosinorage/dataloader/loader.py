@@ -125,7 +125,9 @@ class AccelerometerDataLoader(DataLoader):
         print(f"Filtered out {self.acc_df.shape[0]-self.acc_fil_df.shape[0]} accelerometer records due to incomplete daily coverage")
 
         if self.acc_fil_df.empty:
-            raise ValueError("No data available for processing")
+            self.enmo_df = pd.DataFrame()
+            self.enmo_minute_fil_df = pd.DataFrame()
+            return
 
         self.enmo_df = calculate_enmo(self.acc_fil_df)
         print(f"Calculated ENMO for {self.enmo_df.shape[0]} accelerometer records")
@@ -205,9 +207,6 @@ class ENMODataLoader(DataLoader):
         self.enmo_minute_fil_df = filter_incomplete_days(self.enmo_minute_df,  self.enmo_freq)
         print(f"Filtered out {self.enmo_minute_df.shape[0]-self.enmo_minute_fil_df.shape[0]} minute-level ENMO records due to incomplete daily coverage")
 
-        # if dataframe is empty return function
-        if self.enmo_minute_fil_df.empty:
-            raise ValueError("No data available for processing")
 
     def save_data(self, output_file_path: str):
         """
@@ -220,10 +219,10 @@ class ENMODataLoader(DataLoader):
             None
         """
 
-        if self.enmo_df is None:
+        if self.enmo_minute_fil_df is None:
             raise ValueError("Data has not been loaded. Please call `load_data()` first.")
 
-        self.enmo_df.to_csv(output_file_path, index=False)
+        self.enmo_minute_fil_df.to_csv(output_file_path, index=False)
 
 
 
