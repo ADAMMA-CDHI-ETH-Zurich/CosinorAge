@@ -1,10 +1,15 @@
+from typing import Union, Tuple, Any
+
 import pandas as pd
 import os
 import numpy as np
 from glob import glob
 
+from numpy import ndarray, dtype
+from pandas import DataFrame, Series
 
-def read_acc_csvs(directory_path: str) -> pd.DataFrame:
+
+def read_acc_csvs(directory_path: str) -> Union[DataFrame, tuple[Any, Union[float, Any]]]:
     """
     Concatenate all CSV files in a directory into a single DataFrame.
 
@@ -26,6 +31,7 @@ def read_acc_csvs(directory_path: str) -> pd.DataFrame:
         print(f"No files found in {directory_path}")
         return pd.DataFrame()
 
+    # Read all CSV files and concatenate into a single DataFrame
     try:
         data_frames = [pd.read_csv(file) for file in file_names]
         data = pd.concat(data_frames, ignore_index=True)
@@ -35,6 +41,7 @@ def read_acc_csvs(directory_path: str) -> pd.DataFrame:
         print(f"Error reading files: {e}")
         data = pd.DataFrame()
 
+    # Convert timestamps to datetime format
     try:
         data['HEADER_TIMESTAMP'] = pd.to_datetime(data['HEADER_TIMESTAMP'])
         data.rename(columns={'HEADER_TIMESTAMP': 'TIMESTAMP'}, inplace=True)
@@ -42,33 +49,60 @@ def read_acc_csvs(directory_path: str) -> pd.DataFrame:
         print(f"Error converting timestamps: {e}")
         data = pd.DataFrame()
 
-    return data
+    # check if timestamp frequency is consistent up to 1ms
+    time_diffs = data['TIMESTAMP'].diff().dropna().dt.round('1ms')
+    unique_diffs = time_diffs.unique()
+    if (not len(unique_diffs) == 1) and (not (len(unique_diffs) == 2) and unique_diffs[0] - unique_diffs[1] <= pd.Timedelta('1ms')):
+        raise ValueError("Inconsistent timestamp frequency detected.")
 
-
-def get_posix_timestamps(timestamps: pd.Series, sample_rate=80) -> pd.Series:
-    """
-    Generate a POSIX timestamp series based on an initial timestamp and sample rate.
-
-    This function creates a series of POSIX timestamps by adding a time delta
-    at the specified sampling rate to the initial timestamp in the series.
-    This is useful for creating timestamped data at a consistent sampling rate.
-
-    Args:
-        timestamps (pd.Series): Series containing a single initial timestamp.
-        sample_rate (int, optional): Sampling rate in Hz (samples per second).
-                                     Defaults to 80 Hz.
-
-    Returns:
-        pd.Series: Series of POSIX timestamps at the given sample rate.
-    """
+    # resample timestamps with mean frequency
+    sample_rate = 1 / unique_diffs.mean().total_seconds()
+    timestamps = data['TIMESTAMP']
     start_timestamp = pd.to_datetime(timestamps.iloc[0])
     time_deltas = pd.to_timedelta(np.arange(len(timestamps)) / sample_rate, unit='s')
-    posix_timestamps = start_timestamp + time_deltas
+    data['TIMESTAMP'] = start_timestamp + time_deltas
 
-    return posix_timestamps
+    # determine frequency in Hz of accelerometer data
+    time_diffs = data['TIMESTAMP'].diff().dropna()
+    acc_freq = 1 / time_diffs.mean().total_seconds()
 
+    return data[['TIMESTAMP', 'X', 'Y', 'Z']], acc_freq
 
-def filter_incomplete_days(enmo_df: pd.DataFrame) -> pd.DataFrame:
+def read_enmo_csv(file_path: str, source: str) -> Union[DataFrame, tuple[Any, Union[float, Any]]]:
+
+    # based on data source file format might look different
+    if source == 'uk-biobank':
+        time_col = 'time'
+        enmo_col = 'ENMO_t'
+    else:
+        raise ValueError("Invalid source specified. Please specify, e.g., 'uk-biobank'.")
+
+    # Read the CSV file
+    try:
+        data = pd.read_csv(file_path)[[time_col, enmo_col]]
+        data = data.sort_values(by=time_col)
+        data.rename(columns={enmo_col: 'ENMO'}, inplace=True)
+    except Exception as e:
+        print(f"Error reading file: {e}")
+        data = pd.DataFrame()
+
+    # Convert timestamps to datetime format
+    try:
+        data[time_col] = pd.to_datetime(data[time_col], format='mixed')
+        data.rename(columns={time_col: 'TIMESTAMP'}, inplace=True)
+    except Exception as e:
+        print(f"Error converting timestamps: {e}")
+        data = pd.DataFrame()
+
+    # check if timestamp frequency is consistent up to 1ms
+    time_diffs = data['TIMESTAMP'].diff().dropna()
+    unique_diffs = time_diffs.unique()
+    if not len(unique_diffs) == 1:
+        raise ValueError("Inconsistent timestamp frequency detected.")
+
+    return data[['TIMESTAMP', 'ENMO']]
+
+def filter_incomplete_days(df: pd.DataFrame, data_freq: float) -> pd.DataFrame:
     """
     Filter out data from incomplete days to ensure 24-hour data periods.
 
@@ -84,17 +118,30 @@ def filter_incomplete_days(enmo_df: pd.DataFrame) -> pd.DataFrame:
         are fewer than two unique dates in the data, an empty DataFrame is returned.
     """
 
+    # Filter out incomplete days
     try:
-        _enmo_df = enmo_df.copy()
-        _enmo_df['DATE'] = enmo_df['TIMESTAMP'].dt.date
-        unique_dates = _enmo_df['DATE'].unique()
+        # Calculate expected number of data points for a full 24-hour day
+        expected_points_per_day = data_freq * 60 * 60 * 24
+
+        # Extract the date from each timestamp
+        _df = df.copy()
+        _df['DATE'] = _df['TIMESTAMP'].dt.date
+
+        # Count data points for each day
+        daily_counts = _df.groupby('DATE').size()
+
+        # Identify complete days based on expected number of data points
+        complete_days = daily_counts[daily_counts >= expected_points_per_day].index
+
+        # Filter the DataFrame to include only rows from complete days
+        filtered_df = _df[_df['DATE'].isin(complete_days)]
+
+        # Reset Index
+        filtered_df.reset_index(drop=True, inplace=True)
+
+        # Drop the helper 'DATE' column before returning
+        return filtered_df.drop(columns=['DATE'])
 
     except Exception as e:
         print(f"Error filtering incomplete days: {e}")
         return pd.DataFrame()
-
-    if len(unique_dates) <= 2:
-        return pd.DataFrame()  # Not enough data to exclude first/last days
-
-    return _enmo_df[(_enmo_df['DATE'] != unique_dates[0]) &
-                    (_enmo_df['DATE'] != unique_dates[-1])]
