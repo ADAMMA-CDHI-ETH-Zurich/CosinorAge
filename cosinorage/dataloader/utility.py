@@ -30,7 +30,7 @@ def read_acc_csvs(directory_path: str) -> Union[DataFrame, tuple[Any, Union[floa
 
     if not file_names:
         print(f"No files found in {directory_path}")
-        return pd.DataFrame()
+        return pd.DataFrame(), None
 
     # Read all CSV files and concatenate into a single DataFrame
     try:
@@ -44,7 +44,7 @@ def read_acc_csvs(directory_path: str) -> Union[DataFrame, tuple[Any, Union[floa
 
     except Exception as e:
         print(f"Error reading files: {e}")
-        data = pd.DataFrame()
+        return pd.DataFrame(), None
 
     # Convert timestamps to datetime format
     try:
@@ -52,7 +52,7 @@ def read_acc_csvs(directory_path: str) -> Union[DataFrame, tuple[Any, Union[floa
         data.rename(columns={'HEADER_TIMESTAMP': 'TIMESTAMP'}, inplace=True)
     except Exception as e:
         print(f"Error converting timestamps: {e}")
-        data = pd.DataFrame()
+        return pd.DataFrame(), None
 
     # check if timestamp frequency is consistent up to 1ms
     time_diffs = data['TIMESTAMP'].diff().dropna().dt.round('1ms')
@@ -89,7 +89,7 @@ def read_enmo_csv(file_path: str, source: str) -> Union[DataFrame, tuple[Any, Un
         data.rename(columns={enmo_col: 'ENMO'}, inplace=True)
     except Exception as e:
         print(f"Error reading file: {e}")
-        data = pd.DataFrame()
+        return pd.DataFrame()
 
     # Convert timestamps to datetime format
     try:
@@ -97,7 +97,7 @@ def read_enmo_csv(file_path: str, source: str) -> Union[DataFrame, tuple[Any, Un
         data.rename(columns={time_col: 'TIMESTAMP'}, inplace=True)
     except Exception as e:
         print(f"Error converting timestamps: {e}")
-        data = pd.DataFrame()
+        return pd.DataFrame()
 
     # check if timestamp frequency is consistent up to 1ms
     time_diffs = data['TIMESTAMP'].diff().dropna()
