@@ -4,7 +4,7 @@ import numpy as np
 from glob import glob
 
 
-def concatenate_csv(directory_path: str) -> pd.DataFrame:
+def read_acc_csvs(directory_path: str) -> pd.DataFrame:
     """
     Concatenate all CSV files in a directory into a single DataFrame.
 
@@ -26,12 +26,23 @@ def concatenate_csv(directory_path: str) -> pd.DataFrame:
         print(f"No files found in {directory_path}")
         return pd.DataFrame()
 
-    data_frames = [pd.read_csv(file) for file in file_names]
-    data_all = pd.concat(data_frames, ignore_index=True)
-    data_all = data_all[['HEADER_TIMESTAMP', 'X', 'Y', 'Z']]
-    data_all = data_all.sort_values(by='HEADER_TIMESTAMP')
+    try:
+        data_frames = [pd.read_csv(file) for file in file_names]
+        data = pd.concat(data_frames, ignore_index=True)
+        data = data[['HEADER_TIMESTAMP', 'X', 'Y', 'Z']]
+        data = data.sort_values(by='HEADER_TIMESTAMP')
+    except Exception as e:
+        print(f"Error reading files: {e}")
+        data = pd.DataFrame()
 
-    return data_all
+    try:
+        data['HEADER_TIMESTAMP'] = pd.to_datetime(data['HEADER_TIMESTAMP'])
+        data.rename(columns={'HEADER_TIMESTAMP': 'TIMESTAMP'}, inplace=True)
+    except Exception as e:
+        print(f"Error converting timestamps: {e}")
+        data = pd.DataFrame()
+
+    return data
 
 
 def get_posix_timestamps(timestamps: pd.Series, sample_rate=80) -> pd.Series:
@@ -57,7 +68,7 @@ def get_posix_timestamps(timestamps: pd.Series, sample_rate=80) -> pd.Series:
     return posix_timestamps
 
 
-def filter_incomplete_days(data_all: pd.DataFrame) -> pd.DataFrame:
+def filter_incomplete_days(enmo_df: pd.DataFrame) -> pd.DataFrame:
     """
     Filter out data from incomplete days to ensure 24-hour data periods.
 
@@ -72,11 +83,18 @@ def filter_incomplete_days(data_all: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: Filtered DataFrame excluding the first and last days. If there
         are fewer than two unique dates in the data, an empty DataFrame is returned.
     """
-    data_all['DATE'] = data_all['TIMESTAMP'].dt.date
-    unique_dates = data_all['DATE'].unique()
+
+    try:
+        _enmo_df = enmo_df.copy()
+        _enmo_df['DATE'] = enmo_df['TIMESTAMP'].dt.date
+        unique_dates = _enmo_df['DATE'].unique()
+
+    except Exception as e:
+        print(f"Error filtering incomplete days: {e}")
+        return pd.DataFrame()
 
     if len(unique_dates) <= 2:
         return pd.DataFrame()  # Not enough data to exclude first/last days
 
-    return data_all[(data_all['DATE'] != unique_dates[0]) &
-                    (data_all['DATE'] != unique_dates[-1])]
+    return _enmo_df[(_enmo_df['DATE'] != unique_dates[0]) &
+                    (_enmo_df['DATE'] != unique_dates[-1])]

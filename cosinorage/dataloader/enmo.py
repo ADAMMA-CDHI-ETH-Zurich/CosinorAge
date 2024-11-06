@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 
-def calculate_enmo(data: pd.DataFrame) -> pd.DataFrame:
+def calculate_enmo(acc_df: pd.DataFrame) -> pd.DataFrame:
     """
     Calculate the Euclidean Norm Minus One (ENMO) metric from raw accelerometer data.
 
@@ -20,10 +20,15 @@ def calculate_enmo(data: pd.DataFrame) -> pd.DataFrame:
         containing the ENMO values calculated for each row.
     """
 
-    acc_vectors = data[['X', 'Y', 'Z']].values
-    enmo = np.linalg.norm(acc_vectors, axis=1) - 1
-    data['ENMO'] = np.maximum(enmo, 0)
-    return data
+    try:
+        _acc_vectors = acc_df[['X', 'Y', 'Z']].values
+        _enmo_vals = np.linalg.norm(_acc_vectors, axis=1) - 1
+        acc_df['ENMO'] = np.maximum(_enmo_vals, 0)
+    except Exception as e:
+        print(f"Error calculating ENMO: {e}")
+        acc_df['ENMO'] = np.nan
+
+    return acc_df[['TIMESTAMP', 'ENMO']]
 
 
 def calculate_minute_level_enmo(data: pd.DataFrame) -> pd.DataFrame:
