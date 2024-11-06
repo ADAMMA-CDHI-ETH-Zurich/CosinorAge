@@ -4,6 +4,7 @@ import pandas as pd
 import os
 import numpy as np
 from glob import glob
+from tqdm import tqdm
 
 from numpy import ndarray, dtype
 from pandas import DataFrame, Series
@@ -33,10 +34,14 @@ def read_acc_csvs(directory_path: str) -> Union[DataFrame, tuple[Any, Union[floa
 
     # Read all CSV files and concatenate into a single DataFrame
     try:
-        data_frames = [pd.read_csv(file) for file in file_names]
+        # Use tqdm to add a progress bar for reading files
+        data_frames = [pd.read_csv(file) for file in tqdm(file_names, desc="Loading CSV files")]
+
+        # Concatenate, select columns, and sort by timestamp
         data = pd.concat(data_frames, ignore_index=True)
         data = data[['HEADER_TIMESTAMP', 'X', 'Y', 'Z']]
         data = data.sort_values(by='HEADER_TIMESTAMP')
+
     except Exception as e:
         print(f"Error reading files: {e}")
         data = pd.DataFrame()
