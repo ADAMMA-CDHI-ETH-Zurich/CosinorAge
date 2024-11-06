@@ -1,0 +1,3 @@
+examples/acc_loader.pkl filter=lfs diff=lfs merge=lfs -text
+examples/enmo_loader.pkl filter=lfs diff=lfs merge=lfs -text
+*.pkl filter=lfs diff=lfs merge=lfs -text
