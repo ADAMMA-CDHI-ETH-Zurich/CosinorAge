@@ -239,8 +239,8 @@
         <article role="main" id="furo-main-content">
           <h1>Source code for dataloader.loader</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">.utility</span> <span class="kn">import</span> <span class="n">concatenate_csv</span><span class="p">,</span> <span class="n">get_posix_timestamps</span><span class="p">,</span> <span class="n">filter_incomplete_days</span>
-<span class="kn">from</span> <span class="nn">.enmo</span> <span class="kn">import</span> <span class="n">calculate_enmo</span><span class="p">,</span> <span class="n">calculate_minute_level_enmo</span>
+<span class="kn">from</span> <span class="nn">._utility</span> <span class="kn">import</span> <span class="n">read_acc_csvs</span><span class="p">,</span> <span class="n">read_enmo_csv</span><span class="p">,</span> <span class="n">filter_incomplete_days</span>
+<span class="kn">from</span> <span class="nn">._enmo</span> <span class="kn">import</span> <span class="n">calculate_enmo</span><span class="p">,</span> <span class="n">calculate_minute_level_enmo</span>
 
 
 <div class="viewcode-block" id="DataLoader">
@@ -254,7 +254,7 @@
 <span class="sd">    `save_data` methods are intended to be overridden by subclasses.</span>
 
 <span class="sd">    Attributes:</span>
-<span class="sd">        enmo_per_minute (pd.DataFrame): A DataFrame storing minute-level ENMO values.</span>
+<span class="sd">        enmo (pd.DataFrame): A DataFrame storing minute-level ENMO values.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -262,7 +262,11 @@
 <span class="sd">        Initializes an empty DataLoader instance with an empty DataFrame</span>
 <span class="sd">        for storing minute-level ENMO values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_freq</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_minute_fil_df</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">preproc_enmo_df</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="DataLoader.load_data">
 <a class="viewcode-back" href="../../dataloader.html#dataloader.loader.DataLoader.load_data">[docs]</a>
@@ -271,7 +275,7 @@
 <span class="sd">        Load data into the DataLoader instance.</span>
 
 <span class="sd">        This method is intended to be implemented by subclasses. It should load data</span>
-<span class="sd">        and store the minute-level ENMO values in `self.enmo_per_minute`.</span>
+<span class="sd">        and store the minute-level ENMO values in `self.enmo`.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            NotImplementedError: This is a placeholder method and must be implemented in a subclass.</span>
@@ -288,7 +292,11 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            pd.DataFrame: A DataFrame containing the minute-level ENMO values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span></div>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">enmo_minute_fil_df</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Data has not been loaded. Please call `load_data()` first.&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">enmo_minute_fil_df</span></div>
 
 
 <div class="viewcode-block" id="DataLoader.save_data">
@@ -321,8 +329,8 @@
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        input_dir_path (str): Path to the directory containing input CSV files.</span>
-<span class="sd">        data (pd.DataFrame): DataFrame containing raw and processed accelerometer data.</span>
-<span class="sd">        enmo_per_minute (pd.DataFrame): DataFrame containing ENMO values aggregated at the minute level.</span>
+<span class="sd">        acc (pd.DataFrame): DataFrame containing raw and processed accelerometer data.</span>
+<span class="sd">        enmo (pd.DataFrame): DataFrame containing ENMO values aggregated at the minute level.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dir_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
@@ -334,7 +342,13 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input_dir_path</span> <span class="o">=</span> <span class="n">input_dir_path</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">acc_df</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">acc_freq</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">acc_fil_df</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_df</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="AccelerometerDataLoader.load_data">
 <a class="viewcode-back" href="../../dataloader.html#dataloader.loader.AccelerometerDataLoader.load_data">[docs]</a>
@@ -343,7 +357,7 @@
 <span class="sd">        Loads and processes accelerometer data from CSV files in the specified directory.</span>
 <span class="sd">        This method performs several transformations, including timestamp conversion,</span>
 <span class="sd">        ENMO calculation, and filtering of incomplete days. It then aggregates ENMO</span>
-<span class="sd">        values at the minute level and stores the result in `self.enmo_per_minute`.</span>
+<span class="sd">        values at the minute level and stores the result in `self.enmo_df`.</span>
 
 <span class="sd">        Processing steps include:</span>
 <span class="sd">            1. Concatenating CSV files from the input directory.</span>
@@ -355,12 +369,27 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            None</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">concatenate_csv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_dir_path</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;TIMESTAMP&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_posix_timestamps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;HEADER_TIMESTAMP&quot;</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">calculate_enmo</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">filter_incomplete_days</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span> <span class="o">=</span> <span class="n">calculate_minute_level_enmo</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">enmo_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">enmo_minute_fil_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">acc_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">acc_fil_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Data has already been loaded. Please create a new instance to load new data.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">acc_df</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">acc_freq</span> <span class="o">=</span> <span class="n">read_acc_csvs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_dir_path</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">acc_df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> accelerometer data records from </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">input_dir_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The frequency of the accelerometer data is </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">acc_freq</span><span class="si">}</span><span class="s2">Hz&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">acc_fil_df</span> <span class="o">=</span> <span class="n">filter_incomplete_days</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acc_df</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">acc_freq</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Filtered out </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">acc_df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">acc_fil_df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> accelerometer records due to incomplete daily coverage&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">acc_fil_df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">enmo_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">enmo_minute_fil_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+            <span class="k">return</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_df</span> <span class="o">=</span> <span class="n">calculate_enmo</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acc_fil_df</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Calculated ENMO for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">enmo_df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> accelerometer records&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_minute_fil_df</span> <span class="o">=</span> <span class="n">calculate_minute_level_enmo</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">enmo_df</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Aggregated ENMO values at the minute level leading to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">enmo_minute_fil_df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> records&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="AccelerometerDataLoader.save_data">
@@ -375,7 +404,11 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            None</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_file_path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">enmo_df</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Data has not been loaded. Please call `load_data()` first.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_file_path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
 </div>
 
 
@@ -390,7 +423,7 @@
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        input_file_path (str): Path to the input CSV file containing ENMO data.</span>
-<span class="sd">        enmo_per_minute (pd.DataFrame): DataFrame containing processed ENMO values.</span>
+<span class="sd">        enmo (pd.DataFrame): DataFrame containing processed ENMO values.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
@@ -403,6 +436,10 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input_file_path</span> <span class="o">=</span> <span class="n">input_file_path</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_minute_df</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_freq</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">60</span>
+
 <div class="viewcode-block" id="ENMODataLoader.load_data">
 <a class="viewcode-back" href="../../dataloader.html#dataloader.loader.ENMODataLoader.load_data">[docs]</a>
     <span class="k">def</span> <span class="nf">load_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -410,7 +447,7 @@
 <span class="sd">        Loads and processes ENMO data from the specified CSV file. This method</span>
 <span class="sd">        performs several transformations, including timestamp conversion, data</span>
 <span class="sd">        renaming, and filtering of incomplete days. It then stores the processed</span>
-<span class="sd">        data in `self.enmo_per_minute`.</span>
+<span class="sd">        data in `self.enmo_df`.</span>
 
 <span class="sd">        Processing steps include:</span>
 <span class="sd">            1. Loading data from a CSV file.</span>
@@ -423,15 +460,18 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            None</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_file_path</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span><span class="p">[[</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;ENMO_t&#39;</span><span class="p">]]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span><span class="p">[</span><span class="s1">&#39;TIMESTAMP&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_posix_timestamps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">],</span> <span class="n">sample_rate</span><span class="o">=</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">60</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;ENMO_t&#39;</span><span class="p">:</span> <span class="s1">&#39;ENMO&#39;</span><span class="p">})</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">])</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span> <span class="o">=</span> <span class="n">filter_incomplete_days</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;DATE&#39;</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">enmo_minute_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Data has already been loaded. Please create a new instance to load new data.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Load and preprocess data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_minute_df</span> <span class="o">=</span> <span class="n">read_enmo_csv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_file_path</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="s1">&#39;uk-biobank&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">enmo_minute_df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> minute-level ENMO records from </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">input_file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Filter for complete days and reset index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_minute_fil_df</span> <span class="o">=</span> <span class="n">filter_incomplete_days</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">enmo_minute_df</span><span class="p">,</span>  <span class="bp">self</span><span class="o">.</span><span class="n">enmo_freq</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Filtered out </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">enmo_minute_df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">enmo_minute_fil_df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> minute-level ENMO records due to incomplete daily coverage&quot;</span><span class="p">)</span></div>
+
 
 
 <div class="viewcode-block" id="ENMODataLoader.save_data">
@@ -446,7 +486,11 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            None</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_per_minute</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_file_path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">enmo_minute_fil_df</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Data has not been loaded. Please call `load_data()` first.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">enmo_minute_fil_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_file_path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
 </div>
 
 
