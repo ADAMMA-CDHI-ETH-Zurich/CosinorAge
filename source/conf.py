@@ -35,3 +35,7 @@ language = 'Python'
 
 html_theme = 'furo'
 html_static_path = ['_static']
+
+exclude_patterns = ['**/_*']
+
+autosummary_generate = True

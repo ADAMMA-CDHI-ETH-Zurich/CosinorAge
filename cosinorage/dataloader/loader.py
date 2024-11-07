@@ -1,6 +1,6 @@
 import pandas as pd
-from .utility import read_acc_csvs, read_enmo_csv, filter_incomplete_days
-from .enmo import calculate_enmo, calculate_minute_level_enmo
+from ._utility import read_acc_csvs, read_enmo_csv, filter_incomplete_days
+from ._enmo import calculate_enmo, calculate_minute_level_enmo
 
 
 class DataLoader:

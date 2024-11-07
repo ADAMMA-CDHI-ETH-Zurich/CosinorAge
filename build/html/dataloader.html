@@ -249,53 +249,6 @@
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
 </section>
-<section id="module-dataloader.enmo">
-<span id="dataloader-enmo-module"></span><h2>dataloader.enmo module<a class="headerlink" href="#module-dataloader.enmo" title="Link to this heading">¶</a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="dataloader.enmo.calculate_enmo">
-<span class="sig-prename descclassname"><span class="pre">dataloader.enmo.</span></span><span class="sig-name descname"><span class="pre">calculate_enmo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/dataloader/enmo.html#calculate_enmo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dataloader.enmo.calculate_enmo" title="Link to this definition">¶</a></dt>
-<dd><p>Calculate the Euclidean Norm Minus One (ENMO) metric from raw accelerometer data.</p>
-<p>The ENMO metric is computed as the Euclidean norm of the accelerometer vector
-(X, Y, Z) minus 1, with negative values set to zero. This metric is commonly
-used in physical activity research to quantify movement intensity.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>data</strong> (<em>pd.DataFrame</em>) -- DataFrame containing accelerometer data with
-columns 'X', 'Y', and 'Z' representing the raw accelerometer readings
-along the three axes.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The input DataFrame with an additional 'ENMO' column
-containing the ENMO values calculated for each row.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pd.DataFrame</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="dataloader.enmo.calculate_minute_level_enmo">
-<span class="sig-prename descclassname"><span class="pre">dataloader.enmo.</span></span><span class="sig-name descname"><span class="pre">calculate_minute_level_enmo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/dataloader/enmo.html#calculate_minute_level_enmo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dataloader.enmo.calculate_minute_level_enmo" title="Link to this definition">¶</a></dt>
-<dd><p>Resample ENMO data to minute-level by averaging over 1-minute intervals.</p>
-<p>This function resamples high-frequency ENMO data to a minute-level resolution
-by taking the mean of the ENMO values within each 1-minute period.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>data</strong> (<em>pd.DataFrame</em>) -- DataFrame containing timestamped ENMO data with
-'TIMESTAMP' and 'ENMO' columns, where 'TIMESTAMP' is in a datetime format.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>DataFrame with minute-level averaged ENMO values, containing
-'TIMESTAMP' and 'ENMO' columns where each row represents a 1-minute interval.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pd.DataFrame</p>
-</dd>
-</dl>
-</dd></dl>
-
-</section>
 <section id="module-dataloader.loader">
 <span id="dataloader-loader-module"></span><h2>dataloader.loader module<a class="headerlink" href="#module-dataloader.loader" title="Link to this heading">¶</a></h2>
 <dl class="py class">
@@ -317,8 +270,8 @@ values at the minute level.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="dataloader.loader.AccelerometerDataLoader.data">
-<span class="sig-name descname"><span class="pre">data</span></span><a class="headerlink" href="#dataloader.loader.AccelerometerDataLoader.data" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dataloader.loader.AccelerometerDataLoader.acc">
+<span class="sig-name descname"><span class="pre">acc</span></span><a class="headerlink" href="#dataloader.loader.AccelerometerDataLoader.acc" title="Link to this definition">¶</a></dt>
 <dd><p>DataFrame containing raw and processed accelerometer data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -328,8 +281,8 @@ values at the minute level.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="dataloader.loader.AccelerometerDataLoader.enmo_per_minute">
-<span class="sig-name descname"><span class="pre">enmo_per_minute</span></span><a class="headerlink" href="#dataloader.loader.AccelerometerDataLoader.enmo_per_minute" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dataloader.loader.AccelerometerDataLoader.enmo">
+<span class="sig-name descname"><span class="pre">enmo</span></span><a class="headerlink" href="#dataloader.loader.AccelerometerDataLoader.enmo" title="Link to this definition">¶</a></dt>
 <dd><p>DataFrame containing ENMO values aggregated at the minute level.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -344,7 +297,7 @@ values at the minute level.</p>
 <dd><p>Loads and processes accelerometer data from CSV files in the specified directory.
 This method performs several transformations, including timestamp conversion,
 ENMO calculation, and filtering of incomplete days. It then aggregates ENMO
-values at the minute level and stores the result in <cite>self.enmo_per_minute</cite>.</p>
+values at the minute level and stores the result in <cite>self.enmo_df</cite>.</p>
 <dl class="simple">
 <dt>Processing steps include:</dt><dd><ol class="arabic simple">
 <li><p>Concatenating CSV files from the input directory.</p></li>
@@ -387,8 +340,8 @@ values at the minute level and stores the result in <cite>self.enmo_per_minute</
 data, retrieve processed ENMO values, and save data. The <cite>load_data</cite> and
 <cite>save_data</cite> methods are intended to be overridden by subclasses.</p>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="dataloader.loader.DataLoader.enmo_per_minute">
-<span class="sig-name descname"><span class="pre">enmo_per_minute</span></span><a class="headerlink" href="#dataloader.loader.DataLoader.enmo_per_minute" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dataloader.loader.DataLoader.enmo">
+<span class="sig-name descname"><span class="pre">enmo</span></span><a class="headerlink" href="#dataloader.loader.DataLoader.enmo" title="Link to this definition">¶</a></dt>
 <dd><p>A DataFrame storing minute-level ENMO values.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -416,7 +369,7 @@ data, retrieve processed ENMO values, and save data. The <cite>load_data</cite> 
 <span class="sig-name descname"><span class="pre">load_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataloader/loader.html#DataLoader.load_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dataloader.loader.DataLoader.load_data" title="Link to this definition">¶</a></dt>
 <dd><p>Load data into the DataLoader instance.</p>
 <p>This method is intended to be implemented by subclasses. It should load data
-and store the minute-level ENMO values in <cite>self.enmo_per_minute</cite>.</p>
+and store the minute-level ENMO values in <cite>self.enmo</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>NotImplementedError</strong> -- This is a placeholder method and must be implemented in a subclass.</p>
@@ -461,8 +414,8 @@ minute level.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="dataloader.loader.ENMODataLoader.enmo_per_minute">
-<span class="sig-name descname"><span class="pre">enmo_per_minute</span></span><a class="headerlink" href="#dataloader.loader.ENMODataLoader.enmo_per_minute" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dataloader.loader.ENMODataLoader.enmo">
+<span class="sig-name descname"><span class="pre">enmo</span></span><a class="headerlink" href="#dataloader.loader.ENMODataLoader.enmo" title="Link to this definition">¶</a></dt>
 <dd><p>DataFrame containing processed ENMO values.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -477,7 +430,7 @@ minute level.</p>
 <dd><p>Loads and processes ENMO data from the specified CSV file. This method
 performs several transformations, including timestamp conversion, data
 renaming, and filtering of incomplete days. It then stores the processed
-data in <cite>self.enmo_per_minute</cite>.</p>
+data in <cite>self.enmo_df</cite>.</p>
 <dl class="simple">
 <dt>Processing steps include:</dt><dd><ol class="arabic simple">
 <li><p>Loading data from a CSV file.</p></li>
@@ -510,76 +463,6 @@ data in <cite>self.enmo_per_minute</cite>.</p>
 </dl>
 </dd></dl>
 
-</dd></dl>
-
-</section>
-<section id="module-dataloader.utility">
-<span id="dataloader-utility-module"></span><h2>dataloader.utility module<a class="headerlink" href="#module-dataloader.utility" title="Link to this heading">¶</a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="dataloader.utility.concatenate_csv">
-<span class="sig-prename descclassname"><span class="pre">dataloader.utility.</span></span><span class="sig-name descname"><span class="pre">concatenate_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/dataloader/utility.html#concatenate_csv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dataloader.utility.concatenate_csv" title="Link to this definition">¶</a></dt>
-<dd><p>Concatenate all CSV files in a directory into a single DataFrame.</p>
-<p>This function reads all CSV files in the specified directory that match the
-'<a href="#id1"><span class="problematic" id="id2">*</span></a>.sensor.csv' pattern, concatenates them, and returns a single DataFrame
-containing only the 'HEADER_TIMESTAMP', 'X', 'Y', and 'Z' columns.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>directory_path</strong> (<em>str</em>) -- Path to the directory containing the CSV files.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Concatenated DataFrame containing the accelerometer data
-from all CSV files, with columns 'HEADER_TIMESTAMP', 'X', 'Y', 'Z',
-sorted by 'HEADER_TIMESTAMP'.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pd.DataFrame</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="dataloader.utility.filter_incomplete_days">
-<span class="sig-prename descclassname"><span class="pre">dataloader.utility.</span></span><span class="sig-name descname"><span class="pre">filter_incomplete_days</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_all</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/dataloader/utility.html#filter_incomplete_days"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dataloader.utility.filter_incomplete_days" title="Link to this definition">¶</a></dt>
-<dd><p>Filter out data from incomplete days to ensure 24-hour data periods.</p>
-<p>This function removes data from the first and last days in the DataFrame
-to ensure that only complete 24-hour data is retained.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>data_all</strong> (<em>pd.DataFrame</em>) -- DataFrame with a 'TIMESTAMP' column in datetime
-format, which is used to determine the day.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Filtered DataFrame excluding the first and last days. If there
-are fewer than two unique dates in the data, an empty DataFrame is returned.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pd.DataFrame</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="dataloader.utility.get_posix_timestamps">
-<span class="sig-prename descclassname"><span class="pre">dataloader.utility.</span></span><span class="sig-name descname"><span class="pre">get_posix_timestamps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">80</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Series</span></span></span><a class="reference internal" href="_modules/dataloader/utility.html#get_posix_timestamps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dataloader.utility.get_posix_timestamps" title="Link to this definition">¶</a></dt>
-<dd><p>Generate a POSIX timestamp series based on an initial timestamp and sample rate.</p>
-<p>This function creates a series of POSIX timestamps by adding a time delta
-at the specified sampling rate to the initial timestamp in the series.
-This is useful for creating timestamped data at a consistent sampling rate.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>timestamps</strong> (<em>pd.Series</em>) -- Series containing a single initial timestamp.</p></li>
-<li><p><strong>sample_rate</strong> (<em>int</em><em>, </em><em>optional</em>) -- Sampling rate in Hz (samples per second).
-Defaults to 80 Hz.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Series of POSIX timestamps at the given sample rate.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pd.Series</p>
-</dd>
-</dl>
 </dd></dl>
 
 </section>
@@ -637,22 +520,17 @@ Defaults to 80 Hz.</p></li>
             <ul>
 <li><a class="reference internal" href="#">dataloader package</a><ul>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-dataloader.enmo">dataloader.enmo module</a><ul>
-<li><a class="reference internal" href="#dataloader.enmo.calculate_enmo"><code class="docutils literal notranslate"><span class="pre">calculate_enmo()</span></code></a></li>
-<li><a class="reference internal" href="#dataloader.enmo.calculate_minute_level_enmo"><code class="docutils literal notranslate"><span class="pre">calculate_minute_level_enmo()</span></code></a></li>
-</ul>
-</li>
 <li><a class="reference internal" href="#module-dataloader.loader">dataloader.loader module</a><ul>
 <li><a class="reference internal" href="#dataloader.loader.AccelerometerDataLoader"><code class="docutils literal notranslate"><span class="pre">AccelerometerDataLoader</span></code></a><ul>
 <li><a class="reference internal" href="#dataloader.loader.AccelerometerDataLoader.input_dir_path"><code class="docutils literal notranslate"><span class="pre">AccelerometerDataLoader.input_dir_path</span></code></a></li>
-<li><a class="reference internal" href="#dataloader.loader.AccelerometerDataLoader.data"><code class="docutils literal notranslate"><span class="pre">AccelerometerDataLoader.data</span></code></a></li>
-<li><a class="reference internal" href="#dataloader.loader.AccelerometerDataLoader.enmo_per_minute"><code class="docutils literal notranslate"><span class="pre">AccelerometerDataLoader.enmo_per_minute</span></code></a></li>
+<li><a class="reference internal" href="#dataloader.loader.AccelerometerDataLoader.acc"><code class="docutils literal notranslate"><span class="pre">AccelerometerDataLoader.acc</span></code></a></li>
+<li><a class="reference internal" href="#dataloader.loader.AccelerometerDataLoader.enmo"><code class="docutils literal notranslate"><span class="pre">AccelerometerDataLoader.enmo</span></code></a></li>
 <li><a class="reference internal" href="#dataloader.loader.AccelerometerDataLoader.load_data"><code class="docutils literal notranslate"><span class="pre">AccelerometerDataLoader.load_data()</span></code></a></li>
 <li><a class="reference internal" href="#dataloader.loader.AccelerometerDataLoader.save_data"><code class="docutils literal notranslate"><span class="pre">AccelerometerDataLoader.save_data()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#dataloader.loader.DataLoader"><code class="docutils literal notranslate"><span class="pre">DataLoader</span></code></a><ul>
-<li><a class="reference internal" href="#dataloader.loader.DataLoader.enmo_per_minute"><code class="docutils literal notranslate"><span class="pre">DataLoader.enmo_per_minute</span></code></a></li>
+<li><a class="reference internal" href="#dataloader.loader.DataLoader.enmo"><code class="docutils literal notranslate"><span class="pre">DataLoader.enmo</span></code></a></li>
 <li><a class="reference internal" href="#dataloader.loader.DataLoader.get_enmo_per_minute"><code class="docutils literal notranslate"><span class="pre">DataLoader.get_enmo_per_minute()</span></code></a></li>
 <li><a class="reference internal" href="#dataloader.loader.DataLoader.load_data"><code class="docutils literal notranslate"><span class="pre">DataLoader.load_data()</span></code></a></li>
 <li><a class="reference internal" href="#dataloader.loader.DataLoader.save_data"><code class="docutils literal notranslate"><span class="pre">DataLoader.save_data()</span></code></a></li>
@@ -660,17 +538,11 @@ Defaults to 80 Hz.</p></li>
 </li>
 <li><a class="reference internal" href="#dataloader.loader.ENMODataLoader"><code class="docutils literal notranslate"><span class="pre">ENMODataLoader</span></code></a><ul>
 <li><a class="reference internal" href="#dataloader.loader.ENMODataLoader.input_file_path"><code class="docutils literal notranslate"><span class="pre">ENMODataLoader.input_file_path</span></code></a></li>
-<li><a class="reference internal" href="#dataloader.loader.ENMODataLoader.enmo_per_minute"><code class="docutils literal notranslate"><span class="pre">ENMODataLoader.enmo_per_minute</span></code></a></li>
+<li><a class="reference internal" href="#dataloader.loader.ENMODataLoader.enmo"><code class="docutils literal notranslate"><span class="pre">ENMODataLoader.enmo</span></code></a></li>
 <li><a class="reference internal" href="#dataloader.loader.ENMODataLoader.load_data"><code class="docutils literal notranslate"><span class="pre">ENMODataLoader.load_data()</span></code></a></li>
 <li><a class="reference internal" href="#dataloader.loader.ENMODataLoader.save_data"><code class="docutils literal notranslate"><span class="pre">ENMODataLoader.save_data()</span></code></a></li>
 </ul>
 </li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-dataloader.utility">dataloader.utility module</a><ul>
-<li><a class="reference internal" href="#dataloader.utility.concatenate_csv"><code class="docutils literal notranslate"><span class="pre">concatenate_csv()</span></code></a></li>
-<li><a class="reference internal" href="#dataloader.utility.filter_incomplete_days"><code class="docutils literal notranslate"><span class="pre">filter_incomplete_days()</span></code></a></li>
-<li><a class="reference internal" href="#dataloader.utility.get_posix_timestamps"><code class="docutils literal notranslate"><span class="pre">get_posix_timestamps()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-dataloader">Module contents</a></li>

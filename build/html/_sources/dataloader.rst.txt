@@ -4,14 +4,6 @@ dataloader package
 Submodules
 ----------
 
-dataloader.enmo module
-----------------------
-
-.. automodule:: dataloader.enmo
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 dataloader.loader module
 ------------------------
 
@@ -20,13 +12,6 @@ dataloader.loader module
    :undoc-members:
    :show-inheritance:
 
-dataloader.utility module
--------------------------
-
-.. automodule:: dataloader.utility
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 Module contents
 ---------------
