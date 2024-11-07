@@ -2,4 +2,3 @@ sphinx
 furo
 sphinx-autodoc-typehints
 sphinx-rtd-theme
-sphinx-autodoc
