@@ -257,8 +257,8 @@
 minute-level ENMO data from CSV files and process this data to obtain a
 dataframe containing minute-level ENMO data.</p>
 </section>
-<section id="id1">
-<h2>cosinorage.dataloaders module<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h2>
+<section id="classes">
+<h2>classes<a class="headerlink" href="#classes" title="Link to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="cosinorage.dataloaders.AccelerometerDataLoader">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cosinorage.dataloaders.</span></span><span class="sig-name descname"><span class="pre">AccelerometerDataLoader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_dir_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/dataloaders/dataloaders.html#AccelerometerDataLoader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.dataloaders.AccelerometerDataLoader" title="Link to this definition">¶</a></dt>
@@ -504,15 +504,121 @@ and store the minute-level ENMO values in <cite>self.enmo</cite>.</p>
 the format and structure for saving data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>output_path</strong> (<em>str</em>) – The file path where the minute-level ENMO data</p></li>
-<li><p><strong>saved.</strong> (<em>will be</em>)</p></li>
-</ul>
+<dd class="field-odd"><p><strong>output_path</strong> (<em>str</em>) – The file path where the minute-level ENMO data
+will be saved.</p>
 </dd>
 </dl>
 </dd></dl>
 
 </dd></dl>
+
+</section>
+<section id="utility-functions">
+<h2>utility functions<a class="headerlink" href="#utility-functions" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="cosinorage.dataloaders.read_acc_csvs">
+<span class="sig-prename descclassname"><span class="pre">cosinorage.dataloaders.</span></span><span class="sig-name descname"><span class="pre">read_acc_csvs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/dataloaders/utils/read_csv.html#read_acc_csvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.dataloaders.read_acc_csvs" title="Link to this definition">¶</a></dt>
+<dd><p>Concatenate all CSV files in a directory into a single DataFrame.</p>
+<p>This function reads all CSV files in the specified directory that match the
+‘<a href="#id1"><span class="problematic" id="id2">*</span></a>.sensor.csv’ pattern, concatenates them, and returns a single DataFrame
+containing only the ‘HEADER_TIMESTAMP’, ‘X’, ‘Y’, and ‘Z’ columns.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>directory_path</strong> (<em>str</em>) – Path to the directory containing the CSV files.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Concatenated DataFrame containing the accelerometer
+data from all CSV files, with columns ‘HEADER_TIMESTAMP’, ‘X’, ‘Y’,
+‘Z’, sorted by ‘HEADER_TIMESTAMP’.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cosinorage.dataloaders.read_enmo_csv">
+<span class="sig-prename descclassname"><span class="pre">cosinorage.dataloaders.</span></span><span class="sig-name descname"><span class="pre">read_enmo_csv</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/dataloaders/utils/read_csv.html#read_enmo_csv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.dataloaders.read_enmo_csv" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cosinorage.dataloaders.filter_incomplete_days">
+<span class="sig-prename descclassname"><span class="pre">cosinorage.dataloaders.</span></span><span class="sig-name descname"><span class="pre">filter_incomplete_days</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/dataloaders/utils/read_csv.html#filter_incomplete_days"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.dataloaders.filter_incomplete_days" title="Link to this definition">¶</a></dt>
+<dd><p>Filter out data from incomplete days to ensure 24-hour data periods.</p>
+<p>This function removes data from the first and last days in the DataFrame
+to ensure that only complete 24-hour data is retained.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data_all</strong> (<em>pd.DataFrame</em>) – DataFrame with a ‘TIMESTAMP’ column in datetime
+format, which is used to determine the day.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Filtered DataFrame excluding the first and last days.
+If there
+are fewer than two unique dates in the data, an empty DataFrame is
+returned.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cosinorage.dataloaders.calculate_enmo">
+<span class="sig-prename descclassname"><span class="pre">cosinorage.dataloaders.</span></span><span class="sig-name descname"><span class="pre">calculate_enmo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/dataloaders/utils/calc_enmo.html#calculate_enmo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.dataloaders.calculate_enmo" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate the Euclidean Norm Minus One (ENMO) metric from accelerometer data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>acc_df</strong> (<em>pd.DataFrame</em>) – DataFrame containing accelerometer data with columns
+‘X’, ‘Y’, and ‘Z’ for accelerometer readings along the three axes,
+and ‘TIMESTAMP’ for time information.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>DataFrame containing columns ‘TIMESTAMP’ and ‘ENMO’.</dt><dd><p>The frequency of the records is the same as for the input data.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cosinorage.dataloaders.calculate_minute_level_enmo">
+<span class="sig-prename descclassname"><span class="pre">cosinorage.dataloaders.</span></span><span class="sig-name descname"><span class="pre">calculate_minute_level_enmo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/dataloaders/utils/calc_enmo.html#calculate_minute_level_enmo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.dataloaders.calculate_minute_level_enmo" title="Link to this definition">¶</a></dt>
+<dd><p>Resample high-frequency ENMO data to minute-level by averaging over each minute.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>pd.DataFrame</em>) – DataFrame with ‘TIMESTAMP’ and ‘ENMO’ column
+containing high-frequency ENMO data.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>DataFrame containing columns ‘TIMESTAMP’ and ‘ENMO’.</dt><dd><p>The records are aggregated at the minute level.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cosinorage.dataloaders.plot_enmo">
+<span class="sig-prename descclassname"><span class="pre">cosinorage.dataloaders.</span></span><span class="sig-name descname"><span class="pre">plot_enmo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/dataloaders/utils/plot_enmo.html#plot_enmo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.dataloaders.plot_enmo" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cosinorage.dataloaders.plot_enmo_difference">
+<span class="sig-prename descclassname"><span class="pre">cosinorage.dataloaders.</span></span><span class="sig-name descname"><span class="pre">plot_enmo_difference</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/dataloaders/utils/plot_enmo.html#plot_enmo_difference"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.dataloaders.plot_enmo_difference" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </section>
 </section>
@@ -574,7 +680,7 @@ the format and structure for saving data.</p>
             <ul>
 <li><a class="reference internal" href="#">cosinorage.dataloaders module</a><ul>
 <li><a class="reference internal" href="#module-cosinorage.dataloaders">module contents</a></li>
-<li><a class="reference internal" href="#id1">cosinorage.dataloaders module</a><ul>
+<li><a class="reference internal" href="#classes">classes</a><ul>
 <li><a class="reference internal" href="#cosinorage.dataloaders.AccelerometerDataLoader"><code class="docutils literal notranslate"><span class="pre">AccelerometerDataLoader</span></code></a><ul>
 <li><a class="reference internal" href="#cosinorage.dataloaders.AccelerometerDataLoader.input_dir_path"><code class="docutils literal notranslate"><span class="pre">AccelerometerDataLoader.input_dir_path</span></code></a></li>
 <li><a class="reference internal" href="#cosinorage.dataloaders.AccelerometerDataLoader.acc"><code class="docutils literal notranslate"><span class="pre">AccelerometerDataLoader.acc</span></code></a></li>
@@ -600,6 +706,16 @@ the format and structure for saving data.</p>
 <li><a class="reference internal" href="#cosinorage.dataloaders.DataLoader.save_data"><code class="docutils literal notranslate"><span class="pre">DataLoader.save_data()</span></code></a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li><a class="reference internal" href="#utility-functions">utility functions</a><ul>
+<li><a class="reference internal" href="#cosinorage.dataloaders.read_acc_csvs"><code class="docutils literal notranslate"><span class="pre">read_acc_csvs()</span></code></a></li>
+<li><a class="reference internal" href="#cosinorage.dataloaders.read_enmo_csv"><code class="docutils literal notranslate"><span class="pre">read_enmo_csv()</span></code></a></li>
+<li><a class="reference internal" href="#cosinorage.dataloaders.filter_incomplete_days"><code class="docutils literal notranslate"><span class="pre">filter_incomplete_days()</span></code></a></li>
+<li><a class="reference internal" href="#cosinorage.dataloaders.calculate_enmo"><code class="docutils literal notranslate"><span class="pre">calculate_enmo()</span></code></a></li>
+<li><a class="reference internal" href="#cosinorage.dataloaders.calculate_minute_level_enmo"><code class="docutils literal notranslate"><span class="pre">calculate_minute_level_enmo()</span></code></a></li>
+<li><a class="reference internal" href="#cosinorage.dataloaders.plot_enmo"><code class="docutils literal notranslate"><span class="pre">plot_enmo()</span></code></a></li>
+<li><a class="reference internal" href="#cosinorage.dataloaders.plot_enmo_difference"><code class="docutils literal notranslate"><span class="pre">plot_enmo_difference()</span></code></a></li>
 </ul>
 </li>
 </ul>

@@ -1,7 +1,7 @@
 import pandas as pd
 
-from cosinorage.dataloaders._utils.enmo import calculate_enmo, calculate_minute_level_enmo
-from cosinorage.dataloaders._utils.data_reading import read_acc_csvs, read_enmo_csv, filter_incomplete_days
+from .utils.calc_enmo import calculate_enmo, calculate_minute_level_enmo
+from .utils.read_csv import read_acc_csvs, read_enmo_csv, filter_incomplete_days
 
 
 class DataLoader:
@@ -61,7 +61,7 @@ class DataLoader:
 
         Args:
             output_path (str): The file path where the minute-level ENMO data
-            will be saved.
+                will be saved.
         """
         raise NotImplementedError("Subclasses must implement this method")
 

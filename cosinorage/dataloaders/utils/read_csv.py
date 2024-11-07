@@ -1,11 +1,8 @@
 import os
-from glob import glob
-from typing import Tuple, Optional
-from typing import Union, Any
-
 import numpy as np
 import pandas as pd
-from pandas import DataFrame
+from glob import glob
+from typing import Tuple, Optional, Union, Any
 from tqdm import tqdm
 
 
@@ -21,9 +18,9 @@ def read_acc_csvs(directory_path: str) -> Tuple[pd.DataFrame, Optional[float]]:
         directory_path (str): Path to the directory containing the CSV files.
 
     Returns:
-        pd.DataFrame: Concatenated DataFrame containing the accelerometer data
-        from all CSV files, with columns 'HEADER_TIMESTAMP', 'X', 'Y', 'Z',
-        sorted by 'HEADER_TIMESTAMP'.
+        pd.DataFrame: Concatenated DataFrame containing the accelerometer
+        data from all CSV files, with columns 'HEADER_TIMESTAMP', 'X', 'Y',
+        'Z', sorted by 'HEADER_TIMESTAMP'.
     """
     file_names = glob(os.path.join(directory_path, "*.sensor.csv"))
 
@@ -79,7 +76,7 @@ def read_acc_csvs(directory_path: str) -> Tuple[pd.DataFrame, Optional[float]]:
 
 
 def read_enmo_csv(file_path: str, source: str) -> Union[
-    DataFrame, tuple[Any, Union[float, Any]]]:
+    pd.DataFrame, tuple[Any, Union[float, Any]]]:
     # based on data doc_source file format might look different
     if source == 'uk-biobank':
         time_col = 'time'
