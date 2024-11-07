@@ -3,6 +3,8 @@ import sys
 sys.path.insert(0, os.path.abspath('../../'))  # Adjust to your source
 # directory
 
+import cosinorage
+
 
 #Configuration file for the Sphinx documentation builder.
 #
