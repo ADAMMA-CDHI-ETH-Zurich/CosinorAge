@@ -1,5 +1,7 @@
 # CosinorAge
 
+[![Documentation Status](https://readthedocs.org/projects/cosinorage/badge/?version=latest)](https://cosinorage.readthedocs.io/en/latest/?badge=latest)
+
 A Python package that calculates **CosinorAge**.
 
 ## Environment
