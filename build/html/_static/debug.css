@@ -3,86 +3,67 @@
   meant for debugging and developing the skeleton that this theme provides.
 */
 body {
-    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif,
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji";
-    background: lavender;
+  background: lavender;
 }
-
 .sb-announcement {
-    background: rgb(131, 131, 131);
+  background: rgb(131, 131, 131);
 }
-
 .sb-announcement__inner {
-    background: black;
-    color: white;
+  background: black;
+  color: white;
 }
-
 .sb-header {
-    background: lightskyblue;
+  background: lightskyblue;
 }
-
 .sb-header__inner {
-    background: royalblue;
-    color: white;
+  background: royalblue;
+  color: white;
 }
-
 .sb-header-secondary {
-    background: lightcyan;
+  background: lightcyan;
 }
-
 .sb-header-secondary__inner {
-    background: cornflowerblue;
-    color: white;
+  background: cornflowerblue;
+  color: white;
 }
-
 .sb-sidebar-primary {
-    background: lightgreen;
+  background: lightgreen;
 }
-
 .sb-main {
-    background: blanchedalmond;
+  background: blanchedalmond;
 }
-
 .sb-main__inner {
-    background: antiquewhite;
+  background: antiquewhite;
 }
-
 .sb-header-article {
-    background: lightsteelblue;
+  background: lightsteelblue;
 }
-
 .sb-article-container {
-    background: snow;
+  background: snow;
 }
-
 .sb-article-main {
-    background: white;
+  background: white;
 }
-
 .sb-footer-article {
-    background: lightpink;
+  background: lightpink;
 }
-
 .sb-sidebar-secondary {
-    background: lightgoldenrodyellow;
+  background: lightgoldenrodyellow;
 }
-
 .sb-footer-content {
-    background: plum;
+  background: plum;
 }
-
 .sb-footer-content__inner {
-    background: palevioletred;
+  background: palevioletred;
 }
-
 .sb-footer {
-    background: pink;
+  background: pink;
 }
-
 .sb-footer__inner {
-    background: salmon;
+  background: salmon;
 }
-
 .sb-article {
-    background: white;
+  background: white;
 }

@@ -243,7 +243,8 @@ class ENMODataLoader(DataLoader):
                                                          self.enmo_freq)
         print(
             f"Filtered out "
-            f"{self.enmo_minute_df.shape[0] - self.enmo_minute_fil_df.shape[0]} minute-level ENMO records due to incomplete daily coverage")
+            f"{self.enmo_minute_df.shape[0] - self.enmo_minute_fil_df.shape[0]}"
+            f" minute-level ENMO records due to incomplete daily coverage")
 
     def save_data(self, output_file_path: str):
         """
