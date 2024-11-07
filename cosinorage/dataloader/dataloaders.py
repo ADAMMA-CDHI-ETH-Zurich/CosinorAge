@@ -1,7 +1,7 @@
 import pandas as pd
 
-from ._enmo import calculate_enmo, calculate_minute_level_enmo
-from ._utility import read_acc_csvs, read_enmo_csv, filter_incomplete_days
+from cosinorage.dataloader._utils.enmo import calculate_enmo, calculate_minute_level_enmo
+from cosinorage.dataloader._utils.data_reading import read_acc_csvs, read_enmo_csv, filter_incomplete_days
 
 
 class DataLoader:

@@ -24,3 +24,13 @@ Module Documentation
    :members:
    :undoc-members:
    :show-inheritance:
+
+.. automodule:: features
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: bioage
+   :members:
+   :undoc-members:
+   :show-inheritance:
