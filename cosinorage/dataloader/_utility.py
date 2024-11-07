@@ -1,14 +1,12 @@
-from typing import Union, Tuple, Any
-
-import pandas as pd
 import os
-import numpy as np
 from glob import glob
-from tqdm import tqdm
 from typing import Tuple, Optional
+from typing import Union, Any
 
-from numpy import ndarray, dtype
+import numpy as np
+import pandas as pd
 from pandas import DataFrame
+from tqdm import tqdm
 
 
 def read_acc_csvs(directory_path: str) -> Tuple[pd.DataFrame, Optional[float]]:
@@ -38,7 +36,8 @@ def read_acc_csvs(directory_path: str) -> Tuple[pd.DataFrame, Optional[float]]:
     try:
         for file in tqdm(file_names, desc="Loading CSV files"):
             try:
-                df = pd.read_csv(file, usecols=['HEADER_TIMESTAMP', 'X', 'Y', 'Z'])
+                df = pd.read_csv(file,
+                                 usecols=['HEADER_TIMESTAMP', 'X', 'Y', 'Z'])
                 data_frames.append(df)
             except Exception as e:
                 print(f"Error reading {file}: {e}")
@@ -59,14 +58,17 @@ def read_acc_csvs(directory_path: str) -> Tuple[pd.DataFrame, Optional[float]]:
     # check if timestamp frequency is consistent up to 1ms
     time_diffs = data['TIMESTAMP'].diff().dt.round('1ms')
     unique_diffs = time_diffs.unique()
-    if (not len(unique_diffs) == 1) and (not (len(unique_diffs) == 2) and unique_diffs[0] - unique_diffs[1] <= pd.Timedelta('1ms')):
+    if (not len(unique_diffs) == 1) and (
+            not (len(unique_diffs) == 2) and unique_diffs[0] - unique_diffs[
+        1] <= pd.Timedelta('1ms')):
         raise ValueError("Inconsistent timestamp frequency detected.")
 
     # resample timestamps with mean frequency
     sample_rate = 1 / unique_diffs.mean().total_seconds()
     timestamps = data['TIMESTAMP']
     start_timestamp = pd.to_datetime(timestamps.iloc[0])
-    time_deltas = pd.to_timedelta(np.arange(len(timestamps)) / sample_rate, unit='s')
+    time_deltas = pd.to_timedelta(np.arange(len(timestamps)) / sample_rate,
+                                  unit='s')
     data['TIMESTAMP'] = start_timestamp + time_deltas
 
     # determine frequency in Hz of accelerometer data
@@ -75,14 +77,16 @@ def read_acc_csvs(directory_path: str) -> Tuple[pd.DataFrame, Optional[float]]:
 
     return data[['TIMESTAMP', 'X', 'Y', 'Z']], acc_freq
 
-def read_enmo_csv(file_path: str, source: str) -> Union[DataFrame, tuple[Any, Union[float, Any]]]:
 
+def read_enmo_csv(file_path: str, source: str) -> Union[
+    DataFrame, tuple[Any, Union[float, Any]]]:
     # based on data source file format might look different
     if source == 'uk-biobank':
         time_col = 'time'
         enmo_col = 'ENMO_t'
     else:
-        raise ValueError("Invalid source specified. Please specify, e.g., 'uk-biobank'.")
+        raise ValueError(
+            "Invalid source specified. Please specify, e.g., 'uk-biobank'.")
 
     # Read the CSV file
     try:
@@ -109,6 +113,7 @@ def read_enmo_csv(file_path: str, source: str) -> Union[DataFrame, tuple[Any, Un
 
     return data[['TIMESTAMP', 'ENMO']]
 
+
 def filter_incomplete_days(df: pd.DataFrame, data_freq: float) -> pd.DataFrame:
     """
     Filter out data from incomplete days to ensure 24-hour data periods.
@@ -121,8 +126,10 @@ def filter_incomplete_days(df: pd.DataFrame, data_freq: float) -> pd.DataFrame:
             format, which is used to determine the day.
 
     Returns:
-        pd.DataFrame: Filtered DataFrame excluding the first and last days. If there
-        are fewer than two unique dates in the data, an empty DataFrame is returned.
+        pd.DataFrame: Filtered DataFrame excluding the first and last days.
+        If there
+        are fewer than two unique dates in the data, an empty DataFrame is
+        returned.
     """
 
     # Filter out incomplete days
@@ -138,7 +145,8 @@ def filter_incomplete_days(df: pd.DataFrame, data_freq: float) -> pd.DataFrame:
         daily_counts = _df.groupby('DATE').size()
 
         # Identify complete days based on expected number of data points
-        complete_days = daily_counts[daily_counts >= expected_points_per_day].index
+        complete_days = daily_counts[
+            daily_counts >= expected_points_per_day].index
 
         # Filter the DataFrame to include only rows from complete days
         filtered_df = _df[_df['DATE'].isin(complete_days)]
