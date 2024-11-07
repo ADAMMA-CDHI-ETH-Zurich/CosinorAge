@@ -1,5 +1,5 @@
-from ._plot import plot_enmo, plot_enmo_difference
-from .loader import *
+from cosinorage.dataloader._utils.plot import plot_enmo, plot_enmo_difference
+from .dataloaders import *
 
 '''
 This module provides the functionality to load Accelerometer data or 
