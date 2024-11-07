@@ -48,4 +48,4 @@ autodoc_default_options = {
     'exclude-members': '__weakref__'
 }
 
-#autoclass_content = 'both'
+html_logo = "_static/logo.png"
