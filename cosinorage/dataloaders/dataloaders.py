@@ -1,7 +1,7 @@
 import pandas as pd
 
-from cosinorage.dataloader._utils.enmo import calculate_enmo, calculate_minute_level_enmo
-from cosinorage.dataloader._utils.data_reading import read_acc_csvs, read_enmo_csv, filter_incomplete_days
+from cosinorage.dataloaders._utils.enmo import calculate_enmo, calculate_minute_level_enmo
+from cosinorage.dataloaders._utils.data_reading import read_acc_csvs, read_enmo_csv, filter_incomplete_days
 
 
 class DataLoader:
@@ -35,10 +35,6 @@ class DataLoader:
         This method is intended to be implemented by subclasses. It should
         load data
         and store the minute-level ENMO values in `self.enmo`.
-
-        Raises:
-            NotImplementedError: This is a placeholder method and must be
-            implemented in a subclass.
         """
         raise NotImplementedError("Subclasses must implement this method")
 
@@ -66,10 +62,6 @@ class DataLoader:
         Args:
             output_path (str): The file path where the minute-level ENMO data
             will be saved.
-
-        Raises:
-            NotImplementedError: This is a placeholder method and must be
-            implemented in a subclass.
         """
         raise NotImplementedError("Subclasses must implement this method")
 
@@ -77,16 +69,17 @@ class DataLoader:
 class AccelerometerDataLoader(DataLoader):
     """
     A data loader for processing accelerometer data. This class loads,
-    processes,
-    and saves accelerometer data, calculating ENMO (Euclidean Norm Minus One)
-    values at the minute level.
+    processes, and saves accelerometer data, calculating ENMO
+    (Euclidean Norm Minus One) values at the minute level.
 
     Attributes:
         input_dir_path (str): Path to the directory containing input CSV files.
+
         acc (pd.DataFrame): DataFrame containing raw and processed
-        accelerometer data.
+            accelerometer data.
+
         enmo (pd.DataFrame): DataFrame containing ENMO values aggregated at
-        the minute level.
+            the minute level.
     """
 
     def __init__(self, input_dir_path: str):

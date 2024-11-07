@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from cosinorage.dataloader.dataloaders import DataLoader
+from cosinorage.dataloaders.dataloaders import DataLoader
 
 
 def plot_enmo(loader: DataLoader):

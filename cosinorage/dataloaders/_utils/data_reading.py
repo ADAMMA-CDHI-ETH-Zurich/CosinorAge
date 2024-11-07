@@ -80,13 +80,13 @@ def read_acc_csvs(directory_path: str) -> Tuple[pd.DataFrame, Optional[float]]:
 
 def read_enmo_csv(file_path: str, source: str) -> Union[
     DataFrame, tuple[Any, Union[float, Any]]]:
-    # based on data source file format might look different
+    # based on data doc_source file format might look different
     if source == 'uk-biobank':
         time_col = 'time'
         enmo_col = 'ENMO_t'
     else:
         raise ValueError(
-            "Invalid source specified. Please specify, e.g., 'uk-biobank'.")
+            "Invalid doc_source specified. Please specify, e.g., 'uk-biobank'.")
 
     # Read the CSV file
     try:
