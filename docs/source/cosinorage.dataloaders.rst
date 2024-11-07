@@ -9,11 +9,6 @@ module contents
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: cosinorage.bioages
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 classes
 ----------------------------------------
 
