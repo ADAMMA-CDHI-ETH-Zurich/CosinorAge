@@ -1,11 +1,15 @@
 cosinorage.dataloaders module
 =============================
 
-
 module contents
 ---------------
 
 .. automodule:: cosinorage.dataloaders
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: cosinorage.bioages
    :members:
    :undoc-members:
    :show-inheritance:
