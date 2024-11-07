@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from cosinorage.dataloader import AccelerometerDataLoader, ENMODataLoader
+from cosinorage.dataloaders import AccelerometerDataLoader, ENMODataLoader
 
 
 @pytest.fixture(scope="function")
