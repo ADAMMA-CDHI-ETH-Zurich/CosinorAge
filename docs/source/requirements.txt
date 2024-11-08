@@ -3,5 +3,7 @@ furo
 sphinx-autodoc-typehints
 sphinx-rtd-theme
 pandas
+tqdm
+numpy
 
 git+https://github.com/readthedocs/sphinx-build-compatibility#egg=sphinx-build-compatibility
