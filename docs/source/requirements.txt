@@ -6,5 +6,6 @@ pandas
 tqdm
 numpy
 matplotlib
+seaborn
 
 git+https://github.com/readthedocs/sphinx-build-compatibility#egg=sphinx-build-compatibility
