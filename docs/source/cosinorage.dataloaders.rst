@@ -6,6 +6,8 @@ module contents
 
 .. automodule:: cosinorage.dataloaders
    :nomembers:
+   :undoc-members:
+
 
 classes
 ----------------------------------------
