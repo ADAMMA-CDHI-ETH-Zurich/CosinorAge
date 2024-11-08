@@ -33,8 +33,5 @@ utility functions
 
 .. autofunction:: cosinorage.dataloaders.calculate_minute_level_enmo()
 
-.. autofunction:: cosinorage.dataloaders.plot_enmo()
-
-.. autofunction:: cosinorage.dataloaders.plot_enmo_difference()
 
 

@@ -67,7 +67,6 @@ class DataLoader:
         """
         raise NotImplementedError("Subclasses must implement this method")
 
-
     def plot_enmo(self):
         """
         Plot minute-level ENMO values.
