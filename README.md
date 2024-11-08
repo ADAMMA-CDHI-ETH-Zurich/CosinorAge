@@ -1,5 +1,6 @@
 # CosinorAge
 
+![Logo](docs/source/_static/logo.png)
 [![Documentation Status](https://readthedocs.org/projects/cosinorage/badge/?version=latest)](https://cosinorage.readthedocs.io/en/latest/?badge=latest)
 [![PyPI version](https://img.shields.io/pypi/v/cosinorage.svg)](https://pypi.org/project/cosinorage/)
 
