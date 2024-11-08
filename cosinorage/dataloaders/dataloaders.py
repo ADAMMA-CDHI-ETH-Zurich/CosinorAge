@@ -1,4 +1,6 @@
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 from .utils.calc_enmo import calculate_enmo, calculate_minute_level_enmo
 from .utils.read_csv import read_acc_csvs, read_enmo_csv, filter_incomplete_days
@@ -64,6 +66,23 @@ class DataLoader:
                 will be saved.
         """
         raise NotImplementedError("Subclasses must implement this method")
+
+
+    def plot_enmo(self):
+        """
+        Plot minute-level ENMO values.
+
+        Returns:
+            None
+        """
+
+        plt.figure(figsize=(12, 6))
+        sns.lineplot(data=self.enmo_minute_fil_df, x='TIMESTAMP', y='ENMO')
+        plt.xlabel('Time')
+        plt.ylabel('ENMO')
+        plt.title('ENMO per Minute')
+        plt.xticks(rotation=45)
+        plt.show()
 
 
 class AccelerometerDataLoader(DataLoader):
@@ -155,6 +174,8 @@ class AccelerometerDataLoader(DataLoader):
             f"Aggregated ENMO values at the minute level leading to "
             f"{self.enmo_minute_fil_df.shape[0]} records")
 
+        self.enmo_minute_fil_df.set_index('TIMESTAMP', inplace=True)
+
     def save_data(self, output_file_path: str):
         """
         Saves the processed minute-level ENMO data to a CSV file.
@@ -238,6 +259,8 @@ class ENMODataLoader(DataLoader):
             f"Filtered out "
             f"{self.enmo_minute_df.shape[0] - self.enmo_minute_fil_df.shape[0]}"
             f" minute-level ENMO records due to incomplete daily coverage")
+
+        self.enmo_minute_fil_df.set_index('TIMESTAMP', inplace=True)
 
     def save_data(self, output_file_path: str):
         """
