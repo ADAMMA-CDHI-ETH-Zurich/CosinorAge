@@ -2,4 +2,5 @@ sphinx
 furo
 sphinx-autodoc-typehints
 sphinx-rtd-theme
-sphinx-build-compatibility
+
+git+https://github.com/readthedocs/sphinx-build-compatibility#egg=sphinx-build-compatibility
