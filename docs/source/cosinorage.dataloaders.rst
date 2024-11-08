@@ -5,9 +5,7 @@ module contents
 ---------------
 
 .. automodule:: cosinorage.dataloaders
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   :nomembers:
 
 classes
 ----------------------------------------
