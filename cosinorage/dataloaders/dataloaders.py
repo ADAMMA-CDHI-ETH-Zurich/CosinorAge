@@ -24,6 +24,7 @@ class DataLoader:
         Initializes an empty DataLoader instance with an empty DataFrame
         for storing minute-level ENMO values.
         """
+
         self.enmo_freq = None
 
         self.enmo_minute_fil_df = None
@@ -40,6 +41,24 @@ class DataLoader:
         """
         raise NotImplementedError("Subclasses must implement this method")
 
+    def save_data(self, output_path: str):
+        """
+        Save minute-level ENMO data to a specified output path.
+
+        This method is intended to be implemented by subclasses, specifying
+        the format and structure for saving data.
+
+        Args:
+            output_path (str): The file path where the minute-level ENMO data
+                will be saved.
+        """
+        raise NotImplementedError("Subclasses must implement this method")
+
+    # TODO: Implement preprocessing steps
+    def preprocess_data(self):
+        pass
+
+
     def get_enmo_per_minute(self):
         """
         Retrieve the minute-level ENMO values.
@@ -53,19 +72,6 @@ class DataLoader:
                 "Data has not been loaded. Please call `load_data()` first.")
 
         return self.enmo_minute_fil_df
-
-    def save_data(self, output_path: str):
-        """
-        Save minute-level ENMO data to a specified output path.
-
-        This method is intended to be implemented by subclasses, specifying
-        the format and structure for saving data.
-
-        Args:
-            output_path (str): The file path where the minute-level ENMO data
-                will be saved.
-        """
-        raise NotImplementedError("Subclasses must implement this method")
 
     def plot_enmo(self):
         """
