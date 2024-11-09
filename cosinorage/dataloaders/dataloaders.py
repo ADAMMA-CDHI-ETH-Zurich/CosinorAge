@@ -1,9 +1,22 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import time
 
 from .utils.calc_enmo import calculate_enmo, calculate_minute_level_enmo
 from .utils.read_csv import read_acc_csvs, read_enmo_csv, filter_incomplete_days
+
+
+def clock(func):
+    def inner(*args, **kwargs):
+        import time
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        print(f"{func.__name__} executed in {end - start:.2f} seconds")
+        return result
+
+    return inner
 
 
 class DataLoader:
@@ -57,7 +70,6 @@ class DataLoader:
     # TODO: Implement preprocessing steps
     def preprocess_data(self):
         pass
-
 
     def get_enmo_per_minute(self):
         """
@@ -125,6 +137,7 @@ class AccelerometerDataLoader(DataLoader):
 
         self.enmo_df = None
 
+    @clock
     def load_data(self):
         """
         Loads and processes accelerometer data from CSV files in the
@@ -181,6 +194,7 @@ class AccelerometerDataLoader(DataLoader):
 
         self.enmo_minute_fil_df.set_index('TIMESTAMP', inplace=True)
 
+    @clock
     def save_data(self, output_file_path: str):
         """
         Saves the processed minute-level ENMO data to a CSV file.
@@ -226,6 +240,7 @@ class ENMODataLoader(DataLoader):
 
         self.enmo_freq = 1 / 60
 
+    @clock
     def load_data(self):
         """
         Loads and processes ENMO data from the specified CSV file. This method
@@ -267,6 +282,7 @@ class ENMODataLoader(DataLoader):
 
         self.enmo_minute_fil_df.set_index('TIMESTAMP', inplace=True)
 
+    @clock
     def save_data(self, output_file_path: str):
         """
         Saves the processed minute-level ENMO data to a CSV file.
