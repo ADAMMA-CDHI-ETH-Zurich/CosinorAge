@@ -72,11 +72,14 @@ def read_acc_csvs(directory_path: str) -> Tuple[pd.DataFrame, Optional[float]]:
     time_diffs = data['TIMESTAMP'].diff().dropna()
     acc_freq = 1 / time_diffs.mean().total_seconds()
 
-    return data[['TIMESTAMP', 'X', 'Y', 'Z']], acc_freq
+    # set timestamp as index
+    data.set_index('TIMESTAMP', inplace=True)
+
+    return data, acc_freq
+    #return data[['TIMESTAMP', 'X', 'Y', 'Z']], acc_freq
 
 
-def read_enmo_csv(file_path: str, source: str) -> Union[
-    pd.DataFrame, tuple[Any, Union[float, Any]]]:
+def read_enmo_csv(file_path: str, source: str) -> Union[pd.DataFrame, tuple[Any, Union[float, Any]]]:
     # based on data doc_source file format might look different
     if source == 'uk-biobank':
         time_col = 'time'
@@ -136,7 +139,8 @@ def filter_incomplete_days(df: pd.DataFrame, data_freq: float) -> pd.DataFrame:
 
         # Extract the date from each timestamp
         _df = df.copy()
-        _df['DATE'] = _df['TIMESTAMP'].dt.date
+        # timestamp is index
+        _df['DATE'] = _df.index.date
 
         # Count data points for each day
         daily_counts = _df.groupby('DATE').size()
@@ -147,9 +151,6 @@ def filter_incomplete_days(df: pd.DataFrame, data_freq: float) -> pd.DataFrame:
 
         # Filter the DataFrame to include only rows from complete days
         filtered_df = _df[_df['DATE'].isin(complete_days)]
-
-        # Reset Index
-        filtered_df.reset_index(drop=True, inplace=True)
 
         # Drop the helper 'DATE' column before returning
         return filtered_df.drop(columns=['DATE'])

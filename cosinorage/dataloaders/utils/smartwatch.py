@@ -2,17 +2,26 @@ import numpy as np
 import pandas as pd
 from scipy.signal import butter, filtfilt
 from sklearn.linear_model import LinearRegression
-
+from tqdm import tqdm
 
 def read_smartwatch_data():
     pass
 
 
-def preprocess_smartwatch_data():
-    pass
+def preprocess_smartwatch_data(df: pd.DataFrame, sf: float, epoch_size: int = 10, max_iter: int = 1000, tol: float = 1e-10) -> pd.DataFrame:
 
 
-def auto_calibrate(df: pd.DataFrame, sf: float, epoch_size: int = 10):
+    _df = df.copy()
+
+    _df = auto_calibrate(_df, sf, epoch_size, max_iter, tol)
+    #_df = remove_noise(df)
+    #df = detect_non_wear(df)
+    #df = calc_weartime(df)
+
+    return _df
+
+
+def auto_calibrate(df: pd.DataFrame, sf: float, epoch_size: int = 10, max_iter: int = 1000, tol: float = 1e-10) -> pd.DataFrame:
 
     """
     Perform autocalibration on accelerometer data, adjusting offset and scale to reduce calibration error.
@@ -51,29 +60,24 @@ def auto_calibrate(df: pd.DataFrame, sf: float, epoch_size: int = 10):
 
     nonmovement_idx = np.where((sd_gx < sd_criter) & (sd_gy < sd_criter) & (sd_gz < sd_criter) & (mean_gx < 2) & (mean_gy < 2) & (mean_gz < 2))[0]
 
-    mean_en = mean_en[nonmovement_idx]
     mean_gx = mean_gx[nonmovement_idx]
     mean_gy = mean_gy[nonmovement_idx]
     mean_gz = mean_gz[nonmovement_idx]
-    sd_gx = sd_gx[nonmovement_idx]
-    sd_gy = sd_gy[nonmovement_idx]
-    sd_gz = sd_gz[nonmovement_idx]
 
     # Step 3: Ensure enough data points for calibration
-    if len(mean_en) > 10:
+    if len(mean_gx) > 10:
         # Calculate initial calibration error based on distance from expected 1g magnitude
-        npoints = len(mean_en)
         calib_error_start = np.mean(
             np.abs(np.sqrt(mean_gx ** 2 + mean_gy ** 2 + mean_gz ** 2) - 1))
+
         # Step 4: Iterative adjustment to minimize calibration error
 
         input_data = np.vstack((mean_gx, mean_gy, mean_gz)).T
         weights = np.ones(len(input_data))  # Initialize weights for each data point
         res = float('inf')
-        max_iter = 1000
-        tol = 1e-10
+
         # Iterative loop to adjust scale and offset
-        for iteration in range(max_iter):
+        for iteration in tqdm(range(max_iter), desc="Calibrating", unit="iter"):
             # Apply current offset and scale to data
             adjusted = (input_data - offset) * scale
             norms = np.linalg.norm(adjusted, axis=1, keepdims=True)  # Compute norms for each row
@@ -95,9 +99,9 @@ def auto_calibrate(df: pd.DataFrame, sf: float, epoch_size: int = 10):
             new_res = np.mean(weights * np.sum((adjusted - closest_point) ** 2, axis=1))
             weights = np.minimum(1 / np.sqrt(np.sum((adjusted - closest_point) ** 2, axis=1)), 1 / 0.01)
             if abs(new_res - res) < tol:
+                tqdm.write(f"Convergence reached at iteration {iteration + 1}")
                 break  # Stop iteration if convergence criterion met
             res = new_res  # Update residual for next iteration
-            print(f"Iteration {iteration + 1}: Residual = {res}")
         # Calculate final calibration error
         calib_error_end = np.mean(
             np.abs(np.sqrt(mean_gx ** 2 + mean_gy ** 2 + mean_gz ** 2) - 1))
@@ -105,13 +109,7 @@ def auto_calibrate(df: pd.DataFrame, sf: float, epoch_size: int = 10):
     else:
         print("Insufficient nonmovement data for calibration.")
     # Return calibration results
-    return {
-        "scale": scale,
-        "offset": offset,
-        "calib_error_start": calib_error_start,
-        "calib_error_end": calib_error_end,
-        "npoints": npoints
-    }
+    return offset + df * scale
 
 def roll_mean(df, window_size):
     return np.convolve(df, np.ones(window_size) / window_size, mode='valid')
@@ -131,9 +129,9 @@ def remove_noise(df: pd.DataFrame, cutoff: float = 2.5, fs: float = 50, order: i
         # Apply filter to data
         return filtfilt(b, a, data)
 
-    df['X_filtered'] = butter_lowpass_filter(df['X'], cutoff, fs)
-    df['Y_filtered'] = butter_lowpass_filter(df['Y'], cutoff, fs)
-    df['Z_filtered'] = butter_lowpass_filter(df['Z'], cutoff, fs)
+    df['X'] = butter_lowpass_filter(df['X'], cutoff, fs)
+    df['Y'] = butter_lowpass_filter(df['Y'], cutoff, fs)
+    df['Z'] = butter_lowpass_filter(df['Z'], cutoff, fs)
 
     return df
 
