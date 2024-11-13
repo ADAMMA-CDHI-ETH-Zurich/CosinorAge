@@ -92,12 +92,11 @@ class DataLoader:
                 return
 
             if self.preprocess:
-                self.acc_df[['X', 'Y', 'Z']] = preprocess_smartwatch_data(self.acc_df[['X', 'Y', 'Z']], self.acc_freq, max_iter=1)
+                self.acc_df[['X', 'Y', 'Z', 'wear']] = preprocess_smartwatch_data(self.acc_df[['X', 'Y', 'Z']], self.acc_freq, max_iter=1)
 
                 if verbose:
                     print(f"Preprocessed accelerometer data")
 
-            print(len(self.acc_df.columns))
             self.acc_df['ENMO'] = calculate_enmo(self.acc_df)
 
             if verbose:
