@@ -19,12 +19,12 @@ def calculate_enmo(acc_df: pd.DataFrame) -> pd.DataFrame:
     try:
         _acc_vectors = acc_df[['X', 'Y', 'Z']].values
         _enmo_vals = np.linalg.norm(_acc_vectors, axis=1) - 1
-        acc_df['ENMO'] = np.maximum(_enmo_vals, 0)
+        _enmo_vals = np.maximum(_enmo_vals, 0)
     except Exception as e:
         print(f"Error calculating ENMO: {e}")
-        acc_df['ENMO'] = np.nan
+        _enmo_vals = np.nan
 
-    return acc_df[['TIMESTAMP', 'ENMO']]
+    return _enmo_vals
 
 
 def calculate_minute_level_enmo(data: pd.DataFrame) -> pd.DataFrame:
@@ -40,6 +40,5 @@ def calculate_minute_level_enmo(data: pd.DataFrame) -> pd.DataFrame:
             The records are aggregated at the minute level.
     """
 
-    data.set_index('TIMESTAMP', inplace=True)
-    minute_level_enmo_df = data['ENMO'].resample('min').mean().reset_index()
+    minute_level_enmo_df = data['ENMO'].resample('min').mean()
     return minute_level_enmo_df
