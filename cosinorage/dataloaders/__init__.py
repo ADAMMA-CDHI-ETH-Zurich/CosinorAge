@@ -7,4 +7,4 @@ dataframe containing minute-level ENMO data.
 '''
 
 from .dataloaders import *
-from . import utils
+from .utils import *
