@@ -8,12 +8,10 @@ def calculate_enmo(acc_df: pd.DataFrame) -> pd.DataFrame:
 
     Args:
         acc_df (pd.DataFrame): DataFrame containing accelerometer data with columns
-            'X', 'Y', and 'Z' for accelerometer readings along the three axes,
-            and 'TIMESTAMP' for time information.
+            'X', 'Y', and 'Z' for accelerometer readings along the three axes, and 'TIMESTAMP' for time information.
 
     Returns:
-        pd.DataFrame: DataFrame containing columns 'TIMESTAMP' and 'ENMO'.
-            The frequency of the records is the same as for the input data.
+        pd.DataFrame: DataFrame containing columns 'TIMESTAMP' and 'ENMO'. The frequency of the records is the same as for the input data.
     """
 
     try:
@@ -32,12 +30,10 @@ def calculate_minute_level_enmo(data: pd.DataFrame) -> pd.DataFrame:
     Resample high-frequency ENMO data to minute-level by averaging over each minute.
 
     Args:
-        data (pd.DataFrame): DataFrame with 'TIMESTAMP' and 'ENMO' column
-            containing high-frequency ENMO data.
+        data (pd.DataFrame): DataFrame with 'TIMESTAMP' and 'ENMO' column containing high-frequency ENMO data.
 
     Returns:
-        pd.DataFrame: DataFrame containing columns 'TIMESTAMP' and 'ENMO'.
-            The records are aggregated at the minute level.
+        pd.DataFrame: DataFrame containing columns 'TIMESTAMP' and 'ENMO'. The records are aggregated at the minute level.
     """
 
     minute_level_enmo_df = data['ENMO'].resample('min').mean().to_frame(name='ENMO')

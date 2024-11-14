@@ -82,6 +82,22 @@ def read_smartwatch_data(directory_path: str) -> Tuple[pd.DataFrame, Optional[fl
 
 def preprocess_smartwatch_data(df: pd.DataFrame, sf: float, meta_dict: dict, epoch_size: int = 10, max_iter: int = 1000,
                                tol: float = 1e-10, verbose: bool = False) -> pd.DataFrame:
+    """
+    Preprocess smartwatch data by performing auto-calibration, noise removal, and wear detection.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing accelerometer data with columns 'X', 'Y', and 'Z'.
+        sf (float): Sampling frequency of the accelerometer data in Hz.
+        meta_dict (dict): Dictionary to store metadata such as total time, wear time, and non-wear time.
+        epoch_size (int): Epoch size for calibration in seconds (default is 10).
+        max_iter (int): Maximum number of iterations for auto-calibration (default is 1000).
+        tol (float): Tolerance for convergence in auto-calibration (default is 1e-10).
+        verbose (bool): Whether to print detailed information during preprocessing (default is False).
+
+    Returns:
+        pd.DataFrame: Preprocessed DataFrame containing columns 'X', 'Y', 'Z', and 'wear'.
+    """
+
     _df = df.copy()
 
     _df = auto_calibrate(_df, sf, epoch_size, max_iter, tol)
@@ -107,16 +123,17 @@ def preprocess_smartwatch_data(df: pd.DataFrame, sf: float, meta_dict: dict, epo
 def auto_calibrate(df: pd.DataFrame, sf: float, epoch_size: int = 10, max_iter: int = 1000,
                    tol: float = 1e-10) -> pd.DataFrame:
     """
-    Perform autocalibration on accelerometer data, adjusting offset and scale to reduce calibration error.
-    Parameters:
-        data (np.ndarray): Accelerometer data (N x 3), where each column is an axis (x, y, z)
-        sf (int): Sampling frequency of the data
-        params_rawdata (dict): Dictionary with calibration parameters
-        calib_epoch_size (int): Epoch size for calibration in seconds
-        block_resolution (int): Resolution of data blocks in seconds
-        verbose (bool): If True, prints calibration summary
+    Perform autocalibration on accelerometer data, adjusting offset and scale to reduce calibration error. The implementation is based on the algorithm described in the GGIR R-package.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing accelerometer data with columns 'X', 'Y', and 'Z'.
+        sf (float): Sampling frequency of the accelerometer data in Hz.
+        epoch_size (int): Epoch size for calibration in seconds (default is 10).
+        max_iter (int): Maximum number of iterations for auto-calibration (default is 1000).
+        tol (float): Tolerance for convergence in auto-calibration (default is 1e-10).
+
     Returns:
-        dict: Calibration results including scale, offset, and calibration error metrics
+        pd.DataFrame: Calibrated DataFrame with adjusted offset and scale.
     """
     # Initialize calibration parameters for scale and offset
     scale = np.array([1.0, 1.0, 1.0])  # Start with no scaling (1.0) for x, y, z
@@ -198,6 +215,19 @@ def auto_calibrate(df: pd.DataFrame, sf: float, epoch_size: int = 10, max_iter: 
 
 
 def remove_noise(df: pd.DataFrame, cutoff: float = 2.5, fs: float = 50, order: int = 2) -> pd.DataFrame:
+    """
+    Remove noise from accelerometer data using a Butterworth low-pass filter.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing accelerometer data with columns 'X', 'Y', and 'Z'.
+        cutoff (float): Cutoff frequency for the low-pass filter in Hz (default is 2.5).
+        fs (float): Sampling frequency of the accelerometer data in Hz (default is 50).
+        order (int): Order of the Butterworth filter (default is 2).
+
+    Returns:
+        pd.DataFrame: DataFrame with noise removed from the 'X', 'Y', and 'Z' columns.
+    """
+
     def butter_lowpass_filter(data, cutoff, fs, order=2):
         # Design Butterworth filter
         nyquist = 0.5 * fs  # Nyquist frequency
@@ -215,6 +245,17 @@ def remove_noise(df: pd.DataFrame, cutoff: float = 2.5, fs: float = 50, order: i
 
 
 def detect_wear(df: pd.DataFrame, sf: float) -> pd.DataFrame:
+    """
+    Detect wear and non-wear periods from accelerometer data. The implementation is based on the algorithm described in the BioPsyKit package.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing accelerometer data with columns 'X', 'Y', and 'Z'.
+        sf (float): Sampling frequency of the accelerometer data in Hz.
+
+    Returns:
+        pd.DataFrame: DataFrame with a 'wear' column indicating wear (1) and non-wear (0) periods.
+    """
+
     # copy and rename acc columns of the dataframe
     _df = df[['X', 'Y', 'Z']].copy()
 
@@ -242,6 +283,17 @@ def detect_wear(df: pd.DataFrame, sf: float) -> pd.DataFrame:
 
 
 def calc_weartime(df: pd.DataFrame, sf: float) -> Tuple[float, float, float]:
+    """
+    Calculate total, wear, and non-wear time from accelerometer data.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing accelerometer data with a 'wear' column.
+        sf (float): Sampling frequency of the accelerometer data in Hz.
+
+    Returns:
+        Tuple[float, float, float]: A tuple containing total time, wear time, and non-wear time in seconds.
+    """
+
     total = float((df.index[-1] - df.index[0]).total_seconds())
     wear = float((df['wear'].sum()) * (1 / sf))
     nonwear = float((total - wear) * (1 / sf))
@@ -250,28 +302,45 @@ def calc_weartime(df: pd.DataFrame, sf: float) -> Tuple[float, float, float]:
 
 
 def _roll_mean(df, window_size):
+    """
+    Calculate the rolling mean of a DataFrame.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing data to calculate the rolling mean.
+        window_size (int): Size of the rolling window.
+
+    Returns:
+        np.ndarray: Array containing the rolling mean values.
+    """
+
     return np.convolve(df, np.ones(window_size) / window_size, mode='valid')
 
 
 def _roll_sd(df, window_size):
+    """
+    Calculate the rolling standard deviation of a DataFrame.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing data to calculate the rolling standard deviation.
+        window_size (int): Size of the rolling window.
+
+    Returns:
+        np.ndarray: Array containing the rolling standard deviation values.
+    """
+
     return pd.Series(df).rolling(window=window_size).std().dropna().values
 
 
 def _detect_wear(data: pd.DataFrame, sampling_rate: float) -> pd.DataFrame:
     """
-    Detect non-wear times from raw acceleration data.
+    Detect non-wear times from raw acceleration data. The implementation is based on the algorithm described in the BioPsyKit package.
 
-    Parameters
-    ----------
-    data : pd.DataFrame
-        Input acceleration data with columns for each axis ('acc_x', 'acc_y', 'acc_z').
-    sampling_rate : float
-        Sampling rate of the recorded data in Hz.
+    Args:
+        data (pd.DataFrame): Input acceleration data with columns for each axis ('X', 'Y', 'Z').
+        sampling_rate (float): Sampling rate of the recorded data in Hz.
 
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame with wear (1) and non-wear (0) times per 15-minute interval.
+    Returns:
+        pd.DataFrame: DataFrame with wear (1) and non-wear (0) times per 15-minute interval.
     """
     # Ensure data contains acceleration columns
     if not all(axis in data.columns for axis in ['X', 'Y', 'Z']):
@@ -337,6 +406,18 @@ def _detect_wear(data: pd.DataFrame, sampling_rate: float) -> pd.DataFrame:
 
 
 def _resample_index(index, window_samples, step_samples):
+    """
+    Resample the index to match the window and step sizes.
+
+    Args:
+        index (pd.Index): Original index to be resampled.
+        window_samples (int): Number of samples in each window.
+        step_samples (int): Number of samples to step between windows.
+
+    Returns:
+        pd.DataFrame: DataFrame with 'start' and 'end' columns indicating the start and end times of each window.
+    """
+
     indices = np.arange(len(index))
     windows = _sliding_window(indices, window_samples, step_samples)
     start_end = windows[:, [0, -1]]
@@ -352,6 +433,16 @@ def _resample_index(index, window_samples, step_samples):
 
 
 def _rescore_wear_detection(wear_data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Rescore wear detection based on duration and surrounding blocks.
+
+    Args:
+        wear_data (pd.DataFrame): DataFrame with 'wear' column indicating wear (1) and non-wear (0) periods.
+
+    Returns:
+        pd.DataFrame: Rescored DataFrame with updated 'wear' column.
+    """
+
     # Group into wear and non-wear blocks
     wear_data = wear_data.copy()
     wear_data['block'] = (wear_data['wear'] != wear_data['wear'].shift()).cumsum()
@@ -391,6 +482,18 @@ def _rescore_wear_detection(wear_data: pd.DataFrame) -> pd.DataFrame:
 
 
 def _sliding_window(arr, window_size, step_size):
+    """
+    Generate a sliding window view of the input array.
+
+    Args:
+        arr (np.ndarray): Input array to generate sliding windows from.
+        window_size (int): Size of each window.
+        step_size (int): Step size between windows.
+
+    Returns:
+        np.ndarray: Array of sliding windows.
+    """
+
     num_windows = ((len(arr) - window_size) // step_size) + 1
     shape = (num_windows, window_size)
     strides = (arr.strides[0] * step_size, arr.strides[0])

@@ -2,6 +2,18 @@ import pandas as pd
 from typing import Union, Any
 
 def read_ukbiobank_data(file_path: str, source: str) -> Union[pd.DataFrame, tuple[Any, Union[float, Any]]]:
+    """
+    Read UK Biobank data from a CSV file and process it.
+
+    Args:
+        file_path (str): The path to the CSV file containing the data.
+        source (str): The source of the data, should be 'uk-biobank'.
+
+    Returns:
+        Union[pd.DataFrame, tuple[Any, Union[float, Any]]]: A DataFrame containing the processed data,
+        or an empty DataFrame in case of an error.
+    """
+
     # based on data doc_source file format might look different
     if source == 'uk-biobank':
         time_col = 'time'
