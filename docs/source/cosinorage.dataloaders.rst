@@ -11,19 +11,25 @@ module contents
 classes
 ----------------------------------------
 
-.. autoclass:: cosinorage.dataloaders.AccelerometerDataLoader
-   :members:
-
-.. autoclass:: cosinorage.dataloaders.ENMODataLoader
-   :members:
-
 .. autoclass:: cosinorage.dataloaders.DataLoader
    :members:
 
 utility functions
 ----------------------------------------
 
-.. autofunction:: cosinorage.dataloaders.read_acc_csvs()
+.. autofunction:: cosinorage.dataloaders.read_smartwatch_data()
+
+.. autofunction:: cosinorage.dataloaders.preprocess_smartwatch_data()
+
+.. autofunction:: cosinorage.dataloaders.auto_calibrate()
+
+.. autofunction:: cosinorage.dataloaders.remove_noise()
+
+.. autofunction:: cosinorage.dataloaders.detect_wear()
+
+.. autofunction:: cosinorage.dataloaders.calc_weartime()
+
+.. autofunction:: cosinorage.dataloaders.read_ukbiobank_data()
 
 .. autofunction:: cosinorage.dataloaders.read_enmo_csv()
 

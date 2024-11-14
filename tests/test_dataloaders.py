@@ -2,26 +2,26 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from cosinorage.dataloaders import AccelerometerDataLoader, ENMODataLoader
+from cosinorage.dataloaders import DataLoader
 
 
 @pytest.fixture(scope="function")
-def my_AccelerometerDataLoader():
-    loader = AccelerometerDataLoader(input_dir_path="tests/data/full/62164/")
+def my_SmartwatchDataLoader():
+    loader = DataLoader(datasource='smartwatch', input_path='tests/data/full/62164/', preprocess=True)
     loader.load_data()
     return loader
 
 
 @pytest.fixture(scope="function")
-def my_ENMODataLoader():
-    loader = ENMODataLoader(input_file_path="tests/data/full/62164.csv")
+def my_UKBiobankDataLoader():
+    loader = DataLoader(datasource='uk-biobank', input_path='tests/data/full/62164.csv', preprocess=True)
     loader.load_data()
     return loader
 
 
-def test_AccelerometerDataLoader(my_AccelerometerDataLoader, my_ENMODataLoader):
-    acc_enmo_df = my_AccelerometerDataLoader.get_enmo_per_minute()
-    enmo_enmo_df = my_ENMODataLoader.get_enmo_per_minute()
+def test_SmartwatchDataLoader(my_SmartwatchDataLoader, my_UKBiobankDataLoader):
+    acc_enmo_df = my_SmartwatchDataLoader.get_enmo_per_minute()
+    enmo_enmo_df = my_UKBiobankDataLoader.get_enmo_per_minute()
     # check if data frame has the correct 2 columns
     assert acc_enmo_df.shape[
                1] == 1, ("AccelerometerDataLoader() ENMO Data Frame should "
@@ -73,57 +73,57 @@ def test_AccelerometerDataLoader(my_AccelerometerDataLoader, my_ENMODataLoader):
     assert np.linalg.norm(diff) < 1e-14, "Minute-level ENMO values do not match"
 
 
-def test_ENMODataLoader(my_ENMODataLoader):
+def test_UKBiobankDataLoader(my_UKBiobankDataLoader):
     # check if data frame has the correct 2 columns
-    assert my_ENMODataLoader.get_enmo_per_minute().shape[
+    assert my_UKBiobankDataLoader.get_enmo_per_minute().shape[
                1] == 1, "ENMODataLoader() ENMO Data Frame should have 1 column"
 
     # index should be timestamp
-    assert my_ENMODataLoader.get_enmo_per_minute().index.name == 'TIMESTAMP', "Index should be 'TIMESTAMP'"
-    assert my_ENMODataLoader.get_enmo_per_minute().columns[
+    assert my_UKBiobankDataLoader.get_enmo_per_minute().index.name == 'TIMESTAMP', "Index should be 'TIMESTAMP'"
+    assert my_UKBiobankDataLoader.get_enmo_per_minute().columns[
                0] == 'ENMO', "First column name should be 'ENMO'"
 
-    assert my_ENMODataLoader.get_enmo_per_minute().index.min() == pd.Timestamp(
+    assert my_UKBiobankDataLoader.get_enmo_per_minute().index.min() == pd.Timestamp(
         '2000-01-03 00:00:00'), "Minimum POSIX date does not match"
-    assert my_ENMODataLoader.get_enmo_per_minute().index.max() == pd.Timestamp(
+    assert my_UKBiobankDataLoader.get_enmo_per_minute().index.max() == pd.Timestamp(
         '2000-01-09 23:59:00'), "Maximum POSIX date does not match"
 
     # check if timestamps are minute-level
-    assert my_ENMODataLoader.get_enmo_per_minute().index.second.max() == 0, "Seconds should be 0"
-    assert my_ENMODataLoader.get_enmo_per_minute().index.microsecond.max() == 0, ("Microseconds should "
+    assert my_UKBiobankDataLoader.get_enmo_per_minute().index.second.max() == 0, "Seconds should be 0"
+    assert my_UKBiobankDataLoader.get_enmo_per_minute().index.microsecond.max() == 0, ("Microseconds should "
                                                         "be 0")
 
     # check if difference between timestamps is 1 minute
-    assert (my_ENMODataLoader.get_enmo_per_minute().index.diff().total_seconds()[
+    assert (my_UKBiobankDataLoader.get_enmo_per_minute().index.diff().total_seconds()[
             1:] == 60).all(), "Difference between timestamps should be 1 minute"
 
     # check if ENMO values are within the expected range
-    assert my_ENMODataLoader.get_enmo_per_minute()[
+    assert my_UKBiobankDataLoader.get_enmo_per_minute()[
                'ENMO'].min() >= 0, "ENMO values should be non-negative"
 
 
 @pytest.fixture(scope="function")
-def my_trunc_AccelerometerDataLoader():
-    loader = AccelerometerDataLoader(input_dir_path="tests/data/trunc/62164/")
+def my_trunc_SmartwatchDataLoader():
+    loader = DataLoader(datasource='smartwatch', input_path='tests/data/trunc/62164/', preprocess=True)
     loader.load_data()
     return loader
 
 
 @pytest.fixture(scope="function")
-def my_trunc_ENMODataLoader():
-    loader = ENMODataLoader(input_file_path="tests/data/trunc/62164.csv")
+def my_trunc_UKBiobankDataLoader():
+    loader = DataLoader(datasource='uk-biobank', input_path='tests/data/trunc/62164.csv', preprocess=True)
     loader.load_data()
     return loader
 
 
-def test_trunc_AccelerometerDataLoader(my_trunc_AccelerometerDataLoader):
+def test_trunc_SmartwatchDataLoader(my_trunc_SmartwatchDataLoader):
     # check if dataframe is empty
-    assert my_trunc_AccelerometerDataLoader.get_enmo_per_minute().shape[
+    assert my_trunc_SmartwatchDataLoader.get_enmo_per_minute().shape[
                0] == 0, ("AccelerometerDataLoader() ENMO Data Frame should be "
                          "empty")
 
 
-def test_trunc_ENMODataLoader(my_trunc_ENMODataLoader):
+def test_trunc_UKBiobankDataLoader(my_trunc_UKBiobankDataLoader):
     # check if dataframe is empty
-    assert my_trunc_ENMODataLoader.get_enmo_per_minute().shape[
+    assert my_trunc_UKBiobankDataLoader.get_enmo_per_minute().shape[
                0] == 0, "ENMODataLoader() ENMO Data Frame should be empty"
