@@ -17,6 +17,9 @@ classes
 utility functions
 ----------------------------------------
 
+smartwatch data functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. autofunction:: cosinorage.dataloaders.read_smartwatch_data()
 
 .. autofunction:: cosinorage.dataloaders.preprocess_smartwatch_data()
@@ -29,9 +32,15 @@ utility functions
 
 .. autofunction:: cosinorage.dataloaders.calc_weartime()
 
+uk biobank dat functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. autofunction:: cosinorage.dataloaders.read_ukbiobank_data()
 
 .. autofunction:: cosinorage.dataloaders.read_enmo_csv()
+
+general utility functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: cosinorage.dataloaders.filter_incomplete_days()
 
