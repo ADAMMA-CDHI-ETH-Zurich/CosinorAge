@@ -19,9 +19,9 @@ def my_UKBiobankDataLoader():
     return loader
 
 
-def test_SmartwatchDataLoader(my_SmartwatchDataLoader, my_UKBiobankDataLoader):
+def test_SmartwatchDataLoader(my_SmartwatchDataLoader):
     acc_enmo_df = my_SmartwatchDataLoader.get_enmo_data()
-    enmo_enmo_df = my_UKBiobankDataLoader.get_enmo_data()
+
     # check if data frame has the correct 2 columns
     assert acc_enmo_df.shape[
                1] == 1, ("AccelerometerDataLoader() ENMO Data Frame should "
@@ -38,11 +38,8 @@ def test_SmartwatchDataLoader(my_SmartwatchDataLoader, my_UKBiobankDataLoader):
         '2000-01-08 23:59:00'), "Maximum POSIX date does not match"
 
     # check if timestamps are minute-level
-    assert acc_enmo_df.index.second.max() == 0, ("Seconds "
-                                                                    "should be 0")
-    assert acc_enmo_df.index.microsecond.max() == 0, \
-        ("Microseconds should "
-                                                        "be 0")
+    assert acc_enmo_df.index.second.max() == 0, "Seconds should be 0"
+    assert acc_enmo_df.index.microsecond.max() == 0, "Microseconds should be 0"
 
     # check if difference between timestamps is 1 minute
     assert (acc_enmo_df.index.diff().total_seconds()[
@@ -50,28 +47,6 @@ def test_SmartwatchDataLoader(my_SmartwatchDataLoader, my_UKBiobankDataLoader):
 
     # check if ENMO values are within the expected range
     assert acc_enmo_df['ENMO'].min() >= 0, "ENMO values should be non-negative"
-
-    # determine overlap range of the two dataframes
-    startdate = max(acc_enmo_df.index.min(),
-                    enmo_enmo_df.index.min())
-    enddate = min(acc_enmo_df.index.max(),
-                  enmo_enmo_df.index.max())
-    # check if there is overlap
-    if startdate >= enddate:
-        return
-
-    acc_enmo_df = acc_enmo_df[
-        (acc_enmo_df.index >= startdate) & (
-                    acc_enmo_df.index <= enddate)].reset_index(drop=True)
-    enmo_enmo_df = enmo_enmo_df[
-        (enmo_enmo_df.index >= startdate) & (
-                    enmo_enmo_df.index <= enddate)].reset_index(
-        drop=True)
-    assert (acc_enmo_df.index == enmo_enmo_df.index).all(), "Timestamps do not match"
-
-    diff = acc_enmo_df['ENMO'] - enmo_enmo_df['ENMO']
-    assert np.linalg.norm(diff) < 1e-14, "Minute-level ENMO values do not match"
-
 
 def test_UKBiobankDataLoader(my_UKBiobankDataLoader):
     # check if data frame has the correct 2 columns
@@ -127,3 +102,42 @@ def test_trunc_UKBiobankDataLoader(my_trunc_UKBiobankDataLoader):
     # check if dataframe is empty
     assert my_trunc_UKBiobankDataLoader.get_enmo_data().shape[
                0] == 0, "ENMODataLoader() ENMO Data Frame should be empty"
+
+
+@pytest.fixture(scope="function")
+def my_NoPreprocSmartwatchDataLoader():
+    loader = DataLoader(datasource='smartwatch', input_path='tests/data/full/62164/', preprocess=False)
+    loader.load_data()
+    return loader
+
+
+@pytest.fixture(scope="function")
+def my_NoPreprocUKBiobankDataLoader():
+    loader = DataLoader(datasource='uk-biobank', input_path='tests/data/full/62164.csv', preprocess=False)
+    loader.load_data()
+    return loader
+
+def test_DataLoaderConsistency(my_NoPreprocSmartwatchDataLoader, my_NoPreprocUKBiobankDataLoader):
+    acc_enmo_df = my_NoPreprocSmartwatchDataLoader.get_enmo_data()
+    enmo_enmo_df = my_NoPreprocUKBiobankDataLoader.get_enmo_data()
+
+    # determine overlap range of the two dataframes
+    startdate = max(acc_enmo_df.index.min(),
+                    enmo_enmo_df.index.min())
+    enddate = min(acc_enmo_df.index.max(),
+                  enmo_enmo_df.index.max())
+    # check if there is overlap
+    if startdate >= enddate:
+        return
+
+    acc_enmo_df = acc_enmo_df[
+        (acc_enmo_df.index >= startdate) & (
+                acc_enmo_df.index <= enddate)].reset_index(drop=True)
+    enmo_enmo_df = enmo_enmo_df[
+        (enmo_enmo_df.index >= startdate) & (
+                enmo_enmo_df.index <= enddate)].reset_index(
+        drop=True)
+    assert (acc_enmo_df.index == enmo_enmo_df.index).all(), "Timestamps do not match"
+
+    diff = acc_enmo_df['ENMO'] - enmo_enmo_df['ENMO']
+    assert np.linalg.norm(diff) < 1e-14, "Minute-level ENMO values do not match"
