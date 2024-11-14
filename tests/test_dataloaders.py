@@ -20,8 +20,8 @@ def my_UKBiobankDataLoader():
 
 
 def test_SmartwatchDataLoader(my_SmartwatchDataLoader, my_UKBiobankDataLoader):
-    acc_enmo_df = my_SmartwatchDataLoader.get_enmo_per_minute()
-    enmo_enmo_df = my_UKBiobankDataLoader.get_enmo_per_minute()
+    acc_enmo_df = my_SmartwatchDataLoader.get_enmo_data()
+    enmo_enmo_df = my_UKBiobankDataLoader.get_enmo_data()
     # check if data frame has the correct 2 columns
     assert acc_enmo_df.shape[
                1] == 1, ("AccelerometerDataLoader() ENMO Data Frame should "
@@ -75,30 +75,30 @@ def test_SmartwatchDataLoader(my_SmartwatchDataLoader, my_UKBiobankDataLoader):
 
 def test_UKBiobankDataLoader(my_UKBiobankDataLoader):
     # check if data frame has the correct 2 columns
-    assert my_UKBiobankDataLoader.get_enmo_per_minute().shape[
+    assert my_UKBiobankDataLoader.get_enmo_data().shape[
                1] == 1, "ENMODataLoader() ENMO Data Frame should have 1 column"
 
     # index should be timestamp
-    assert my_UKBiobankDataLoader.get_enmo_per_minute().index.name == 'TIMESTAMP', "Index should be 'TIMESTAMP'"
-    assert my_UKBiobankDataLoader.get_enmo_per_minute().columns[
+    assert my_UKBiobankDataLoader.get_enmo_data().index.name == 'TIMESTAMP', "Index should be 'TIMESTAMP'"
+    assert my_UKBiobankDataLoader.get_enmo_data().columns[
                0] == 'ENMO', "First column name should be 'ENMO'"
 
-    assert my_UKBiobankDataLoader.get_enmo_per_minute().index.min() == pd.Timestamp(
+    assert my_UKBiobankDataLoader.get_enmo_data().index.min() == pd.Timestamp(
         '2000-01-03 00:00:00'), "Minimum POSIX date does not match"
-    assert my_UKBiobankDataLoader.get_enmo_per_minute().index.max() == pd.Timestamp(
+    assert my_UKBiobankDataLoader.get_enmo_data().index.max() == pd.Timestamp(
         '2000-01-09 23:59:00'), "Maximum POSIX date does not match"
 
     # check if timestamps are minute-level
-    assert my_UKBiobankDataLoader.get_enmo_per_minute().index.second.max() == 0, "Seconds should be 0"
-    assert my_UKBiobankDataLoader.get_enmo_per_minute().index.microsecond.max() == 0, ("Microseconds should "
+    assert my_UKBiobankDataLoader.get_enmo_data().index.second.max() == 0, "Seconds should be 0"
+    assert my_UKBiobankDataLoader.get_enmo_data().index.microsecond.max() == 0, ("Microseconds should "
                                                         "be 0")
 
     # check if difference between timestamps is 1 minute
-    assert (my_UKBiobankDataLoader.get_enmo_per_minute().index.diff().total_seconds()[
+    assert (my_UKBiobankDataLoader.get_enmo_data().index.diff().total_seconds()[
             1:] == 60).all(), "Difference between timestamps should be 1 minute"
 
     # check if ENMO values are within the expected range
-    assert my_UKBiobankDataLoader.get_enmo_per_minute()[
+    assert my_UKBiobankDataLoader.get_enmo_data()[
                'ENMO'].min() >= 0, "ENMO values should be non-negative"
 
 
@@ -118,12 +118,12 @@ def my_trunc_UKBiobankDataLoader():
 
 def test_trunc_SmartwatchDataLoader(my_trunc_SmartwatchDataLoader):
     # check if dataframe is empty
-    assert my_trunc_SmartwatchDataLoader.get_enmo_per_minute().shape[
+    assert my_trunc_SmartwatchDataLoader.get_enmo_data().shape[
                0] == 0, ("AccelerometerDataLoader() ENMO Data Frame should be "
                          "empty")
 
 
 def test_trunc_UKBiobankDataLoader(my_trunc_UKBiobankDataLoader):
     # check if dataframe is empty
-    assert my_trunc_UKBiobankDataLoader.get_enmo_per_minute().shape[
+    assert my_trunc_UKBiobankDataLoader.get_enmo_data().shape[
                0] == 0, "ENMODataLoader() ENMO Data Frame should be empty"
