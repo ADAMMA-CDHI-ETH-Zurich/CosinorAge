@@ -11,6 +11,15 @@ from .utils.ukbiobank import read_ukbiobank_data
 
 
 def clock(func):
+    """
+    A decorator that prints the execution time of the decorated function.
+
+    Args:
+        func (function): The function to be decorated.
+
+    Returns:
+        function: The decorated function.
+    """
     def inner(*args, **kwargs):
         start = time.time()
         result = func(*args, **kwargs)
@@ -31,15 +40,25 @@ class DataLoader:
     `save_data` methods are intended to be overridden by subclasses.
 
     Attributes:
-        enmo (pd.DataFrame): A DataFrame storing minute-level ENMO values.
+        datasource (str): The source of the data ('smartwatch', 'nhanes', or 'uk-biobank').
+        input_path (str): The path to the input data.
+        preprocess (bool): Whether to preprocess the data.
+        acc_df (pd.DataFrame): A DataFrame storing accelerometer data.
+        acc_freq (int): The frequency of the accelerometer data.
+        meta_dic (dict): A dictionary storing metadata.
+        enmo_df (pd.DataFrame): A DataFrame storing minute-level ENMO values.
     """
 
     def __init__(self, datasource: str, input_path: str, preprocess: bool = True):
         """
         Initializes an empty DataLoader instance with an empty DataFrame
         for storing minute-level ENMO values.
-        """
 
+        Args:
+            datasource (str): The source of the data ('smartwatch', 'nhanes', or 'uk-biobank').
+            input_path (str): The path to the input data.
+            preprocess (bool): Whether to preprocess the data.
+        """
         self.datasource = datasource
         self.input_path = input_path
 
@@ -68,18 +87,19 @@ class DataLoader:
         self.meta_dic = {}
         self.enmo_df = None
 
-
     def load_data(self, verbose: bool = False, autocalib_max_iter: int = 1000, autocalib_tol: float = 1e-10):
         """
         Load data into the DataLoader instance.
 
         This method is intended to be implemented by subclasses. It should
-        load data
-        and store the minute-level ENMO values in `self.enmo`.
+        load data and store the minute-level ENMO values in `self.enmo`.
+
+        Args:
+            verbose (bool): Whether to print detailed information during loading.
+            autocalib_max_iter (int): Maximum iterations for auto-calibration.
+            autocalib_tol (float): Tolerance for auto-calibration.
         """
-
         if self.datasource == 'smartwatch':
-
             # load accelerometer data from csv files into a DataFrame
             self.acc_df, self.acc_freq = read_smartwatch_data(self.input_path)
             if verbose:
@@ -114,7 +134,6 @@ class DataLoader:
                 print(f"Aggregated ENMO values at the minute level leading to {self.enmo_df.shape[0]} records")
 
         elif self.datasource == 'uk-biobank':
-
             self.enmo_df = read_ukbiobank_data(self.input_path, source='uk-biobank')
             if verbose:
                 print(f"Loaded {self.enmo_df.shape[0]} minute-level ENMO records from {self.input_path}")
@@ -134,10 +153,8 @@ class DataLoader:
             output_path (str): The file path where the minute-level ENMO data
                 will be saved.
         """
-
         if self.enmo_df is None:
-            raise ValueError(
-                "Data has not been loaded. Please call `load_data()` first.")
+            raise ValueError("Data has not been loaded. Please call `load_data()` first.")
 
         self.enmo_df.to_csv(output_path, index=False)
 
@@ -148,10 +165,8 @@ class DataLoader:
         Returns:
             pd.DataFrame: A DataFrame containing the minute-level ENMO values.
         """
-
         if self.enmo_df is None:
-            raise ValueError(
-                "Data has not been loaded. Please call `load_data()` first.")
+            raise ValueError("Data has not been loaded. Please call `load_data()` first.")
 
         return self.enmo_df
 
@@ -162,10 +177,8 @@ class DataLoader:
         Returns:
             pd.DataFrame: A DataFrame containing the accelerometer data.
         """
-
         if self.acc_df is None:
-            raise ValueError(
-                "Data has not been loaded. Please call `load_data()` first.")
+            raise ValueError("Data has not been loaded. Please call `load_data()` first.")
 
         return self.acc_df
 
@@ -176,11 +189,16 @@ class DataLoader:
         Returns:
             dict: A dictionary containing the metadata.
         """
-
         return self.meta_dic
 
-
     def plot_orig_enmo(self, resample: str = '15min', wear: bool = True):
+        """
+        Plot the original ENMO values resampled at a specified interval.
+
+        Args:
+            resample (str): The resampling interval (default is '15min').
+            wear (bool): Whether to add color bands for wear and non-wear periods (default is True).
+        """
         _data = self.acc_df.resample('15min').mean().reset_index(inplace=False)
 
         plt.figure(figsize=(12, 6))
@@ -203,7 +221,6 @@ class DataLoader:
         Returns:
             None
         """
-
         plt.figure(figsize=(12, 6))
         sns.lineplot(data=self.enmo_df, x=self.enmo_df.index, y='ENMO')
         plt.xlabel('Time')
@@ -211,5 +228,3 @@ class DataLoader:
         plt.title('ENMO per Minute')
         plt.xticks(rotation=45)
         plt.show()
-
-
