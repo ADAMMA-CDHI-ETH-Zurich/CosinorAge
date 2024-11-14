@@ -32,7 +32,7 @@ smartwatch data functions
 
 .. autofunction:: cosinorage.dataloaders.calc_weartime()
 
-uk biobank dat functions
+uk biobank data functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: cosinorage.dataloaders.read_ukbiobank_data()
