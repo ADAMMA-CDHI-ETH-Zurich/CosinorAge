@@ -1,29 +1,105 @@
+import os
 import numpy as np
 import pandas as pd
 from scipy.signal import butter, filtfilt
 from sklearn.linear_model import LinearRegression
 from tqdm import tqdm
-from typing import Tuple, Union
+from typing import Tuple, Optional
+from glob import glob
 
 
-# from .wear_detection import WearDetection
+def read_smartwatch_data(directory_path: str) -> Tuple[pd.DataFrame, Optional[float]]:
+    """
+    Concatenate all CSV files in a directory into a single DataFrame.
+
+    This function reads all CSV files in the specified directory that match the
+    '*.sensor.csv' pattern, concatenates them, and returns a single DataFrame
+    containing only the 'HEADER_TIMESTAMP', 'X', 'Y', and 'Z' columns.
+
+    Args:
+        directory_path (str): Path to the directory containing the CSV files.
+
+    Returns:
+        pd.DataFrame: Concatenated DataFrame containing the accelerometer
+        data from all CSV files, with columns 'HEADER_TIMESTAMP', 'X', 'Y',
+        'Z', sorted by 'HEADER_TIMESTAMP'.
+    """
+    file_names = glob(os.path.join(directory_path, "*.sensor.csv"))
+
+    if not file_names:
+        print(f"No files found in {directory_path}")
+        return pd.DataFrame(), None
+
+    # Read all CSV files and concatenate into a single DataFrame
+    data_frames = []
+    try:
+        for file in tqdm(file_names, desc="Loading CSV files"):
+            try:
+                df = pd.read_csv(file,
+                                 usecols=['HEADER_TIMESTAMP', 'X', 'Y', 'Z'])
+                data_frames.append(df)
+            except Exception as e:
+                print(f"Error reading {file}: {e}")
+        data = pd.concat(data_frames, ignore_index=True)
+    except Exception as e:
+        print(f"Error concatenating CSV files: {e}")
+        return pd.DataFrame(), None
+
+    # Convert timestamps to datetime format
+    try:
+        data['HEADER_TIMESTAMP'] = pd.to_datetime(data['HEADER_TIMESTAMP'])
+        data = data.sort_values(by='HEADER_TIMESTAMP')
+        data.rename(columns={'HEADER_TIMESTAMP': 'TIMESTAMP'}, inplace=True)
+    except Exception as e:
+        print(f"Error converting timestamps: {e}")
+        return pd.DataFrame(), None
+
+    # check if timestamp frequency is consistent up to 1ms
+    time_diffs = data['TIMESTAMP'].diff().dt.round('1ms')
+    unique_diffs = time_diffs.unique()
+    if (not len(unique_diffs) == 1) and (
+            not (len(unique_diffs) == 2) and unique_diffs[0] - unique_diffs[
+        1] <= pd.Timedelta('1ms')):
+        raise ValueError("Inconsistent timestamp frequency detected.")
+
+    # resample timestamps with mean frequency
+    sample_rate = 1 / unique_diffs.mean().total_seconds()
+    timestamps = data['TIMESTAMP']
+    start_timestamp = pd.to_datetime(timestamps.iloc[0])
+    time_deltas = pd.to_timedelta(np.arange(len(timestamps)) / sample_rate,
+                                  unit='s')
+    data['TIMESTAMP'] = start_timestamp + time_deltas
+
+    # determine frequency in Hz of accelerometer data
+    time_diffs = data['TIMESTAMP'].diff().dropna()
+    acc_freq = 1 / time_diffs.mean().total_seconds()
+
+    # set timestamp as index
+    data.set_index('TIMESTAMP', inplace=True)
+
+    return data, acc_freq
 
 
-def read_smartwatch_data():
-    pass
-
-
-def preprocess_smartwatch_data(df: pd.DataFrame, sf: float, epoch_size: int = 10, max_iter: int = 1000,
-                               tol: float = 1e-10) -> pd.DataFrame:
+def preprocess_smartwatch_data(df: pd.DataFrame, sf: float, meta_dict: dict, epoch_size: int = 10, max_iter: int = 1000,
+                               tol: float = 1e-10, verbose: bool = False) -> pd.DataFrame:
     _df = df.copy()
 
     _df = auto_calibrate(_df, sf, epoch_size, max_iter, tol)
-    print('Calibration done')
+    if verbose:
+        print('Calibration done')
+
     _df = remove_noise(_df)
-    print('Noise removal done')
+    if verbose:
+        print('Noise removal done')
+
     _df['wear'] = detect_wear(_df, sf)['wear']
-    print('Wear detection done')
-    # df = calc_weartime(df)
+    if verbose:
+        print('Wear detection done')
+
+    total, wear, nonwear = calc_weartime(_df, sf)
+    meta_dict.update({'total time': total, 'wear time': wear, 'non-wear time': nonwear})
+    if verbose:
+        print('Wear time calculated')
 
     return _df[['X', 'Y', 'Z', 'wear']]
 
@@ -53,14 +129,14 @@ def auto_calibrate(df: pd.DataFrame, sf: float, epoch_size: int = 10, max_iter: 
 
     # Roll mean and standard deviation
     window_size = int(sf * epoch_size)
-    mean_en = roll_mean(en, window_size)
-    mean_gx = roll_mean(gx, window_size)
-    mean_gy = roll_mean(gy, window_size)
-    mean_gz = roll_mean(gz, window_size)
+    mean_en = _roll_mean(en, window_size)
+    mean_gx = _roll_mean(gx, window_size)
+    mean_gy = _roll_mean(gy, window_size)
+    mean_gz = _roll_mean(gz, window_size)
 
-    sd_gx = roll_sd(gx, window_size)
-    sd_gy = roll_sd(gy, window_size)
-    sd_gz = roll_sd(gz, window_size)
+    sd_gx = _roll_sd(gx, window_size)
+    sd_gy = _roll_sd(gy, window_size)
+    sd_gz = _roll_sd(gz, window_size)
 
     # Step 2: Filter features for nonmovement periods based on low standard deviation
     sd_criter = 0.013  # Example threshold for standard deviation
@@ -121,14 +197,6 @@ def auto_calibrate(df: pd.DataFrame, sf: float, epoch_size: int = 10, max_iter: 
     return offset + df * scale
 
 
-def roll_mean(df, window_size):
-    return np.convolve(df, np.ones(window_size) / window_size, mode='valid')
-
-
-def roll_sd(df, window_size):
-    return pd.Series(df).rolling(window=window_size).std().dropna().values
-
-
 def remove_noise(df: pd.DataFrame, cutoff: float = 2.5, fs: float = 50, order: int = 2) -> pd.DataFrame:
     def butter_lowpass_filter(data, cutoff, fs, order=2):
         # Design Butterworth filter
@@ -173,8 +241,20 @@ def detect_wear(df: pd.DataFrame, sf: float) -> pd.DataFrame:
     return wear_mean
 
 
-def calc_weartime():
-    pass
+def calc_weartime(df: pd.DataFrame, sf: float) -> Tuple[float, float, float]:
+    total = float((df.index[-1] - df.index[0]).total_seconds())
+    wear = float((df['wear'].sum()) * (1 / sf))
+    nonwear = float((total - wear) * (1 / sf))
+
+    return total, wear, nonwear
+
+
+def _roll_mean(df, window_size):
+    return np.convolve(df, np.ones(window_size) / window_size, mode='valid')
+
+
+def _roll_sd(df, window_size):
+    return pd.Series(df).rolling(window=window_size).std().dropna().values
 
 
 def _detect_wear(data: pd.DataFrame, sampling_rate: float) -> pd.DataFrame:
@@ -200,8 +280,8 @@ def _detect_wear(data: pd.DataFrame, sampling_rate: float) -> pd.DataFrame:
     index = data.index if isinstance(data.index, pd.DatetimeIndex) else None
 
     # Parameters
-    window = 60  # Window size in minutes
-    overlap = 15  # Overlap size in minutes
+    window = 20  # Window size in minutes should be 60
+    overlap = 5  # Overlap size in minutes should be 15
     overlap_percent = 1.0 - (overlap / window)
 
     window_samples = int(window * 60 * sampling_rate)
@@ -255,6 +335,7 @@ def _detect_wear(data: pd.DataFrame, sampling_rate: float) -> pd.DataFrame:
 
     return wear
 
+
 def _resample_index(index, window_samples, step_samples):
     indices = np.arange(len(index))
     windows = _sliding_window(indices, window_samples, step_samples)
@@ -268,6 +349,7 @@ def _resample_index(index, window_samples, step_samples):
         index_resample = pd.DataFrame({'start': start_end[:, 0], 'end': start_end[:, 1]})
 
     return index_resample
+
 
 def _rescore_wear_detection(wear_data: pd.DataFrame) -> pd.DataFrame:
     # Group into wear and non-wear blocks

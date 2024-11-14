@@ -1,0 +1,38 @@
+import pandas as pd
+from typing import Union, Any
+
+def read_ukbiobank_data(file_path: str, source: str) -> Union[pd.DataFrame, tuple[Any, Union[float, Any]]]:
+    # based on data doc_source file format might look different
+    if source == 'uk-biobank':
+        time_col = 'time'
+        enmo_col = 'ENMO_t'
+    else:
+        raise ValueError(
+            "Invalid doc_source specified. Please specify, e.g., 'uk-biobank'.")
+
+    # Read the CSV file
+    try:
+        data = pd.read_csv(file_path)[[time_col, enmo_col]]
+        data = data.sort_values(by=time_col)
+        data.rename(columns={enmo_col: 'ENMO'}, inplace=True)
+    except Exception as e:
+        print(f"Error reading file: {e}")
+        return pd.DataFrame()
+
+    # Convert timestamps to datetime format
+    try:
+        data[time_col] = pd.to_datetime(data[time_col], format='mixed')
+        data.rename(columns={time_col: 'TIMESTAMP'}, inplace=True)
+    except Exception as e:
+        print(f"Error converting timestamps: {e}")
+        return pd.DataFrame()
+
+    # check if timestamp frequency is consistent up to 1ms
+    time_diffs = data['TIMESTAMP'].diff().dropna()
+    unique_diffs = time_diffs.unique()
+    if not len(unique_diffs) == 1:
+        raise ValueError("Inconsistent timestamp frequency detected.")
+
+    data.set_index('TIMESTAMP', inplace=True)
+
+    return data[['ENMO']]

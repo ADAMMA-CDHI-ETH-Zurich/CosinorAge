@@ -5,13 +5,13 @@ import time
 import os
 
 from .utils.calc_enmo import calculate_enmo, calculate_minute_level_enmo
-from .utils.read_csv import read_acc_csvs, read_enmo_csv, filter_incomplete_days
-from .utils.smartwatch import preprocess_smartwatch_data
+from .utils.filtering import filter_incomplete_days
+from .utils.smartwatch import read_smartwatch_data, preprocess_smartwatch_data
+from .utils.ukbiobank import read_ukbiobank_data
 
 
 def clock(func):
     def inner(*args, **kwargs):
-        import time
         start = time.time()
         result = func(*args, **kwargs)
         end = time.time()
@@ -65,9 +65,11 @@ class DataLoader:
             self.acc_df = None
             self.acc_freq = None
 
+        self.meta_dic = {}
         self.enmo_df = None
 
-    def load_data(self, verbose: bool = False):
+
+    def load_data(self, verbose: bool = False, autocalib_max_iter: int = 1000, autocalib_tol: float = 1e-10):
         """
         Load data into the DataLoader instance.
 
@@ -77,48 +79,49 @@ class DataLoader:
         """
 
         if self.datasource == 'smartwatch':
-            self.acc_df, self.acc_freq = read_acc_csvs(self.input_path)
+
+            # load accelerometer data from csv files into a DataFrame
+            self.acc_df, self.acc_freq = read_smartwatch_data(self.input_path)
             if verbose:
                 print(f"Loaded {self.acc_df.shape[0]} accelerometer data records from {self.input_path}")
                 print(f"The frequency of the accelerometer data is {self.acc_freq}Hz")
 
+            # filter out incomplete days
             n = self.acc_df.shape[0]
             self.acc_df = filter_incomplete_days(self.acc_df, self.acc_freq)
             if verbose:
                 print(f"Filtered out {n - self.acc_df.shape[0]} accelerometer records due to incomplete daily coverage")
 
+            # if not data left, return empty DataFrame
             if self.acc_df.empty:
                 self.enmo_df = pd.DataFrame()
                 return
 
+            # conduct preprocessing if required
             if self.preprocess:
-                self.acc_df[['X', 'Y', 'Z', 'wear']] = preprocess_smartwatch_data(self.acc_df[['X', 'Y', 'Z']], self.acc_freq, max_iter=1)
-
+                self.acc_df[['X', 'Y', 'Z', 'wear']] = preprocess_smartwatch_data(self.acc_df[['X', 'Y', 'Z']], self.acc_freq, self.meta_dic, max_iter=autocalib_max_iter, tol=autocalib_tol, verbose=verbose)
                 if verbose:
                     print(f"Preprocessed accelerometer data")
 
+            # calculate ENMO values at original frequency
             self.acc_df['ENMO'] = calculate_enmo(self.acc_df)
-
             if verbose:
                 print(f"Calculated ENMO for {self.acc_df['ENMO'].shape[0]} accelerometer records")
 
+            # aggregate ENMO values at the minute level
             self.enmo_df = calculate_minute_level_enmo(self.acc_df)
-
             if verbose:
                 print(f"Aggregated ENMO values at the minute level leading to {self.enmo_df.shape[0]} records")
 
-            #self.enmo_df.set_index('TIMESTAMP', inplace=True)
-
         elif self.datasource == 'uk-biobank':
 
-            self.enmo_df = read_enmo_csv(self.input_path, source='nhanes')
-            print(f"Loaded {self.enmo_df.shape[0]} minute-level ENMO records from {self.input_path}")
+            self.enmo_df = read_ukbiobank_data(self.input_path, source='uk-biobank')
+            if verbose:
+                print(f"Loaded {self.enmo_df.shape[0]} minute-level ENMO records from {self.input_path}")
 
             self.enmo_df = filter_incomplete_days(self.enmo_df, data_freq=1 / 60)
-            print(
-                f"Filtered out {self.enmo_df.shape[0] - self.enmo_df.shape[0]} minute-level ENMO records due to incomplete daily coverage")
-
-            self.enmo_df.set_index('TIMESTAMP', inplace=True)
+            if verbose:
+                print(f"Filtered out {self.enmo_df.shape[0] - self.enmo_df.shape[0]} minute-level ENMO records due to incomplete daily coverage")
 
     def save_data(self, output_path: str):
         """
@@ -166,6 +169,33 @@ class DataLoader:
 
         return self.acc_df
 
+    def get_meta_data(self):
+        """
+        Retrieve the metadata.
+
+        Returns:
+            dict: A dictionary containing the metadata.
+        """
+
+        return self.meta_dic
+
+
+    def plot_orig_enmo(self, resample: str = '15min', wear: bool = True):
+        _data = self.acc_df.resample('15min').mean().reset_index(inplace=False)
+
+        plt.figure(figsize=(12, 6))
+        plt.plot(_data['TIMESTAMP'], _data['ENMO'], label='ENMO', color='black')
+
+        if wear:
+            # Add color bands for wear and non-wear periods
+            for i in range(len(_data) - 1):
+                start_time = _data['TIMESTAMP'].iloc[i]
+                end_time = _data['TIMESTAMP'].iloc[i + 1]
+                color = 'green' if _data['wear'].iloc[i] == 1 else 'red'
+                plt.axvspan(start_time, end_time, color=color, alpha=0.3)
+
+        plt.show()
+
     def plot_enmo(self):
         """
         Plot minute-level ENMO values.
@@ -175,7 +205,7 @@ class DataLoader:
         """
 
         plt.figure(figsize=(12, 6))
-        sns.lineplot(data=self.enmo_df, x='TIMESTAMP', y='ENMO')
+        sns.lineplot(data=self.enmo_df, x=self.enmo_df.index, y='ENMO')
         plt.xlabel('Time')
         plt.ylabel('ENMO')
         plt.title('ENMO per Minute')
