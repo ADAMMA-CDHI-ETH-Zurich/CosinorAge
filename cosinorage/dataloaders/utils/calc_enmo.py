@@ -40,5 +40,5 @@ def calculate_minute_level_enmo(data: pd.DataFrame) -> pd.DataFrame:
             The records are aggregated at the minute level.
     """
 
-    minute_level_enmo_df = data['ENMO'].resample('min').mean()
+    minute_level_enmo_df = data['ENMO'].resample('min').mean().to_frame(name='ENMO')
     return minute_level_enmo_df
