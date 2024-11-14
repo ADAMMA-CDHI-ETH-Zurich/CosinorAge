@@ -8,6 +8,6 @@ numpy
 matplotlib
 seaborn
 scipy
-sklearn
+scikit-learn
 
 git+https://github.com/readthedocs/sphinx-build-compatibility#egg=sphinx-build-compatibility
