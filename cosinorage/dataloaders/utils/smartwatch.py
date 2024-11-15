@@ -146,14 +146,14 @@ def auto_calibrate(df: pd.DataFrame, sf: float, epoch_size: int = 10, max_iter: 
 
     # Roll mean and standard deviation
     window_size = int(sf * epoch_size)
-    mean_en = _roll_mean(en, window_size)
-    mean_gx = _roll_mean(gx, window_size)
-    mean_gy = _roll_mean(gy, window_size)
-    mean_gz = _roll_mean(gz, window_size)
+    mean_en = roll_mean(en, window_size)
+    mean_gx = roll_mean(gx, window_size)
+    mean_gy = roll_mean(gy, window_size)
+    mean_gz = roll_mean(gz, window_size)
 
-    sd_gx = _roll_sd(gx, window_size)
-    sd_gy = _roll_sd(gy, window_size)
-    sd_gz = _roll_sd(gz, window_size)
+    sd_gx = roll_sd(gx, window_size)
+    sd_gy = roll_sd(gy, window_size)
+    sd_gz = roll_sd(gz, window_size)
 
     # Step 2: Filter features for nonmovement periods based on low standard deviation
     sd_criter = 0.013  # Example threshold for standard deviation
@@ -301,7 +301,7 @@ def calc_weartime(df: pd.DataFrame, sf: float) -> Tuple[float, float, float]:
     return total, wear, nonwear
 
 
-def _roll_mean(df, window_size):
+def roll_mean(df , window_size: int) -> np.ndarray:
     """
     Calculate the rolling mean of a DataFrame.
 
@@ -313,10 +313,19 @@ def _roll_mean(df, window_size):
         np.ndarray: Array containing the rolling mean values.
     """
 
+    if len(df) < window_size:
+        raise ValueError("Window size is larger than the number of data points.")
+
+    if window_size <= 0:
+        raise ValueError("Window size must be greater than 0.")
+
+    if df.size == 0:
+        raise ValueError("Dataframe is empty.")
+
     return np.convolve(df, np.ones(window_size) / window_size, mode='valid')
 
 
-def _roll_sd(df, window_size):
+def roll_sd(df , window_size: int) -> np.ndarray:
     """
     Calculate the rolling standard deviation of a DataFrame.
 
@@ -327,6 +336,15 @@ def _roll_sd(df, window_size):
     Returns:
         np.ndarray: Array containing the rolling standard deviation values.
     """
+
+    if len(df) < window_size:
+        raise ValueError("Window size is larger than the number of data points.")
+
+    if window_size <= 0:
+        raise ValueError("Window size must be greater than 0.")
+
+    if df.size == 0:
+        raise ValueError("Dataframe is empty.")
 
     return pd.Series(df).rolling(window=window_size).std().dropna().values
 
@@ -358,13 +376,13 @@ def _detect_wear(data: pd.DataFrame, sampling_rate: float) -> pd.DataFrame:
 
     # Apply sliding window to each axis
     acc_sliding = {
-        col: _sliding_window(data[col].values, window_samples, step_samples)
+        col: sliding_window(data[col].values, window_samples, step_samples)
         for col in ['X', 'Y', 'Z']
     }
 
     # Resample index if available
     if index is not None:
-        index_resample = _resample_index(index, window_samples, step_samples)
+        index_resample = resample_index(index, window_samples, step_samples)
     else:
         index_resample = None
 
@@ -400,12 +418,12 @@ def _detect_wear(data: pd.DataFrame, sampling_rate: float) -> pd.DataFrame:
 
     # Rescore wear detection
     for _ in range(3):
-        wear = _rescore_wear_detection(wear)
+        wear = rescore_wear_detection(wear)
 
     return wear
 
 
-def _resample_index(index, window_samples, step_samples):
+def resample_index(index, window_samples, step_samples):
     """
     Resample the index to match the window and step sizes.
 
@@ -419,7 +437,7 @@ def _resample_index(index, window_samples, step_samples):
     """
 
     indices = np.arange(len(index))
-    windows = _sliding_window(indices, window_samples, step_samples)
+    windows = sliding_window(indices, window_samples, step_samples)
     start_end = windows[:, [0, -1]]
 
     if isinstance(index, pd.DatetimeIndex):
@@ -432,7 +450,7 @@ def _resample_index(index, window_samples, step_samples):
     return index_resample
 
 
-def _rescore_wear_detection(wear_data: pd.DataFrame) -> pd.DataFrame:
+def rescore_wear_detection(wear_data: pd.DataFrame) -> pd.DataFrame:
     """
     Rescore wear detection based on duration and surrounding blocks.
 
@@ -481,7 +499,7 @@ def _rescore_wear_detection(wear_data: pd.DataFrame) -> pd.DataFrame:
     return wear_rescored.drop(columns='block')
 
 
-def _sliding_window(arr, window_size, step_size):
+def sliding_window(arr, window_size, step_size):
     """
     Generate a sliding window view of the input array.
 
@@ -493,6 +511,24 @@ def _sliding_window(arr, window_size, step_size):
     Returns:
         np.ndarray: Array of sliding windows.
     """
+
+    if len(arr) < window_size:
+        raise ValueError("Window size is larger than the number of data points.")
+
+    if window_size <= 0:
+        raise ValueError("Window size must be greater than 0.")
+
+    if step_size <= 0:
+        raise ValueError("Step size must be greater than 0.")
+
+    if arr.size == 0:
+        raise ValueError("Array is empty.")
+
+    if arr.ndim == 2:
+        raise ValueError("Array is 2D. Only 1D arrays are supported.")
+
+    if len(arr) < step_size:
+        raise ValueError("Step size is larger than the number of data points.")
 
     num_windows = ((len(arr) - window_size) // step_size) + 1
     shape = (num_windows, window_size)
