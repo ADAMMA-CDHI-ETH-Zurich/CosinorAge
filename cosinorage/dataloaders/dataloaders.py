@@ -129,7 +129,7 @@ class DataLoader:
                 print(f"Calculated ENMO for {self.acc_df['ENMO'].shape[0]} accelerometer records")
 
             # aggregate ENMO values at the minute level
-            self.enmo_df = calculate_minute_level_enmo(self.acc_df)
+            self.enmo_df = calculate_minute_level_enmo(self.acc_df, self.acc_freq)
             if verbose:
                 print(f"Aggregated ENMO values at the minute level leading to {self.enmo_df.shape[0]} records")
 
