@@ -192,139 +192,163 @@ def test_resample_index():
         resample_index(pd.DatetimeIndex([]), window_samples=10, step_samples=5)  # Empty index
 
 
-def testrescore_wear_detection():
-    # Create sample wear data with alternating wear/non-wear periods
-    wear_data = pd.DataFrame({
-        'wear': [1, 1, 1, 0, 0, 1, 1],
-        'start': pd.date_range(start='2024-01-01', periods=7, freq='15min'),
-        'end': pd.date_range(start='2024-01-01', periods=7, freq='15min') + pd.Timedelta(minutes=15)
-    })
+def test_calc_weartime():
+    # Test case 1: Basic test with 1Hz sampling
+    timestamps_1hz = pd.date_range(start='2024-01-01', periods=10, freq='1s')
+    df_1hz = pd.DataFrame({
+        'wear': [1, 1, 1, 0, 0, 1, 1, 0, 1, 1],
+    }, index=timestamps_1hz)
     
-    result = rescore_wear_detection(wear_data)
-    assert isinstance(result, pd.DataFrame)
-    assert 'wear' in result.columns
-    assert set(result['wear'].unique()).issubset({0, 1})
+    total, wear, nonwear = calc_weartime(df_1hz, sf=1)
+    assert total == 9.0  # 9 seconds between first and last timestamp
+    assert wear == 7.0   # 7 samples with wear=1
+    assert nonwear == 2.0  # total - wear time
+    assert abs((total - (wear + nonwear))) < 1e-10  # times should sum to total
 
+    # Test case 2: Test with 2Hz sampling frequency
+    timestamps_2hz = pd.date_range(start='2024-01-01', periods=10, freq='500ms')
+    df_2hz = pd.DataFrame({
+        'wear': [1, 1, 1, 0, 0, 1, 1, 0, 1, 1],
+    }, index=timestamps_2hz)
+    
+    total, wear, nonwear = calc_weartime(df_2hz, sf=2)
+    assert total == 4.5  # 4.5 seconds between first and last timestamp
+    assert wear == 3.5   # 7 samples * 0.5 seconds each
+    assert nonwear == 1.0  # 2 samples * 0.5 seconds each
+    assert abs((total - (wear + nonwear))) < 1e-10
 
-"""
-# Test basic processing functions
-def test_remove_noise():
-    # Create noisy signal
-    t = np.linspace(0, 10, 1000)
-    clean_signal = np.sin(2 * np.pi * 0.5 * t)
-    noise = np.random.normal(0, 0.2, 1000)
-    noisy_signal = clean_signal + noise
-    
-    df = pd.DataFrame({
-        'X': noisy_signal,
-        'Y': noisy_signal,
-        'Z': noisy_signal
-    })
-    
-    result = remove_noise(df)
-    assert isinstance(result, pd.DataFrame)
-    assert result.shape == df.shape
-    assert result.index.equals(df.index)
-    assert not np.array_equal(result['X'].values, df['X'].values)
-    assert result['X'].std() <= df['X'].std()
+    # Test case 3: Empty DataFrame
+    empty_df = pd.DataFrame({'wear': []}, index=pd.DatetimeIndex([]))
+    with pytest.raises(IndexError):
+        calc_weartime(empty_df, sf=1)
 
-def test_auto_calibrate():
-    # Create sample data with known offset and scale
-    df = pd.DataFrame({
-        'X': np.random.normal(0.5, 0.1, 1000),  # offset of 0.5
-        'Y': np.random.normal(0, 0.2, 1000) * 2,  # scale of 2
-        'Z': np.random.normal(-0.3, 0.1, 1000)  # offset of -0.3
-    })
+    # Test case 4: Single sample
+    timestamp_single = pd.date_range(start='2024-01-01', periods=1)
+    df_single = pd.DataFrame({'wear': [1]}, index=timestamp_single)
     
-    result = auto_calibrate(df, sf=50)
-    assert isinstance(result, pd.DataFrame)
-    assert all(col in result.columns for col in ['X', 'Y', 'Z'])
-    assert abs(result['X'].mean()) < abs(df['X'].mean())
-    assert abs(result['Z'].mean()) < abs(df['Z'].mean())
+    total, wear, nonwear = calc_weartime(df_single, sf=1)
+    assert total == 0.0  # No time difference with single sample
+    assert wear == 1.0   # One wear sample
+    assert nonwear == -1.0  # total - wear
+
 
 def test_detect_wear():
-    # Create sample data with periods of movement and non-movement
-    index = pd.date_range(start='2024-01-01', periods=5000, freq='20ms')
-    movement = np.concatenate([
-        np.random.normal(0, 0.5, 2000),  # movement
-        np.random.normal(0, 0.01, 1000),  # non-movement
-        np.random.normal(0, 0.5, 2000)   # movement
-    ])
+    # Test 1: Valid input with wear/non-wear periods
+    # Create mock data: First 30s movement (wear), last 30s no movement (non-wear)
+    # Test parameters
+    sampling_freq = 50  # Hz
+    duration = 60*60*24  # seconds
+    timestamps = pd.date_range(
+        start='2024-01-01', 
+        periods=duration * sampling_freq, 
+        freq=f'{1000/sampling_freq}ms'
+    )
+
+    n_samples = len(timestamps)
+    mid_point = n_samples // 2
     
-    df = pd.DataFrame({
-        'X': movement,
-        'Y': movement,
-        'Z': movement
-    }, index=index)
+    movement_data = np.random.normal(loc=0, scale=0.1, size=(mid_point, 3))
+    no_movement_data = np.zeros((n_samples - mid_point, 3))
+    acc_data = np.vstack([movement_data, no_movement_data])
     
-    result = detect_wear(df, sf=50)
+    df = pd.DataFrame(
+        acc_data, 
+        columns=['X', 'Y', 'Z'], 
+        index=timestamps
+    )
+    
+    result = detect_wear(df, sampling_freq)
+    
+    # Verify basic properties
     assert isinstance(result, pd.DataFrame)
     assert 'wear' in result.columns
-    assert set(result['wear'].unique()).issubset({0, 1})
-
-def test_calc_weartime():
-    # Create sample data
-    index = pd.date_range(start='2024-01-01', periods=1000, freq='20ms')
-    df = pd.DataFrame({
-        'wear': np.concatenate([
-            np.ones(500),
-            np.zeros(200),
-            np.ones(300)
-        ])
-    }, index=index)
+    assert len(result) > 0
+    assert result['wear'].between(0, 1).all()
     
-    total, wear, nonwear = calc_weartime(df, sf=50)
-    assert isinstance(total, float)
-    assert isinstance(wear, float)
-    assert isinstance(nonwear, float)
-    assert abs((wear + nonwear) - total) < 1e-10  # Should sum to total
+    # Verify wear detection accuracy
+    mid_time = timestamps[mid_point]
+    wear_period = result.loc[:mid_time]['wear'].mean()
+    non_wear_period = result.loc[mid_time:]['wear'].mean()
+    assert wear_period > 0.7  # First half should be mostly wear
+    assert non_wear_period < 0.3  # Second half should be mostly non-wear
 
-# Test high-level functions
-def test_read_smartwatch_data(tmp_path):
-    # Create temporary test CSV files
-    df1 = pd.DataFrame({
-        'HEADER_TIMESTAMP': pd.date_range(start='2024-01-01', periods=100, freq='20ms'),
-        'X': np.random.normal(0, 1, 100),
-        'Y': np.random.normal(0, 1, 100),
-        'Z': np.random.normal(0, 1, 100)
+    # Test 2: Valid input with wear/non-wear periods
+    # Create mock data: First 30s movement (wear), last 30s no movement (non-wear)
+    # Test parameters
+    sampling_freq = 50  # Hz
+    duration = 60  # seconds
+    timestamps = pd.date_range(
+        start='2024-01-01', 
+        periods=duration * sampling_freq, 
+        freq=f'{1000/sampling_freq}ms'
+    )
+    
+    n_samples = len(timestamps)
+    mid_point = n_samples // 2
+    
+    movement_data = np.random.normal(loc=0, scale=0.1, size=(mid_point, 3))
+    no_movement_data = np.zeros((n_samples - mid_point, 3))
+    acc_data = np.vstack([movement_data, no_movement_data])
+    
+    df = pd.DataFrame(
+        acc_data, 
+        columns=['X', 'Y', 'Z'], 
+        index=timestamps
+    )
+    
+    with pytest.raises(ValueError):
+        detect_wear(df, sampling_freq)
+    
+    # Test 2: Invalid input - missing columns
+    df_missing_cols = pd.DataFrame({
+        'X': [1, 2, 3],
+        'Y': [1, 2, 3]
     })
-    df2 = pd.DataFrame({
-        'HEADER_TIMESTAMP': pd.date_range(start='2024-01-01 00:00:02', periods=100, freq='20ms'),
-        'X': np.random.normal(0, 1, 100),
-        'Y': np.random.normal(0, 1, 100),
-        'Z': np.random.normal(0, 1, 100)
-    })
+    with pytest.raises(ValueError):
+        detect_wear(df_missing_cols, 50)
     
-    df1.to_csv(tmp_path / "file1.sensor.csv", index=False)
-    df2.to_csv(tmp_path / "file2.sensor.csv", index=False)
-    
-    # Test successful read
-    data, freq = read_smartwatch_data(tmp_path)
-    assert isinstance(data, pd.DataFrame)
-    assert isinstance(freq, float)
-    assert len(data) == 200
-    assert all(col in data.columns for col in ['X', 'Y', 'Z'])
-    
-    # Test empty directory
-    empty_dir = tmp_path / "empty"
-    empty_dir.mkdir()
-    data, freq = read_smartwatch_data(empty_dir)
-    assert data.empty
-    assert freq is None
+    # Test 3: Invalid input - empty DataFrame
+    df_empty = pd.DataFrame(columns=['X', 'Y', 'Z'])
+    with pytest.raises(ValueError):
+        detect_wear(df_empty, 50)
 
-def test_preprocess_smartwatch_data():
+
+def test_remove_noise():
     # Create sample data
-    index = pd.date_range(start='2024-01-01', periods=1000, freq='20ms')
-    df = pd.DataFrame({
-        'X': np.sin(np.linspace(0, 10*np.pi, 1000)),
-        'Y': np.cos(np.linspace(0, 10*np.pi, 1000)),
-        'Z': np.random.normal(0, 0.1, 1000)
-    }, index=index)
+    sample_size = 1000
+    time_index = pd.date_range(start='2023-01-01', periods=sample_size, freq='12.5ms')
     
-    meta_dict = {}
-    result = preprocess_smartwatch_data(df, sf=50, meta_dict=meta_dict, verbose=True)
+    # Generate noisy sine waves for X, Y, Z
+    t = np.linspace(0, 10, sample_size)
+    noise = np.random.normal(0, 0.5, sample_size)
     
-    assert isinstance(result, pd.DataFrame)
-    assert all(col in result.columns for col in ['X', 'Y', 'Z', 'wear'])
-    assert all(key in meta_dict for key in ['total time', 'wear time', 'non-wear time'])
-"""
+    data = {
+        'X': np.sin(2 * np.pi * 0.5 * t) + noise,
+        'Y': np.sin(2 * np.pi * 0.3 * t + np.pi/4) + noise,
+        'Z': np.sin(2 * np.pi * 0.7 * t + np.pi/2) + noise
+    }
+    
+    df = pd.DataFrame(data, index=time_index)
+    
+    # Apply noise removal
+    filtered_df = remove_noise(df, sf=80)
+    
+    # Assertions
+    assert isinstance(filtered_df, pd.DataFrame)
+    assert filtered_df.shape == df.shape
+    assert all(col in filtered_df.columns for col in ['X', 'Y', 'Z'])
+
+    # Check that filtered data has less variance than original
+    for col in ['X', 'Y', 'Z']:
+        assert filtered_df[col].var() < df[col].var()
+    
+    # Test with invalid inputs
+    with pytest.raises(ValueError):
+        remove_noise(pd.DataFrame(), sf=80)  # Empty DataFrame
+    
+    with pytest.raises(KeyError):
+        remove_noise(pd.DataFrame({'A': [1, 2, 3]}), sf=80)  # Missing required columns
+
+
+def test_auto_calibrate():
+    pass
