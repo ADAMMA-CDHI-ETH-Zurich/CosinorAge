@@ -4,7 +4,7 @@ import pandas as pd
 from scipy.signal import butter, filtfilt
 from sklearn.linear_model import LinearRegression
 from tqdm import tqdm
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Dict, Union
 from glob import glob
 
 
@@ -118,8 +118,7 @@ def preprocess_smartwatch_data(df: pd.DataFrame, sf: float, meta_dict: dict, epo
     return _df[['X', 'Y', 'Z', 'wear']]
 
 
-def auto_calibrate(df: pd.DataFrame, sf: float, epoch_size: int = 10, max_iter: int = 1000,
-                   tol: float = 1e-10) -> pd.DataFrame:
+def auto_calibrate(df: pd.DataFrame, sf: float, epoch_size: int = 10, max_iter: int = 1000, tol: float = 1e-10) -> pd.DataFrame:
     """
     Perform autocalibration on accelerometer data, adjusting offset and scale to reduce calibration error. The implementation is based on the algorithm described in the GGIR R-package.
 
@@ -551,3 +550,152 @@ def sliding_window(arr, window_size, step_size):
     shape = (num_windows, window_size)
     strides = (arr.strides[0] * step_size, arr.strides[0])
     return np.lib.stride_tricks.as_strided(arr, shape=shape, strides=strides)
+
+'''
+def auto_calibrate(df: pd.DataFrame, 
+                  sf: float,
+                  epoch_size: int = 10,
+                  max_iter: int = 1000,
+                  tol: float = 1e-10,
+                  sd_criter: float = 0.013,
+                  sphere_crit: float = 0.3,
+                  min_hours: float = 10,
+                  verbose: bool = True) -> Dict[str, Union[pd.DataFrame, np.ndarray, float, str, int]]:
+    """
+    Perform autocalibration on accelerometer data, adjusting offset and scale to reduce calibration error.
+    Implementation based on the GGIR R-package algorithm.
+
+    Args:
+        df (pd.DataFrame): DataFrame with columns 'X', 'Y', and 'Z' containing accelerometer data
+        sf (float): Sampling frequency in Hz
+        epoch_size (int): Epoch size for calibration in seconds
+        max_iter (int): Maximum number of iterations for auto-calibration
+        tol (float): Tolerance for convergence
+        sd_criter (float): Standard deviation threshold for non-movement detection
+        sphere_crit (float): Threshold for sphere population check
+        min_hours (float): Minimum hours of data required
+        verbose (bool): Enable verbose output
+
+    Returns:
+        dict: Dictionary containing calibration results
+    """
+    # Initialize calibration parameters
+    scale = np.array([1.0, 1.0, 1.0])
+    offset = np.array([0.0, 0.0, 0.0])
+    QC_message = ""
+    
+    # Remove rows where all axes are zero (possible idle sleep mode)
+    zero_mask = (df[['X', 'Y', 'Z']] == 0).all(axis=1)
+    if zero_mask.any():
+        df = df[~zero_mask].copy()
+    
+    # Ensure no missing values
+    df = df.dropna(subset=['X', 'Y', 'Z'])
+    
+    # Calculate window size for epochs
+    window_size = int(sf * epoch_size)
+    
+    # Calculate features for all axes
+    axes_data = {}
+    for axis in ['X', 'Y', 'Z']:
+        data = df[axis].values
+        axes_data[f'mean_{axis}'] = roll_mean(data, window_size)
+        axes_data[f'sd_{axis}'] = roll_sd(data, window_size)
+    
+    # Create DataFrame with calculated features
+    features = pd.DataFrame(axes_data)
+    
+    # Calculate hours of data available
+    n_hours_used = (len(features) * epoch_size) / 3600
+    
+    if n_hours_used < min_hours:
+        return df
+    
+    # Identify non-movement periods
+    non_movement = (
+        (features['sd_X'] < sd_criter) &
+        (features['sd_Y'] < sd_criter) &
+        (features['sd_Z'] < sd_criter) &
+        (features['mean_X'].abs() < 2) &
+        (features['mean_Y'].abs() < 2) &
+        (features['mean_Z'].abs() < 2)
+    )
+    
+    nm_features = features[non_movement]
+    n_points = len(nm_features)
+    
+    if n_points < 10:
+        return df
+    
+    # Check if sphere is well-populated
+    sphere_populated = all(
+        (nm_features[f'mean_{axis}'].min() < -sphere_crit) and
+        (nm_features[f'mean_{axis}'].max() > sphere_crit)
+        for axis in ['X', 'Y', 'Z']
+    )
+    
+    if not sphere_populated:
+        return df
+    
+    # Calculate initial calibration error
+    input_data = nm_features[['mean_X', 'mean_Y', 'mean_Z']].values
+    cal_error_start = np.mean(np.abs(np.sqrt(np.sum(input_data ** 2, axis=1)) - 1))
+    
+    if verbose:
+        print(f"Initial calibration error: {cal_error_start:.6f} g")
+    
+    # Iterative calibration
+    weights = np.ones(len(input_data))
+    prev_res = np.inf
+    
+    for iteration in tqdm(range(max_iter), disable=not verbose):
+        # Apply current calibration
+        adjusted = (input_data + offset) / scale
+        norms = np.linalg.norm(adjusted, axis=1, keepdims=True)
+        closest_point = adjusted / norms
+        
+        # Update calibration parameters for each axis
+        for k in range(3):
+            model = LinearRegression()
+            X = np.column_stack([np.ones(len(adjusted)), adjusted[:, k]])
+            y = closest_point[:, k]
+            model.fit(X, y, sample_weight=weights)
+            
+            adjusted[:, k] = adjusted[:, k] * model.coef_[1] + model.intercept_
+            # Update offset and scale
+            offset[k] += model.intercept_ / (scale[k] * model.coef_[1])
+            scale[k] *= model.coef_[1]
+
+        # Check convergence
+        residuals = adjusted - closest_point
+        new_res = np.mean(weights * np.sum(residuals ** 2, axis=1))
+        if abs(new_res - prev_res) < tol:
+            if verbose:
+                print(f"Convergence reached at iteration {iteration + 1}")
+            break
+        
+        # Update weights and residuals
+        weights = np.minimum(1 / np.sqrt(np.sum((adjusted - closest_point) ** 2, axis=1)), 100)
+        prev_res = new_res
+    
+    # Calculate final calibration error
+    adjusted_data = (input_data + offset) / scale
+    cal_error_end = np.mean(np.abs(np.sqrt(np.sum(adjusted_data ** 2, axis=1)) - 1))
+    
+    if verbose:
+        print(f"Final calibration error: {cal_error_end:.6f} g")
+    
+    # Validate calibration improvement
+    if (cal_error_end < cal_error_start) and (cal_error_end < 0.01):
+        QC_message = "Calibration successful."
+    else:
+        QC_message = "Calibration not improved or error too high. Calibration not applied."
+        offset = np.array([0.0, 0.0, 0.0])
+        scale = np.array([1.0, 1.0, 1.0])
+    
+    # Apply calibration to original data
+    calibrated_df = df.copy()
+    for i, axis in enumerate(['X', 'Y', 'Z']):
+        calibrated_df[axis] = (calibrated_df[axis] + offset[i]) / scale[i]
+    return calibrated_df
+'''
