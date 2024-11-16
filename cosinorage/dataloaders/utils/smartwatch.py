@@ -104,7 +104,7 @@ def preprocess_smartwatch_data(df: pd.DataFrame, sf: float, meta_dict: dict, epo
     if verbose:
         print('Calibration done')
 
-    _df = remove_noise(_df)
+    _df = remove_noise(_df, sf)
     if verbose:
         print('Noise removal done')
 
@@ -214,7 +214,7 @@ def auto_calibrate(df: pd.DataFrame, sf: float, epoch_size: int = 10, max_iter: 
     return offset + df * scale
 
 
-def remove_noise(df: pd.DataFrame, cutoff: float = 2.5, fs: float = 50, order: int = 2) -> pd.DataFrame:
+def remove_noise(df: pd.DataFrame, sf: float) -> pd.DataFrame:
     """
     Remove noise from accelerometer data using a Butterworth low-pass filter.
 
@@ -228,20 +228,29 @@ def remove_noise(df: pd.DataFrame, cutoff: float = 2.5, fs: float = 50, order: i
         pd.DataFrame: DataFrame with noise removed from the 'X', 'Y', and 'Z' columns.
     """
 
-    def butter_lowpass_filter(data, cutoff, fs, order=2):
+    if df.empty:
+        raise ValueError("Dataframe is empty.")
+
+    if not all(col in df.columns for col in ['X', 'Y', 'Z']):
+        raise KeyError("Dataframe must contain 'X', 'Y' and 'Z' columns.")
+
+    def butter_lowpass_filter(data, cutoff, sf, btype, order=2):
         # Design Butterworth filter
-        nyquist = 0.5 * fs  # Nyquist frequency
-        normal_cutoff = cutoff / nyquist
-        b, a = butter(order, normal_cutoff, btype='low', analog=False)
+        nyquist = 0.5 * sf  # Nyquist frequency
+        normal_cutoff = np.array(cutoff) / nyquist
+        b, a = butter(order, normal_cutoff, btype=btype, analog=False)
 
         # Apply filter to data
         return filtfilt(b, a, data)
 
-    df['X'] = butter_lowpass_filter(df['X'], cutoff, fs)
-    df['Y'] = butter_lowpass_filter(df['Y'], cutoff, fs)
-    df['Z'] = butter_lowpass_filter(df['Z'], cutoff, fs)
+    _df = df.copy()
 
-    return df
+    cutoff = [0.5, 20]
+    _df['X'] = butter_lowpass_filter(_df['X'], cutoff, sf, btype='bandpass')
+    _df['Y'] = butter_lowpass_filter(_df['Y'], cutoff, sf, btype='bandpass')
+    _df['Z'] = butter_lowpass_filter(_df['Z'], cutoff, sf, btype='bandpass')
+
+    return _df
 
 
 def detect_wear(df: pd.DataFrame, sf: float) -> pd.DataFrame:
@@ -255,6 +264,16 @@ def detect_wear(df: pd.DataFrame, sf: float) -> pd.DataFrame:
     Returns:
         pd.DataFrame: DataFrame with a 'wear' column indicating wear (1) and non-wear (0) periods.
     """
+
+    if df.empty:
+        raise ValueError("Dataframe is empty.")
+
+    if not all(col in df.columns for col in ['X', 'Y', 'Z']):
+        raise ValueError("Dataframe must contain 'X', 'Y' and 'Z' columns.")
+
+    if (df.index[-1] - df.index[0]).total_seconds() <= 3600:
+        raise ValueError("Dataframe must contain at least 1 hour of data.")
+
 
     # copy and rename acc columns of the dataframe
     _df = df[['X', 'Y', 'Z']].copy()
@@ -296,7 +315,7 @@ def calc_weartime(df: pd.DataFrame, sf: float) -> Tuple[float, float, float]:
 
     total = float((df.index[-1] - df.index[0]).total_seconds())
     wear = float((df['wear'].sum()) * (1 / sf))
-    nonwear = float((total - wear) * (1 / sf))
+    nonwear = float((total - wear))
 
     return total, wear, nonwear
 
@@ -367,8 +386,8 @@ def _detect_wear(data: pd.DataFrame, sampling_rate: float) -> pd.DataFrame:
     index = data.index if isinstance(data.index, pd.DatetimeIndex) else None
 
     # Parameters
-    window = 20  # Window size in minutes should be 60
-    overlap = 5  # Overlap size in minutes should be 15
+    window = 60  # Window size in minutes should be 60
+    overlap = 15  # Overlap size in minutes should be 15
     overlap_percent = 1.0 - (overlap / window)
 
     window_samples = int(window * 60 * sampling_rate)
