@@ -55,11 +55,9 @@ def read_smartwatch_data(directory_path: str) -> Tuple[pd.DataFrame, Optional[fl
         return pd.DataFrame(), None
 
     # check if timestamp frequency is consistent up to 1ms
-    time_diffs = data['TIMESTAMP'].diff().dt.round('1ms')
+    time_diffs = data['TIMESTAMP'].diff().dropna().dt.round('1ms')
     unique_diffs = time_diffs.unique()
-    if (not len(unique_diffs) == 1) and (
-            not (len(unique_diffs) == 2) and unique_diffs[0] - unique_diffs[
-        1] <= pd.Timedelta('1ms')):
+    if (not len(unique_diffs) == 1) and (not (len(unique_diffs) == 2 and unique_diffs[0] - unique_diffs[1]) <= pd.Timedelta('1ms')):
         raise ValueError("Inconsistent timestamp frequency detected.")
 
     # resample timestamps with mean frequency
@@ -211,7 +209,7 @@ def auto_calibrate(df: pd.DataFrame, sf: float, epoch_size: int = 10, max_iter: 
     else:
         print("Insufficient nonmovement data for calibration.")
     # Return calibration results
-    return offset + df * scale
+    return (df - offset) * scale
 
 
 def remove_noise(df: pd.DataFrame, sf: float) -> pd.DataFrame:
@@ -469,7 +467,7 @@ def resample_index(index, window_samples, step_samples):
     return index_resample
 
 
-def rescore_wear_detection(wear_data: pd.DataFrame) -> pd.DataFrame:
+def rescore_wear_detection(data: pd.DataFrame) -> pd.DataFrame:
     """
     Rescore wear detection based on duration and surrounding blocks.
 
@@ -481,7 +479,7 @@ def rescore_wear_detection(wear_data: pd.DataFrame) -> pd.DataFrame:
     """
 
     # Group into wear and non-wear blocks
-    wear_data = wear_data.copy()
+    wear_data = data.copy()
     wear_data['block'] = (wear_data['wear'] != wear_data['wear'].shift()).cumsum()
     blocks = wear_data.groupby('block')
 

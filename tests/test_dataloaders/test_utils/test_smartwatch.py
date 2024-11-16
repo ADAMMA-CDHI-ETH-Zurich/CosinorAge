@@ -350,5 +350,93 @@ def test_remove_noise():
         remove_noise(pd.DataFrame({'A': [1, 2, 3]}), sf=80)  # Missing required columns
 
 
+def test_read_smartwatch_data(tmp_path):
+    """Test read_smartwatch_data function with various scenarios."""
+    # Test 1: Successful case with valid data
+    # Create test data with known frequency (50Hz)
+    timestamps = pd.date_range(start='2023-01-01', periods=100, freq='20ms')
+    data = {
+        'HEADER_TIMESTAMP': timestamps,
+        'X': np.random.normal(0, 1, 100),
+        'Y': np.random.normal(0, 1, 100),
+        'Z': np.random.normal(0, 1, 100)
+    }
+    df = pd.DataFrame(data)
+    
+    # Create multiple CSV files
+    for i in range(3):
+        file_path = tmp_path / f"test_{i}.sensor.csv"
+        df_slice = df.iloc[i*33:(i+1)*33]  # Split data into 3 files
+        df_slice.to_csv(file_path, index=False)
+    
+    # Test successful reading
+    result_df, freq = read_smartwatch_data(tmp_path)
+    assert isinstance(result_df, pd.DataFrame)
+    assert isinstance(freq, float)
+    assert not result_df.empty
+    assert all(col in result_df.columns for col in ['X', 'Y', 'Z'])
+    assert isinstance(result_df.index, pd.DatetimeIndex)
+    assert result_df.index.is_monotonic_increasing
+    assert abs(freq - 50) < 1  # Should be close to 50Hz
+    
+    # Test 2: Empty directory
+    empty_dir = tmp_path / "empty"
+    empty_dir.mkdir()
+    df_empty, freq_empty = read_smartwatch_data(empty_dir)
+    assert df_empty.empty
+    assert freq_empty is None
+    
+    # Test 3: Invalid CSV file
+    invalid_dir = tmp_path / "invalid"
+    invalid_dir.mkdir()
+    invalid_file = invalid_dir / "invalid.sensor.csv"
+    with open(invalid_file, 'w') as f:
+        f.write("invalid,csv,content\n")
+    
+    df_invalid, freq_invalid = read_smartwatch_data(invalid_dir)
+    assert df_invalid.empty
+    assert freq_invalid is None
+    
+    # Test 4: Inconsistent frequency
+    inconsistent_dir = tmp_path / "inconsistent"
+    inconsistent_dir.mkdir()
+    
+    # Create data with inconsistent frequency using just 3 timestamps
+    timestamps1 = pd.to_datetime(['2023-01-01 00:00:00', '2023-01-01 00:00:02', '2023-01-01 00:00:04'])
+    timestamps2 = pd.to_datetime(['2023-01-01 00:00:05', '2023-01-01 00:00:06', '2023-01-01 00:00:07'])
+    
+    data1 = {
+        'HEADER_TIMESTAMP': timestamps1,
+        'X': [0.1, 0.2, 0.3],
+        'Y': [0.4, 0.5, 0.6],
+        'Z': [0.7, 0.8, 0.9]
+    }
+    data2 = {
+        'HEADER_TIMESTAMP': timestamps2,
+        'X': [0.1, 0.2, 0.3],
+        'Y': [0.4, 0.5, 0.6],
+        'Z': [0.7, 0.8, 0.9]
+    }
+    
+    pd.DataFrame(data1).to_csv(inconsistent_dir / "data1.sensor.csv", index=False)
+    pd.DataFrame(data2).to_csv(inconsistent_dir / "data2.sensor.csv", index=False)
+    
+    with pytest.raises(ValueError, match="Inconsistent timestamp frequency detected."):
+        read_smartwatch_data(inconsistent_dir)
+    
+    # Test 5: Nonexistent directory
+    df_nonexist, freq_nonexist = read_smartwatch_data("nonexistent_directory")
+    assert df_nonexist.empty
+    assert freq_nonexist is None
+
+
+def test_rescore_wear_detection():
+    pass
+
+
 def test_auto_calibrate():
+    pass
+
+
+def test_preprocess_smartwatch_data():
     pass
