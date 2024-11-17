@@ -264,7 +264,9 @@ def auto_calibrate(df: pd.DataFrame, sf: float, epoch_size: int = 10, max_iter: 
             scale = np.array([1.0, 1.0, 1.0])
 
         # Return calibration results
-        return (df + offset) / scale
+        print(f"Offset: {offset}")
+        print(f"Scale: {scale}")
+        return (df + offset) * scale
     else:
         print("Insufficient nonmovement data for calibration.")
         return df
