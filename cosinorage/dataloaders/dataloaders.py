@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import time
 import os
+from tqdm import tqdm
 
 from .utils.calc_enmo import calculate_enmo, calculate_minute_level_enmo
 from .utils.filtering import filter_incomplete_days
@@ -199,18 +200,25 @@ class DataLoader:
             resample (str): The resampling interval (default is '15min').
             wear (bool): Whether to add color bands for wear and non-wear periods (default is True).
         """
-        _data = self.acc_df.resample('15min').mean().reset_index(inplace=False)
+        #_data = self.acc_df.resample('5min').mean().reset_index(inplace=False)
+        if wear:
+            _data = self.acc_df.resample(f'{resample}').mean().reset_index(inplace=False)
+        else:
+            _data = self.acc_df.reset_index(inplace=False)
 
         plt.figure(figsize=(12, 6))
         plt.plot(_data['TIMESTAMP'], _data['ENMO'], label='ENMO', color='black')
 
         if wear:
             # Add color bands for wear and non-wear periods
-            for i in range(len(_data) - 1):
-                start_time = _data['TIMESTAMP'].iloc[i]
-                end_time = _data['TIMESTAMP'].iloc[i + 1]
-                color = 'green' if _data['wear'].iloc[i] == 1 else 'red'
-                plt.axvspan(start_time, end_time, color=color, alpha=0.3)
+            # add tqdm progress bar
+
+            for i in tqdm(range(len(_data) - 1)):
+                if _data['wear'].iloc[i] != 1:
+                    start_time = _data['TIMESTAMP'].iloc[i]
+                    end_time = _data['TIMESTAMP'].iloc[i + 1]
+                    color = 'red'
+                    plt.axvspan(start_time, end_time, color=color, alpha=0.3)
 
         plt.show()
 
@@ -221,10 +229,17 @@ class DataLoader:
         Returns:
             None
         """
+        _data = self.enmo_df.reset_index(inplace=False)
+
         plt.figure(figsize=(12, 6))
-        sns.lineplot(data=self.enmo_df, x=self.enmo_df.index, y='ENMO')
-        plt.xlabel('Time')
-        plt.ylabel('ENMO')
-        plt.title('ENMO per Minute')
-        plt.xticks(rotation=45)
+        plt.plot(_data['TIMESTAMP'], _data['ENMO'], label='ENMO', color='black')
+
+        if 'wear' in _data.columns:
+            for i in tqdm(range(len(_data) - 1)):
+                if _data['wear'].iloc[i] != 1:
+                    start_time = _data['TIMESTAMP'].iloc[i]
+                    end_time = _data['TIMESTAMP'].iloc[i + 1]
+                    color = 'red'
+                    plt.axvspan(start_time, end_time, color=color, alpha=0.3)
+
         plt.show()

@@ -431,12 +431,77 @@ def test_read_smartwatch_data(tmp_path):
 
 
 def test_rescore_wear_detection():
-    pass
+    # Create test data with alternating wear/non-wear periods
+    test_data = pd.DataFrame({
+        'wear': [1, 1, 1, 0, 0, 0, 1, 1, 0, 0],  # 10 periods
+        'start': pd.date_range('2024-01-01', periods=10, freq='15min'),
+        'end': pd.date_range('2024-01-01', periods=10, freq='15min') + pd.Timedelta('15min')
+    })
+    
+    # Test the function
+    result = rescore_wear_detection(test_data)
+    
+    # Basic assertions
+    assert isinstance(result, pd.DataFrame)
+    assert 'wear' in result.columns
+    assert len(result) == len(test_data)
+    assert all(x in [0, 1] for x in result['wear'])  # Check values are binary
+    assert 'block' not in result.columns  # Check temporary 'block' column was removed
 
 
 def test_auto_calibrate():
-    pass
+    # Create simple test data
+    n_samples = 1000
+    time_index = pd.date_range('2023-01-01', periods=n_samples, freq='20ms')
+    
+    # Generate random accelerometer data
+    np.random.seed(42)
+    data = np.random.normal(0, 1, (n_samples, 3))
+    
+    # Create input DataFrame
+    df = pd.DataFrame(
+        data,
+        columns=['X', 'Y', 'Z'],
+        index=time_index
+    )
+    
+    # Run auto_calibration
+    calibrated_df = auto_calibrate(df, sf=50)
+    
+    # Check that output shape matches input shape
+    assert calibrated_df.shape == df.shape
+    assert list(calibrated_df.columns) == ['X', 'Y', 'Z']
+    assert (calibrated_df.index == df.index).all()
 
 
 def test_preprocess_smartwatch_data():
-    pass
+    # Create sample data
+    n_samples = 600000  # 10 seconds of data at 100Hz
+    sf = 80  # sampling frequency in Hz
+    
+    # Generate timestamps
+    timestamps = pd.date_range(
+        start='2023-01-01', 
+        periods=n_samples, 
+        freq=f'{1000/sf}ms'
+    )
+    
+    # Create synthetic accelerometer data with some noise
+    data = {
+        'X': np.sin(np.linspace(0, 10*np.pi, n_samples)) + np.random.normal(0, 0.1, n_samples),
+        'Y': np.cos(np.linspace(0, 10*np.pi, n_samples)) + np.random.normal(0, 0.1, n_samples),
+        'Z': np.sin(np.linspace(0, 5*np.pi, n_samples)) + np.random.normal(0, 0.1, n_samples)
+    }
+    
+    df = pd.DataFrame(data, index=timestamps)
+    meta_dict = {}
+    
+    # Process the data
+    result = preprocess_smartwatch_data(df, sf, meta_dict, verbose=False)
+    
+    # Basic assertions
+    assert isinstance(result, pd.DataFrame)
+    assert all(col in result.columns for col in ['X', 'Y', 'Z', 'wear'])
+    assert len(result) == len(df)
+    #assert all(result['wear'].isin([0, 1]))  # wear column should only contain 0s and 1s
+    assert all(key in meta_dict for key in ['total time', 'wear time', 'non-wear time'])
