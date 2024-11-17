@@ -34,7 +34,7 @@ smartwatch_loader = DataLoader(datasource='smartwatch', input_path='../data/6216
 Moreover you can load minute-level ENMO data provided by the UK-Biobank from a csv file.
 
 ```python
-biobank_loader = DataLoader(datasource='uk-biobank', input_path='../data/62164_ENMO.csv', preprocess=False)
+biobank_loader = DataLoader(datasource='uk-biobank', input_path='../data/62164_ENMO.csv', preprocess=True)
 ```
 
 The `load_data()` method reads the data from the input directory/file and calculates minute-level ENMO values (if not
