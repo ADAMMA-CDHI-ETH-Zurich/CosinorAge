@@ -132,13 +132,21 @@ def auto_calibrate(df: pd.DataFrame, sf: float, epoch_size: int = 10, max_iter: 
     Returns:
         pd.DataFrame: Calibrated DataFrame with adjusted offset and scale.
     """
+
+    _df = df.copy()
+
     # Initialize calibration parameters for scale and offset
     scale = np.array([1.0, 1.0, 1.0])  # Start with no scaling (1.0) for x, y, z
     offset = np.array([0.0, 0.0, 0.0])  # Start with no offset for x, y, z
     calib_error_start, calib_error_end = None, None  # Track calibration error before and after adjustment
 
+    # Remove rows where all axes are zero (possible idle sleep mode)
+    zero_mask = (df[['X', 'Y', 'Z']] == 0).all(axis=1)
+    if zero_mask.any():
+        _df = _df[~zero_mask]
+
     # Step 1: Calculate features for calibration
-    gx, gy, gz = df['X'].values, df['Y'].values, df['Z'].values
+    gx, gy, gz = _df['X'].values, _df['Y'].values, _df['Z'].values
     en = np.sqrt(gx ** 2 + gy ** 2 + gz ** 2)
 
     # Roll mean and standard deviation
@@ -165,6 +173,22 @@ def auto_calibrate(df: pd.DataFrame, sf: float, epoch_size: int = 10, max_iter: 
 
     # Step 3: Ensure enough data points for calibration
     if len(mean_gx) > 10:
+        
+        # Check if the data points are within the sphere criterion
+        sphere_crit = 0.3
+        sphere_populated = (
+            (mean_gx.min() < -sphere_crit) and
+            (mean_gx.max() > sphere_crit) and
+            (mean_gy.min() < -sphere_crit) and
+            (mean_gy.max() > sphere_crit) and
+            (mean_gz.min() < -sphere_crit) and
+          (mean_gz.max() > sphere_crit)
+        )
+    
+        if not sphere_populated:
+            print("Sphere is not well-populated.")
+            return df
+
         # Calculate initial calibration error based on distance from expected 1g magnitude
         calib_error_start = np.mean(
             np.abs(np.sqrt(mean_gx ** 2 + mean_gy ** 2 + mean_gz ** 2) - 1))
@@ -177,38 +201,73 @@ def auto_calibrate(df: pd.DataFrame, sf: float, epoch_size: int = 10, max_iter: 
 
         # Iterative loop to adjust scale and offset
         for iteration in tqdm(range(max_iter), desc="Calibrating", unit="iter"):
+            adjusted = None
+
+            try:
+                adjusted = (input_data + offset) * scale
+            except Exception as e:
+                pass
+
+            if adjusted is None:
+                print("Error applying offset and scale. Calibration not applied.")
+                break
+
             # Apply current offset and scale to data
-            adjusted = (input_data - offset) * scale
             norms = np.linalg.norm(adjusted, axis=1, keepdims=True)  # Compute norms for each row
             closest_point = adjusted / norms  # Normalize to project onto the unit sphere
             # Offset and scale changes for each axis
             offset_change = np.zeros(3)
             scale_change = np.ones(3)
             # Adjust offset and scale for each axis using linear regression
+
             for k in range(3):
-                model = LinearRegression()
-                model.fit(adjusted[:, k].reshape(-1, 1), closest_point[:, k], sample_weight=weights)
+                X = adjusted[:, k].reshape(-1, 1)
+                y = closest_point[:, k]
+
+                if (np.sum(np.isnan(y)) > 0 and np.sum(~np.isnan(y)) > 10):
+                    # Identify rows with NaN values in column k
+                    invi = np.where(np.isnan(y))[0]
+                    
+                    # Remove rows with NaN values from all related variables
+                    y = np.delete(y, invi, axis=0)
+                    X = np.delete(X, invi, axis=0)
+                    adjusted = np.delete(adjusted, invi, axis=0)
+                    closest_point = np.delete(closest_point, invi, axis=0)
+                    weights = np.delete(weights, invi, axis=0)
+
+                model = LinearRegression() 
+                model.fit(X, y, sample_weight=weights)
                 offset_change[k] = model.intercept_  # Intercept represents offset adjustment
                 scale_change[k] = model.coef_[0]  # Coefficient represents scale adjustment
-                adjusted[:, k] = model.predict(adjusted[:, k].reshape(-1, 1))  # Update adjusted data
+                adjusted[:, k] = model.predict(X)
+
             # Apply changes to offset and scale
             offset += offset_change / (scale * scale_change)
             scale *= scale_change
             # Check convergence based on change in residuals
-            new_res = np.mean(weights * np.sum((adjusted - closest_point) ** 2, axis=1))
+            new_res = 3 * np.sum(weights[:, np.newaxis] * (adjusted - closest_point)**2) / np.sum(weights)
             weights = np.minimum(1 / np.sqrt(np.sum((adjusted - closest_point) ** 2, axis=1)), 1 / 0.01)
+
             if abs(new_res - res) < tol:
                 tqdm.write(f"Convergence reached at iteration {iteration + 1}")
                 break  # Stop iteration if convergence criterion met
             res = new_res  # Update residual for next iteration
+
         # Calculate final calibration error
-        calib_error_end = np.mean(
-            np.abs(np.sqrt(mean_gx ** 2 + mean_gy ** 2 + mean_gz ** 2) - 1))
-        # Output summary of calibration results if verbose is enabled
+        calib_error_end = np.mean(np.abs(np.sqrt(mean_gx ** 2 + mean_gy ** 2 + mean_gz ** 2) - 1))
+
+        if (calib_error_end < calib_error_start) and (calib_error_end < 0.01):
+            print("Calibration successful.")
+        else:
+            print("Calibration not improved or error too high. Calibration not applied.")
+            offset = np.array([0.0, 0.0, 0.0])
+            scale = np.array([1.0, 1.0, 1.0])
+
+        # Return calibration results
+        return (df + offset) / scale
     else:
         print("Insufficient nonmovement data for calibration.")
-    # Return calibration results
-    return (df - offset) * scale
+        return df
 
 
 def remove_noise(df: pd.DataFrame, sf: float) -> pd.DataFrame:
