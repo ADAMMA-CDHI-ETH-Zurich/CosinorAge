@@ -47,6 +47,10 @@ def calculate_minute_level_enmo(data: pd.DataFrame, sf: float) -> pd.DataFrame:
 
     try:    
         minute_level_enmo_df = data['ENMO'].resample('min').mean().to_frame(name='ENMO')
+        # check if data has a wear column
+        if 'wear' in data.columns:
+            minute_level_enmo_df['wear'] = data['wear'].resample('min').mean()
+        
     except Exception as e:
         print(f"Error resampling ENMO data: {e}")
         minute_level_enmo_df = pd.DataFrame()
