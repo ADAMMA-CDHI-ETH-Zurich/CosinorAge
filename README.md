@@ -24,33 +24,31 @@ pip install .
 
 ### Data Loading
 
-`AccelerometerDataLoader` object can be used to load raw accelerometer data from a directory containing hourly csv
+`DataLoader` object can be used to load raw smartwatch accelerometer data from a directory containing hourly csv
 files.
 
 ```python
-reader = AccelerometerDataLoader(input_dir_path='../data/62164/')
+smartwatch_loader = DataLoader(datasource='smartwatch', input_path='../data/62164/', preprocess=True)
 ```
 
-The `ENMODataLoader` object can be used to load minute-level ENMO data from a csv file.
+Moreover you can load minute-level ENMO data provided by the UK-Biobank from a csv file.
 
 ```python
-reader = ENMODataLoader(input_file_path='../data/62164.csv')
+biobank_loader = DataLoader(datasource='uk-biobank', input_path='../data/62164_ENMO.csv', preprocess=False)
 ```
 
 The `load_data()` method reads the data from the input directory/file and calculates minute-level ENMO values (if not
 already available) and stores it in a pandas DataFrame.
 
 ```python
-acc_reader.load_data()
+smartwatch_loader.load_data()
 ```
 
 The `save_data()` method saves the minute-level data to a csv file.
 
 ```python
-acc_reader.save_data(output_file_path='../data/62164_ENMO.csv')
+smartwatch_loader.save_data(output_file_path='../data/62164_ENMO.csv')
 ```
-
-### Preprocessing
 
 ### Wearable Feature Computation
 
