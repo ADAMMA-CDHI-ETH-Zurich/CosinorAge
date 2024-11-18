@@ -7,3 +7,6 @@ wearable-features based on minute-level ENMO data including
 - Physical activity features, e.g., SB, LIPA, MVPA
 - Sleep features, e.g., TST, WASO, SE, SR
 '''
+
+from .utils import *
+from .features import *
