@@ -10,7 +10,6 @@ attrs==24.2.0
 babel==2.16.0
 backports.tarfile==1.2.0
 beautifulsoup4==4.12.3
-biopsykit==0.10.0
 bioread==3.0.1
 bleach==6.2.0
 build==1.2.2.post1
