@@ -1,5 +1,1 @@
-- add documentation
-- add tests for single functionalities of data loader
-- add tests for utility functions
-- optimize code
-- add niche error handling
+- maybe use calibration function suggested by pampro

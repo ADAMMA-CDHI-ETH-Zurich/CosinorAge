@@ -1,11 +1,13 @@
 from ..dataloaders import DataLoader
 
+from .utils.nonparam_analysis import *
+
 # TODO: Implement the WearableFeatures class
 class WearableFeatures:
 
     def __init__(self, loader: DataLoader):
 
-        self.enmo = loader.get_enmo_minute()
+        self.enmo = loader.get_enmo_data()
         
         # cosinor analysis features
 
@@ -31,19 +33,19 @@ class WearableFeatures:
     
 
     def compute_IV(self):
-        pass
+        self.IV = IV(self.enmo)
     
     def compute_IS(self):
-        pass
+        self.IS = IS(self.enmo)
 
     def compute_RA(self):
-        pass
+        self.RA = RA(self.enmo) 
 
     def compute_M10(self):
-        pass
+        self.M10 = M10(self.enmo)
     
     def compute_M5(self):
-        pass
+        self.M5 = M5(self.enmo)
 
     def compute_M10_start(self):
         pass
@@ -71,3 +73,18 @@ class WearableFeatures:
     
     def compute_sleep_efficiency(self):
         pass
+
+    def get_IV(self):
+        return self.IV
+    
+    def get_IS(self):
+        return self.IS
+    
+    def get_RA(self):
+        return self.RA
+    
+    def get_M10(self):
+        return self.M10
+    
+    def get_M5(self):
+        return self.M5
