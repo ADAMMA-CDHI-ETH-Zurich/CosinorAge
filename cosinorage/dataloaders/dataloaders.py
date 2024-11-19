@@ -131,6 +131,7 @@ class DataLoader:
 
             # aggregate ENMO values at the minute level
             self.enmo_df = calculate_minute_level_enmo(self.acc_df, self.acc_freq)
+            self.enmo_df.index = pd.to_datetime(self.enmo_df.index)
             if verbose:
                 print(f"Aggregated ENMO values at the minute level leading to {self.enmo_df.shape[0]} records")
 
@@ -140,6 +141,7 @@ class DataLoader:
                 print(f"Loaded {self.enmo_df.shape[0]} minute-level ENMO records from {self.input_path}")
 
             self.enmo_df = filter_incomplete_days(self.enmo_df, data_freq=1 / 60)
+            self.enmo_df.index = pd.to_datetime(self.enmo_df.index)
             if verbose:
                 print(f"Filtered out {self.enmo_df.shape[0] - self.enmo_df.shape[0]} minute-level ENMO records due to incomplete daily coverage")
 

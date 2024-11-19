@@ -1,249 +1,173 @@
 import pandas as pd
 
 
-def IV(data: pd.Series) -> float:
-    r"""Calculate the intradaily variability"""
+def IV(data: pd.Series) -> pd.DataFrame:
+    r"""Calculate the intradaily variability for each day separately
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with date index and IV values for each day
+    """
+    data_ = data.copy()[['ENMO']]
+    #data_['date'] = data_.index.date
+    daily_groups = data_.groupby(data_.index.date)
+    
+    # Calculate IV for each day
+    daily_ivs = []
+    for date, day_data in daily_groups:
+
+        c_1h = day_data.diff(1).pow(2).mean().values[0]
+        d_1h = day_data.var().values[0]
+        iv = (c_1h / d_1h)
+        daily_ivs.append({'date': date, 'IV': iv})
+    
+    # Create DataFrame with results
+    iv_df = pd.DataFrame(daily_ivs)
+    iv_df.set_index('date', inplace=True)
+    
+    return iv_df
+
+
+def IS(data: pd.Series) -> pd.DataFrame:
+    r"""Calculate the interdaily stability (IS) for each day separately.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with date index and IS values for each day.
+    """
+    data_ = data.copy()[['ENMO']]
+    data_['hour'] = data_.index.hour
+    data_['minute'] = data_.index.minute
+
+    # Calculate the mean 24-hour profile
+    mean_profile = data_.groupby(['hour', 'minute'])['ENMO'].mean()
+
+    # Calculate IS for each day
+    daily_groups = data_.groupby(data_.index.date)
+    daily_iss = []
+    for date, day_data in daily_groups:
+        # Match the day's data with the 24-hour mean profile
+        day_data['hour_minute'] = list(zip(day_data['hour'], day_data['minute']))
+        day_profile = day_data['hour_minute'].map(mean_profile)
+
+        # Compute IS
+        mean_daily_value = day_data['ENMO'].mean()
+        numerator = ((day_profile - mean_daily_value) ** 2).sum()
+        denominator = ((day_data['ENMO'] - mean_daily_value) ** 2).sum()
+        is_value = numerator / denominator if denominator != 0 else 0
+
+        daily_iss.append({'date': date, 'IS': is_value})
+
+    # Create DataFrame with results
+    is_df = pd.DataFrame(daily_iss)
+    is_df.set_index('date', inplace=True)
+
+    return is_df
+
+
+def RA(data: pd.Series) -> pd.DataFrame:
+    r"""Calculate the relative amplitude (RA) for each day separately.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with date index and RA values for each day.
+    """
+    data_ = data.copy()[['ENMO']]
+    data_['hour'] = data_.index.hour
+
+    # Group data by day
+    daily_groups = data_.groupby(data_.index.date)
+
+    # Calculate RA for each day
+    daily_ras = []
+    for date, day_data in daily_groups:
+        # Group data by hour within the day
+        hourly_means = day_data.groupby('hour')['ENMO'].mean()
+
+        # Find most active 10 hours and least active 5 hours
+        top_10h = hourly_means.nlargest(10).mean()  # Mean activity of the most active 10 hours
+        bottom_5h = hourly_means.nsmallest(5).mean()  # Mean activity of the least active 5 hours
+
+        # Compute RA
+        ra_value = (top_10h - bottom_5h) / (top_10h + bottom_5h) if (top_10h + bottom_5h) != 0 else 0
+
+        daily_ras.append({'date': date, 'RA': ra_value})
+
+    # Create DataFrame with results
+    ra_df = pd.DataFrame(daily_ras)
+    ra_df.set_index('date', inplace=True)
+
+    return ra_df
+
 
-    c_1h = data.diff(1).pow(2).mean()
+def M10(data: pd.Series) -> pd.DataFrame:
+    r"""Calculate the M10 (mean activity during the 10 most active hours) 
+    and the start time of the 10 most active hours (M10_start) for each day.
 
-    d_1h = data.var()
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with date index, M10 values, and M10_start for each day.
+    """
+    data_ = data.copy()[['ENMO']]
+    data_['hour'] = data_.index.hour
 
-    return (c_1h / d_1h)  
+    # Group data by day
+    daily_groups = data_.groupby(data_.index.date)
 
+    # Calculate M10 and M10_start for each day
+    daily_m10 = []
+    for date, day_data in daily_groups:
+        # Group data by hour within the day
+        hourly_means = day_data.groupby('hour')['ENMO'].mean()
 
-def IS(data: pd.Series) -> float:
-    r"""Calculate the interdaily stability"""
+        # Find most active 10 hours
+        top_10h = hourly_means.nlargest(10)
+        top_10h_mean = top_10h.mean()
+        m10_start_hour = top_10h.idxmax()  # The hour with the highest activity in the top 10
 
-    d_24h = data.groupby([
-        data.index.hour,
-        data.index.minute,
-        data.index.second]
-    ).mean().var()
+        daily_m10.append({'date': date, 'M10': top_10h_mean, 'M10_start': m10_start_hour})
 
-    d_1h = data.var()
+    # Create DataFrame with results
+    m10_df = pd.DataFrame(daily_m10)
+    m10_df.set_index('date', inplace=True)
 
-    return (d_24h / d_1h)
+    return m10_df
 
 
-def RA(data: pd.Series):
-        r"""Relative rest/activity amplitude
+def L5(data: pd.Series) -> pd.DataFrame:
+    r"""Calculate the L5 (mean activity during the 5 least active hours) 
+    and the start time of the 5 least active hours (L5_start) for each day.
 
-        Relative amplitude between the mean activity during the 10 most active
-        hours of the day and the mean activity during the 5 least active hours
-        of the day.
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with date index, L5 values, and L5_start for each day.
+    """
+    data_ = data.copy()[['ENMO']]
+    data_['hour'] = data_.index.hour
 
-        Parameters
-        ----------
-        binarize: bool, optional
-            If set to True, the data are binarized.
-            Default is True.
-        threshold: int, optional
-            If binarize is set to True, data above this threshold are set to 1
-            and to 0 otherwise.
-            Default is 4.
+    # Group data by day
+    daily_groups = data_.groupby(data_.index.date)
 
-        Returns
-        -------
-        ra: float
+    # Calculate L5 and L5_start for each day
+    daily_l5 = []
+    for date, day_data in daily_groups:
+        # Group data by hour within the day
+        hourly_means = day_data.groupby('hour')['ENMO'].mean()
 
+        # Find least active 5 hours
+        bottom_5h = hourly_means.nsmallest(5)
+        bottom_5h_mean = bottom_5h.mean()
+        l5_start_hour = bottom_5h.idxmin()  # The hour with the lowest activity in the bottom 5
 
-        Notes
-        -----
+        daily_l5.append({'date': date, 'L5': bottom_5h_mean, 'L5_start': l5_start_hour})
 
-        The RA [1]_ variable is calculated as:
+    # Create DataFrame with results
+    l5_df = pd.DataFrame(daily_l5)
+    l5_df.set_index('date', inplace=True)
+    return l5_df
 
-        .. math::
-
-            RA = \frac{M10 - L5}{M10 + L5}
-
-        References
-        ----------
-
-        .. [1] Van Someren, E.J.W., Lijzenga, C., Mirmiran, M., Swaab, D.F.
-               (1997). Long-Term Fitness Training Improves the Circadian
-               Rest-Activity Rhythm in Healthy Elderly Males.
-               Journal of Biological Rhythms, 12(2), 146–156.
-               http://doi.org/10.1177/074873049701200206
-
-        Examples
-        --------
-
-            >>> import pyActigraphy
-            >>> rawAWD = pyActigraphy.io.read_raw_awd(fpath + 'SUBJECT_01.AWD')
-            >>> rawAWD.RA()
-            0.XXXX
-            >>> rawAWD.RA(binarize=False)
-            0.XXXX
-        """
-
-        _data = data.copy()
-
-        # n_epochs = int(pd.Timedelta('5H')/self.frequency)
-
-        _, l5 = _lmx(_data, '5H', lowest=True)
-        _, m10 = _lmx(_data, '10H', lowest=False)
-
-        return (m10-l5)/(m10+l5)
-
-
-def M10(data: pd.Series):
-        r"""M10
-
-        Mean activity during the 10 most active hours of the day.
-
-        Parameters
-        ----------
-        binarize: bool, optional
-            If set to True, the data are binarized.
-            Default is True.
-        threshold: int, optional
-            If binarize is set to True, data above this threshold are set to 1
-            and to 0 otherwise.
-            Default is 4.
-
-        Returns
-        -------
-        m10: float
-
-
-        Notes
-        -----
-
-        The M10 [1]_ variable is calculated as the mean, per acquisition period
-        , of the average daily activities during the 10 most active hours.
-
-        .. warning:: The value of this variable depends on the length of the
-                     acquisition period.
-
-        References
-        ----------
-
-        .. [1] Van Someren, E.J.W., Lijzenga, C., Mirmiran, M., Swaab, D.F.
-               (1997). Long-Term Fitness Training Improves the Circadian
-               Rest-Activity Rhythm in Healthy Elderly Males.
-               Journal of Biological Rhythms, 12(2), 146–156.
-               http://doi.org/10.1177/074873049701200206
-
-        Examples
-        --------
-
-            >>> import pyActigraphy
-            >>> rawAWD = pyActigraphy.io.read_raw_awd(fpath + 'SUBJECT_01.AWD')
-            >>> rawAWD.M10()
-            0.XXXX
-            >>> rawAWD.M10(binarize=False)
-            0.XXXX
-        """
-
-        _data = data.copy()
-
-        # n_epochs = int(pd.Timedelta('10H')/self.frequency)
-
-        _, m10 = _lmx(_data, '10H', lowest=False)
-
-        return m10
-
-
-def L5(data: pd.Series):
-        r"""L5
-
-        Mean activity during the 5 least active hours of the day.
-
-        Parameters
-        ----------
-        binarize: bool, optional
-            If set to True, the data are binarized.
-            Default is True.
-        threshold: int, optional
-            If binarize is set to True, data above this threshold are set to 1
-            and to 0 otherwise.
-            Default is 4.
-
-        Returns
-        -------
-        l5: float
-
-
-        Notes
-        -----
-
-        The L5 [1]_ variable is calculated as the mean, per acquisition period,
-        of the average daily activities during the 5 least active hours.
-
-        .. warning:: The value of this variable depends on the length of the
-                     acquisition period.
-
-        References
-        ----------
-
-        .. [1] Van Someren, E.J.W., Lijzenga, C., Mirmiran, M., Swaab, D.F.
-               (1997). Long-Term Fitness Training Improves the Circadian
-               Rest-Activity Rhythm in Healthy Elderly Males.
-               Journal of Biological Rhythms, 12(2), 146–156.
-               http://doi.org/10.1177/074873049701200206
-
-        Examples
-        --------
-
-            >>> import pyActigraphy
-            >>> rawAWD = pyActigraphy.io.read_raw_awd(fpath + 'SUBJECT_01.AWD')
-            >>> rawAWD.L5()
-            0.XXXX
-            >>> rawAWD.L5(binarize=False)
-            0.XXXX
-        """
-
-        _data = data.copy()
-
-        # n_epochs = int(pd.Timedelta('5H')/self.frequency)
-
-        _, l5 = _lmx(_data, '5H', lowest=True)
-
-        return l5
-
-
-def _lmx(data, period, lowest=True):
-    """Calculate the start time and mean activity of the period of
-    lowest/highest activity"""
-
-    avgdaily = _average_daily_activity(data=data, cyclic=True)
-
-    n_epochs = int(pd.Timedelta(period)/avgdaily.index.freq)
-
-    mean_activity = avgdaily.rolling(period).sum().shift(-n_epochs+1)
-
-    if lowest:
-        t_start = mean_activity.idxmin()
-    else:
-        t_start = mean_activity.idxmax()
-
-    lmx = mean_activity[t_start]/n_epochs
-    return t_start, lmx
-
-
-def _average_daily_activity(data: pd.Series, cyclic=False):
-    """Calculate the average daily activity distribution"""
-
-    avgdaily = data.groupby([
-        data.index.hour,
-        data.index.minute,
-        data.index.second
-    ]).mean()
-
-    if cyclic:
-        avgdaily = pd.concat([avgdaily, avgdaily])
-        avgdaily.index = pd.timedelta_range(
-            start='0 day',
-            end='2 days',
-            freq=data.index.freq,
-            closed='left'
-        )
-    else:
-        avgdaily.index = pd.timedelta_range(
-            start='0 day',
-            end='1 day',
-            freq=data.index.freq,
-            closed='left'
-        )
-
-    return avgdaily
