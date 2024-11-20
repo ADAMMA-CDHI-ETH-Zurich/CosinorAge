@@ -1,8 +1,7 @@
 import pandas as pd
 import numpy as np
 
-
-def apply_sleep_wake_predictions(df):
+def apply_sleep_wake_predictions(df: pd.DataFrame, mode: str="ggir") -> pd.DataFrame:
     """
     Apply sleep-wake prediction to a DataFrame with ENMO values.
 
@@ -16,12 +15,141 @@ def apply_sleep_wake_predictions(df):
     if "ENMO" not in df.columns:
         raise ValueError(f"Column ENMO not found in the DataFrame.")
     
-    # Run sleep-wake predictions using ColeKripke
-    ck = ColeKripke(df["ENMO"])  # Assuming ColeKripke class is implemented
-    df["sleep_predictions"] = ck.predict()  # Add predictions to the DataFrame
-    
-    return df
+    df_ = df.copy()
 
+    if mode == "sleeppy":
+        # Run sleep-wake predictions using ColeKripke
+        ck = ColeKripke(df_["ENMO"])  # Assuming ColeKripke class is implemented
+        df_["sleep_predictions"] = ck.predict()  # Add predictions to the DataFrame
+    elif mode == "ggir":
+        df_["sleep_predictions"] = enmo_sleep_wake_windows(df_)
+    else:
+        raise ValueError(f"Mode {mode} not supported.")
+    
+    return df_["sleep_predictions"]
+
+def waso(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate WASO (Wake After Sleep Onset) for a 24-hour cycle (12 PM to 12 PM).
+
+    Parameters:
+    df (pd.DataFrame): DataFrame with timestamp as index and sleep-wake predictions.
+
+    Returns:
+    pd.DataFrame: DataFrame with WASO values for each 24-hour cycle.
+    """
+
+    # Ensure the index is in datetime format
+    df.index = pd.to_datetime(df.index)
+    
+    # Assign each record to a 24-hour cycle starting at 12 PM
+    df['day'] = df.index.date  # Extract date
+    df['cycle'] = df.index + pd.Timedelta(hours=12)  # Shift start of cycle to 12 PM
+    df['cycle'] = df['cycle'].dt.date  # Extract shifted cycle date
+
+    waso_results = []
+
+    # Group by 24-hour cycle
+    for cycle_date, group in df.groupby('cycle'):
+        # Sort by timestamp within the group
+        group = group.sort_index()
+        
+        # Identify sleep onset (first transition from wake to sleep)
+        try:
+            first_sleep_idx = group[group["sleep_predictions"] == 0].index[0]  # First occurrence of sleep
+        except IndexError:
+            # No sleep detected in this cycle
+            waso_results.append({"cycle": cycle_date, "waso_minutes": 0})
+            continue
+        
+        # Calculate WASO: sum wake states (1) after first sleep onset
+        waso = group.loc[first_sleep_idx:, "sleep_predictions"].sum()
+        time_interval_minutes = (group.index[1] - group.index[0]).seconds / 60.0
+        
+        waso_results.append({
+            "cycle": cycle_date,
+            "waso_minutes": float(waso * time_interval_minutes)
+        })
+    
+    # delete last row
+    waso_results = waso_results[:-1]
+
+    # set first and last row to nan
+    waso_results[0]["waso_minutes"] = np.nan
+    waso_results[-1]["waso_minutes"] = np.nan
+    
+    return pd.DataFrame(waso_results).set_index("cycle")["waso_minutes"]
+
+def tst(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate total sleep time for a 24-hour cycle (12 PM to 12 PM).
+    """
+    df.index = pd.to_datetime(df.index)
+    df['day'] = df.index.date  # Extract date
+    df['cycle'] = df.index + pd.Timedelta(hours=12)  # Shift start of cycle to 12 PM
+    df['cycle'] = df['cycle'].dt.date  # Extract shifted cycle date
+
+    sleep_results = []
+
+    for cycle_date, group in df.groupby('cycle'):
+        # Sort by timestamp within the group
+        group = group.sort_index()
+
+        # Calculate total sleep time: sum sleep states (0)
+        total_sleep = group[group["sleep_predictions"] == 0].shape[0]
+        sleep_results.append({
+            "cycle": cycle_date,
+            "total_sleep_minutes": total_sleep
+        })
+    
+    # delete last row
+    sleep_results = sleep_results[:-1]
+
+    # set first and last row to nan
+    sleep_results[0]["total_sleep_minutes"] = np.nan
+    sleep_results[-1]["total_sleep_minutes"] = np.nan
+    
+    return pd.DataFrame(sleep_results).set_index("cycle")["total_sleep_minutes"]
+
+def percent_time_asleep(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate percent time asleep for a 24-hour cycle (12 PM to 12 PM).
+    """
+    df.index = pd.to_datetime(df.index)
+    df['day'] = df.index.date  # Extract date
+    df['cycle'] = df.index + pd.Timedelta(hours=12)  # Shift start of cycle to 12 PM
+    df['cycle'] = df['cycle'].dt.date  # Extract shifted cycle date
+
+    sleep_results = []
+
+    for cycle_date, group in df.groupby('cycle'):
+        # Sort by timestamp within the group
+        group = group.sort_index()
+
+        # Calculate percent time asleep: sum sleep states (0) / total states
+        percent_time_asleep = group[group["sleep_predictions"] == 0].shape[0] / group.shape[0]
+        sleep_results.append({
+            "cycle": cycle_date,
+            "percent_time_asleep": percent_time_asleep
+        })
+    
+    # delete last row
+    sleep_results = sleep_results[:-1]
+
+    # set first and last row to nan
+    sleep_results[0]["percent_time_asleep"] = np.nan
+    sleep_results[-1]["percent_time_asleep"] = np.nan
+    
+    return pd.DataFrame(sleep_results).set_index("cycle")["percent_time_asleep"]
+
+def sleep_onset_latency(df: pd.DataFrame) -> pd.DataFrame:
+    pass
+
+def sleep_efficiency(df: pd.DataFrame) -> pd.DataFrame:
+    pass
+
+def sleep_regularity(df: pd.DataFrame) -> pd.DataFrame:
+    pass
 
 class ColeKripke:
     """
@@ -38,7 +166,7 @@ class ColeKripke:
         self.activity_index = activity_index
         self.predictions = None
 
-    def predict(self, sf:float=5.5):
+    def predict(self, sf:float=100):
         """
         Runs the prediction of sleep wake states based on activity index data.
 
@@ -58,7 +186,7 @@ class ColeKripke:
         scores[scores < 0.5] = 0
 
         # rescore the original predictions
-        for i in range(5):
+        for i in range(3):
             self.rescore(scores)
         self.predictions = scores
         return self.predictions
@@ -107,3 +235,54 @@ class ColeKripke:
                         rescored[start_ind:t] = 1.0
                 sleep_bin = 0
         self.predictions = rescored
+
+
+def enmo_sleep_wake_windows(df: pd.DataFrame, threshold: float=0.001, epoch_size: int=60, min_sleep_duration: int=30) -> pd.DataFrame:
+    """
+    Classifies a time series into sleep and wake periods based on ENMO values.
+
+    Parameters:
+    - ts (pd.DataFrame): Time series DataFrame with a 'time' column.
+    - enmo (pd.Series): ENMO values corresponding to the time series.
+    - threshold (float): ENMO threshold to classify sleep (default: 10 mg).
+    - epoch_size (int): Duration of each epoch in seconds (default: 60 seconds).
+    - min_sleep_duration (int): Minimum duration for a valid sleep period in minutes.
+
+    Returns:
+    - pd.DataFrame: Updated time series with a 'diur' column (1: sleep, 0: wake).
+    """
+
+    if "ENMO" not in df.columns:
+        raise ValueError(f"Column ENMO not found in the DataFrame.")
+
+    df_ = df.copy()
+    df_['sleep_predictions'] = 0  # Initialize diurnal classification (0: wake)
+
+    # Identify potential sleep epochs (ENMO < threshold)
+    is_sleep = df_["ENMO"] < threshold
+
+    # Detect consecutive sleep periods using run-length encoding (RLE)
+    sleep_periods = []
+    start_idx = None
+    for i, sleep in enumerate(is_sleep):
+        if sleep:
+            if start_idx is None:
+                start_idx = i  # Start of a sleep period
+        else:
+            if start_idx is not None:
+                duration = (i - start_idx) * (epoch_size / 60)  # Convert to minutes
+                if duration >= min_sleep_duration:
+                    sleep_periods.append((start_idx, i - 1))  # Save valid sleep period
+                start_idx = None
+
+    # Handle final sleep period if it extends to the end
+    if start_idx is not None:
+        duration = (len(is_sleep) - start_idx) * (epoch_size / 60)
+        if duration >= min_sleep_duration:
+            sleep_periods.append((start_idx, len(is_sleep) - 1))
+
+    # Mark sleep periods in the 'diur' column
+    for start, end in sleep_periods:
+        df_.iloc[start:end, df_.columns.get_loc('sleep_predictions')] = 1
+
+    return 1 - df_["sleep_predictions"]
