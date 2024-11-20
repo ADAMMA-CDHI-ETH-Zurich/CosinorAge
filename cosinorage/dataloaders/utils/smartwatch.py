@@ -78,8 +78,7 @@ def read_smartwatch_data(directory_path: str) -> Tuple[pd.DataFrame, Optional[fl
     return data, acc_freq
 
 
-def preprocess_smartwatch_data(df: pd.DataFrame, sf: float, meta_dict: dict, epoch_size: int = 10, max_iter: int = 1000,
-                               tol: float = 1e-10, verbose: bool = False) -> pd.DataFrame:
+def preprocess_smartwatch_data(df: pd.DataFrame, sf: float, meta_dict: dict, preprocess_args: dict = {}, verbose: bool = False) -> pd.DataFrame:
     """
     Preprocess smartwatch data by performing auto-calibration, noise removal, and wear detection.
 
@@ -98,11 +97,24 @@ def preprocess_smartwatch_data(df: pd.DataFrame, sf: float, meta_dict: dict, epo
 
     _df = df.copy()
 
+    epoch_size = preprocess_args.get('autocalib_epoch_size', 10)
+    max_iter = preprocess_args.get('autocalib_max_iter', 1000)
+    tol = preprocess_args.get('autocalib_tol', 1e-10)
+
     _df = auto_calibrate(_df, sf, meta_dict, epoch_size, max_iter, tol, verbose=verbose)
     if verbose:
         print('Calibration done')
 
-    _df = remove_noise(_df, sf)
+    filter_type = preprocess_args.get('filter_type', 'highpass')
+    filter_cutoff = preprocess_args.get('filter_cutoff', 15)
+
+    if (filter_type == 'bandpass' or filter_type == 'bandstop') and (type(filter_cutoff) != list or len(filter_cutoff) != 2):
+        raise ValueError("Bandpass and bandstop filters require a list of two cutoff frequencies.")
+
+    if (filter_type == 'highpass' or filter_type == 'lowpass') and type(filter_cutoff) not in [float, int]:
+        raise ValueError("Highpass and lowpass filters require a single cutoff frequency.")
+
+    _df = remove_noise(_df, sf, filter_type, filter_cutoff)
     if verbose:
         print('Noise removal done')
 
@@ -282,7 +294,7 @@ def auto_calibrate(df: pd.DataFrame, sf: float, meta_dict: dict, epoch_size: int
         return df
 
 
-def remove_noise(df: pd.DataFrame, sf: float) -> pd.DataFrame:
+def remove_noise(df: pd.DataFrame, sf: float, filter_type: str, filter_cutoff: float) -> pd.DataFrame:
     """
     Remove noise from accelerometer data using a Butterworth low-pass filter.
 
@@ -313,10 +325,10 @@ def remove_noise(df: pd.DataFrame, sf: float) -> pd.DataFrame:
 
     _df = df.copy()
 
-    cutoff = 5
-    _df['X'] = butter_lowpass_filter(_df['X'], cutoff, sf, btype='highpass')
-    _df['Y'] = butter_lowpass_filter(_df['Y'], cutoff, sf, btype='highpass')
-    _df['Z'] = butter_lowpass_filter(_df['Z'], cutoff, sf, btype='highpass')
+    cutoff = filter_cutoff
+    _df['X'] = butter_lowpass_filter(_df['X'], cutoff, sf, btype=filter_type)
+    _df['Y'] = butter_lowpass_filter(_df['Y'], cutoff, sf, btype=filter_type)
+    _df['Z'] = butter_lowpass_filter(_df['Z'], cutoff, sf, btype=filter_type)
 
     return _df
 

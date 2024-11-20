@@ -4,6 +4,7 @@ import seaborn as sns
 import time
 import os
 from tqdm import tqdm
+from scipy.signal import welch
 
 from .utils.calc_enmo import calculate_enmo, calculate_minute_level_enmo
 from .utils.filtering import filter_incomplete_days
@@ -50,7 +51,7 @@ class DataLoader:
         enmo_df (pd.DataFrame): A DataFrame storing minute-level ENMO values.
     """
 
-    def __init__(self, datasource: str, input_path: str, preprocess: bool = True):
+    def __init__(self, datasource: str, input_path: str, preprocess: bool = True, preprocess_args: dict = {}):
         """
         Initializes an empty DataLoader instance with an empty DataFrame
         for storing minute-level ENMO values.
@@ -80,7 +81,7 @@ class DataLoader:
             raise ValueError("The datasource should be either 'smartwatch', 'nhanes' or 'uk-biobank'")
 
         self.preprocess = preprocess
-
+        self.preprocess_args = preprocess_args
         if datasource in ['nhanes', 'smartwatch']:
             self.acc_df = None
             self.acc_freq = None
@@ -88,7 +89,8 @@ class DataLoader:
         self.meta_dic = {}
         self.enmo_df = None
 
-    def load_data(self, verbose: bool = False, autocalib_max_iter: int = 1000, autocalib_tol: float = 1e-10):
+    @clock
+    def load_data(self, verbose: bool = False):
         """
         Load data into the DataLoader instance.
 
@@ -120,7 +122,7 @@ class DataLoader:
 
             # conduct preprocessing if required
             if self.preprocess:
-                self.acc_df[['X', 'Y', 'Z', 'wear']] = preprocess_smartwatch_data(self.acc_df[['X', 'Y', 'Z']], self.acc_freq, self.meta_dic, max_iter=autocalib_max_iter, tol=autocalib_tol, verbose=verbose)
+                self.acc_df[['X', 'Y', 'Z', 'wear']] = preprocess_smartwatch_data(self.acc_df[['X', 'Y', 'Z']], self.acc_freq, self.meta_dic, preprocess_args=self.preprocess_args, verbose=verbose)
                 if verbose:
                     print(f"Preprocessed accelerometer data")
 
@@ -242,4 +244,12 @@ class DataLoader:
                     color = 'red'
                     plt.axvspan(start_time, end_time, color=color, alpha=0.3)
 
+        plt.show()
+
+    def plot_orig_enmo_freq(self):
+        # convert to frequency domain
+        f, Pxx = welch(self.acc_df['ENMO'], fs=80, nperseg=1024)
+
+        plt.figure(figsize=(20, 5))
+        plt.plot(f, Pxx)
         plt.show()
