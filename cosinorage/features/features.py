@@ -4,6 +4,7 @@ from ..dataloaders import DataLoader
 from .utils.nonparam_analysis import *
 from .utils.physical_activity_metrics import *
 from .utils.sleep_metrics import *
+from .utils.cosinor_analysis import *
 
 
 # TODO: Implement the WearableFeatures class
@@ -15,7 +16,14 @@ class WearableFeatures:
 
         self.feature_df = pd.DataFrame(index=pd.unique(self.enmo.index.date))
         
-        self.feat_dict = {}
+        self.feature_dict = {}
+
+    def get_cosinor_features(self):
+        if "cosinor_features" not in self.feature_dict.keys():
+            res = act_cosinor(self.enmo)
+            self.feature_dict["cosinor_features"] = res["params"]
+            self.feature_dict["cosinor_ts"] = res["cosinor_ts"]
+        return self.feature_dict["cosinor_features"], self.feature_dict["cosinor_ts"]
 
     def get_IV(self):
         if "IV" not in self.feature_df.columns:
