@@ -3,6 +3,7 @@ import pandas as pd
 from ..dataloaders import DataLoader
 from .utils.nonparam_analysis import *
 from .utils.physical_activity_metrics import *
+from .utils.sleep_metrics import *
 
 
 # TODO: Implement the WearableFeatures class
@@ -82,6 +83,10 @@ class WearableFeatures:
             self.feature_df["LIPA"] = res["LIPA"]
             self.feature_df["MVPA"] = res["MVPA"]
         return pd.DataFrame(self.feature_df["MVPA"])
+
+    def get_sleep_predictions(self):
+        res = apply_sleep_wake_predictions(self.enmo)
+        return pd.DataFrame(res)
 
     def get_TST(self):
         return self.feature_df["TST"]
