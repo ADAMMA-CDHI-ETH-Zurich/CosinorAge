@@ -1,4 +1,5 @@
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from ..dataloaders import DataLoader
 from .utils.nonparam_analysis import *
@@ -131,3 +132,11 @@ class WearableFeatures:
 
     def get_enmo_data(self):
         return self.enmo
+
+    def plot_sleep_predictions(self):
+        plt.figure(figsize=(20, 0.5))
+        plt.plot(self.enmo["sleep_predictions"] == 0, 'r.')
+        plt.plot(self.enmo["sleep_predictions"] == 1, 'g.')
+        plt.ylim(1, 1)
+        plt.yticks([])
+        plt.show()
