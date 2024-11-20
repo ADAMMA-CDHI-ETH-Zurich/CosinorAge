@@ -203,10 +203,8 @@ class DataLoader:
             wear (bool): Whether to add color bands for wear and non-wear periods (default is True).
         """
         #_data = self.acc_df.resample('5min').mean().reset_index(inplace=False)
-        if wear:
-            _data = self.acc_df.resample(f'{resample}').mean().reset_index(inplace=False)
-        else:
-            _data = self.acc_df.reset_index(inplace=False)
+        _data = self.acc_df.resample(f'{resample}').mean().reset_index(inplace=False)
+        
 
         plt.figure(figsize=(12, 6))
         plt.plot(_data['TIMESTAMP'], _data['ENMO'], label='ENMO', color='black')

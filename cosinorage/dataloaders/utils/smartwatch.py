@@ -313,10 +313,10 @@ def remove_noise(df: pd.DataFrame, sf: float) -> pd.DataFrame:
 
     _df = df.copy()
 
-    cutoff = [0.5, 20]
-    _df['X'] = butter_lowpass_filter(_df['X'], cutoff, sf, btype='bandpass')
-    _df['Y'] = butter_lowpass_filter(_df['Y'], cutoff, sf, btype='bandpass')
-    _df['Z'] = butter_lowpass_filter(_df['Z'], cutoff, sf, btype='bandpass')
+    cutoff = 5
+    _df['X'] = butter_lowpass_filter(_df['X'], cutoff, sf, btype='highpass')
+    _df['Y'] = butter_lowpass_filter(_df['Y'], cutoff, sf, btype='highpass')
+    _df['Z'] = butter_lowpass_filter(_df['Z'], cutoff, sf, btype='highpass')
 
     return _df
 
