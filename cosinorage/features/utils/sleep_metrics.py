@@ -38,19 +38,20 @@ def waso(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
     pd.DataFrame: DataFrame with WASO values for each 24-hour cycle.
     """
+    df_ = df.copy()
 
     # Ensure the index is in datetime format
-    df.index = pd.to_datetime(df.index)
+    df_.index = pd.to_datetime(df_.index)
     
     # Assign each record to a 24-hour cycle starting at 12 PM
-    df['day'] = df.index.date  # Extract date
-    df['cycle'] = df.index + pd.Timedelta(hours=12)  # Shift start of cycle to 12 PM
-    df['cycle'] = df['cycle'].dt.date  # Extract shifted cycle date
+    df_['day'] = df_.index.date  # Extract date
+    df_['cycle'] = df_.index + pd.Timedelta(hours=12)  # Shift start of cycle to 12 PM
+    df_['cycle'] = df_['cycle'].dt.date  # Extract shifted cycle date
 
     waso_results = []
 
     # Group by 24-hour cycle
-    for cycle_date, group in df.groupby('cycle'):
+    for cycle_date, group in df_.groupby('cycle'):
         # Sort by timestamp within the group
         group = group.sort_index()
         
@@ -75,7 +76,6 @@ def waso(df: pd.DataFrame) -> pd.DataFrame:
     waso_results = waso_results[:-1]
 
     # set first and last row to nan
-    waso_results[0]["waso_minutes"] = np.nan
     waso_results[-1]["waso_minutes"] = np.nan
     
     return pd.DataFrame(waso_results).set_index("cycle")["waso_minutes"]
@@ -84,14 +84,17 @@ def tst(df: pd.DataFrame) -> pd.DataFrame:
     """
     Calculate total sleep time for a 24-hour cycle (12 PM to 12 PM).
     """
-    df.index = pd.to_datetime(df.index)
-    df['day'] = df.index.date  # Extract date
-    df['cycle'] = df.index + pd.Timedelta(hours=12)  # Shift start of cycle to 12 PM
-    df['cycle'] = df['cycle'].dt.date  # Extract shifted cycle date
+
+    df_ = df.copy()
+
+    df_.index = pd.to_datetime(df_.index)
+    df_['day'] = df_.index.date  # Extract date
+    df_['cycle'] = df_.index + pd.Timedelta(hours=12)  # Shift start of cycle to 12 PM
+    df_['cycle'] = df_['cycle'].dt.date  # Extract shifted cycle date
 
     sleep_results = []
 
-    for cycle_date, group in df.groupby('cycle'):
+    for cycle_date, group in df_.groupby('cycle'):
         # Sort by timestamp within the group
         group = group.sort_index()
 
@@ -106,23 +109,23 @@ def tst(df: pd.DataFrame) -> pd.DataFrame:
     sleep_results = sleep_results[:-1]
 
     # set first and last row to nan
-    sleep_results[0]["total_sleep_minutes"] = np.nan
     sleep_results[-1]["total_sleep_minutes"] = np.nan
     
     return pd.DataFrame(sleep_results).set_index("cycle")["total_sleep_minutes"]
 
-def percent_time_asleep(df: pd.DataFrame) -> pd.DataFrame:
+def PTA(df: pd.DataFrame) -> pd.DataFrame:
     """
     Calculate percent time asleep for a 24-hour cycle (12 PM to 12 PM).
     """
-    df.index = pd.to_datetime(df.index)
-    df['day'] = df.index.date  # Extract date
-    df['cycle'] = df.index + pd.Timedelta(hours=12)  # Shift start of cycle to 12 PM
-    df['cycle'] = df['cycle'].dt.date  # Extract shifted cycle date
+    df_ = df.copy()
+    df_.index = pd.to_datetime(df_.index)
+    df_['day'] = df_.index.date  # Extract date
+    df_['cycle'] = df_.index + pd.Timedelta(hours=12)  # Shift start of cycle to 12 PM
+    df_['cycle'] = df_['cycle'].dt.date  # Extract shifted cycle date
 
     sleep_results = []
 
-    for cycle_date, group in df.groupby('cycle'):
+    for cycle_date, group in df_.groupby('cycle'):
         # Sort by timestamp within the group
         group = group.sort_index()
 
@@ -137,19 +140,47 @@ def percent_time_asleep(df: pd.DataFrame) -> pd.DataFrame:
     sleep_results = sleep_results[:-1]
 
     # set first and last row to nan
-    sleep_results[0]["percent_time_asleep"] = np.nan
     sleep_results[-1]["percent_time_asleep"] = np.nan
     
     return pd.DataFrame(sleep_results).set_index("cycle")["percent_time_asleep"]
 
-def sleep_onset_latency(df: pd.DataFrame) -> pd.DataFrame:
-    pass
+def SRI(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate sleep regularity for a 24-hour cycle (12 PM to 12 PM).
+    """
 
-def sleep_efficiency(df: pd.DataFrame) -> pd.DataFrame:
-    pass
+    sleep_states = df["sleep_predictions"].values
+    epochs_per_day = 24 * 60 
+    epochs_per_window = epochs_per_day * 2
 
-def sleep_regularity(df: pd.DataFrame) -> pd.DataFrame:
-    pass
+    if len(sleep_states) < 2 * epochs_per_day:
+        raise ValueError("Insufficient data. At least two complete days are required.")
+    # Remove extra epochs to ensure an integer number of days
+
+    total_epochs = len(sleep_states)
+    extra_epochs = total_epochs % epochs_per_day
+    if extra_epochs > 0:
+        sleep_states = sleep_states[:-extra_epochs]
+
+    sri_results = []
+    for start in range(epochs_per_day, len(sleep_states), epochs_per_day):
+        # Extract current and previous day's data
+        prev_day = sleep_states[start - epochs_per_day : start]
+        curr_day = sleep_states[start : start + epochs_per_day]
+
+        # Compare sleep states between the two days
+        concordance = prev_day == curr_day
+        concordance_rate = np.mean(concordance)
+
+        # Calculate SRI
+        sri = float(200 * concordance_rate - 100)
+        sri_results.append(sri)
+
+    # Build the output DataFrame
+    dates = df.index[epochs_per_day::epochs_per_day]  # Start at second day's date
+    sri_df = pd.DataFrame({"date": dates, "SRI": sri_results}).set_index("date") # NaN for the first day
+
+    return sri_df
 
 class ColeKripke:
     """
@@ -235,7 +266,6 @@ class ColeKripke:
                         rescored[start_ind:t] = 1.0
                 sleep_bin = 0
         self.predictions = rescored
-
 
 def enmo_sleep_wake_windows(df: pd.DataFrame, threshold: float=0.001, epoch_size: int=60, min_sleep_duration: int=30) -> pd.DataFrame:
     """
