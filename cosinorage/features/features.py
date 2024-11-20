@@ -85,20 +85,36 @@ class WearableFeatures:
         return pd.DataFrame(self.feature_df["MVPA"])
 
     def get_sleep_predictions(self):
-        res = apply_sleep_wake_predictions(self.enmo)
-        return pd.DataFrame(res)
+        if "sleep_predictions" not in self.enmo.columns:
+            self.enmo["sleep_predictions"] = apply_sleep_wake_predictions(self.enmo)
+        return pd.DataFrame(self.enmo["sleep_predictions"])
 
     def get_TST(self):
-        return self.feature_df["TST"]
+        if "sleep_predictions" not in self.enmo.columns:
+            self.enmo["sleep_predictions"] = apply_sleep_wake_predictions(self.enmo)
+        if "TST" not in self.feature_df.columns:
+            self.feature_df["TST"] = tst(self.enmo)    
+        return pd.DataFrame(self.feature_df["TST"])
 
     def get_WASO(self):
-        return self.feature_df["WASO"]
+        if "sleep_predictions" not in self.enmo.columns:
+            self.enmo["sleep_predictions"] = apply_sleep_wake_predictions(self.enmo)
+        if "WASO" not in self.feature_df.columns:
+            self.feature_df["WASO"] = waso(self.enmo)
+        return pd.DataFrame(self.feature_df["WASO"])
+
+    def get_percent_time_asleep(self):
+        if "sleep_predictions" not in self.enmo.columns:
+            self.enmo["sleep_predictions"] = apply_sleep_wake_predictions(self.enmo)
+        if "percent_time_asleep" not in self.feature_df.columns:
+            self.feature_df["percent_time_asleep"] = percent_time_asleep(self.enmo)
+        return pd.DataFrame(self.feature_df["percent_time_asleep"])
 
     def get_sleep_regularity(self):
-        return self.feature_df["sleep_regularity"]
+        pass
 
     def get_sleep_efficiency(self):
-        return self.feature_df["sleep_efficiency"]
+        pass
 
     def get_all(self):
         """Returns the entire feature DataFrame."""
