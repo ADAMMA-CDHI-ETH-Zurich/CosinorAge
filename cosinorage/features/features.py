@@ -11,7 +11,7 @@ class WearableFeatures:
 
     def __init__(self, loader: DataLoader):
 
-        self.enmo = loader.get_enmo_data()
+        self.enmo = loader.get_enmo_data().copy()
 
         self.feature_df = pd.DataFrame(index=pd.unique(self.enmo.index.date))
         
@@ -103,19 +103,23 @@ class WearableFeatures:
             self.feature_df["WASO"] = waso(self.enmo)
         return pd.DataFrame(self.feature_df["WASO"])
 
-    def get_percent_time_asleep(self):
+    def get_PTA(self):
         if "sleep_predictions" not in self.enmo.columns:
             self.enmo["sleep_predictions"] = apply_sleep_wake_predictions(self.enmo)
-        if "percent_time_asleep" not in self.feature_df.columns:
-            self.feature_df["percent_time_asleep"] = percent_time_asleep(self.enmo)
-        return pd.DataFrame(self.feature_df["percent_time_asleep"])
+        if "PTA" not in self.feature_df.columns:
+            self.feature_df["PTA"] = PTA(self.enmo)
+        return pd.DataFrame(self.feature_df["PTA"])
 
-    def get_sleep_regularity(self):
-        pass
-
-    def get_sleep_efficiency(self):
-        pass
+    def get_SRI(self):
+        if "sleep_predictions" not in self.enmo.columns:
+            self.enmo["sleep_predictions"] = apply_sleep_wake_predictions(self.enmo)
+        if "SRI" not in self.feature_df.columns:
+            self.feature_df["SRI"] = SRI(self.enmo)
+        return pd.DataFrame(self.feature_df["SRI"])
 
     def get_all(self):
         """Returns the entire feature DataFrame."""
         return self.feature_df
+
+    def get_enmo_data(self):
+        return self.enmo
