@@ -122,6 +122,7 @@ class DataLoader:
 
             # conduct preprocessing if required
             if self.preprocess:
+                self.acc_df[['X_raw', 'Y_raw', 'Z_raw']] = self.acc_df[['X', 'Y', 'Z']]
                 self.acc_df[['X', 'Y', 'Z', 'wear']] = preprocess_smartwatch_data(self.acc_df[['X', 'Y', 'Z']], self.acc_freq, self.meta_dic, preprocess_args=self.preprocess_args, verbose=verbose)
                 if verbose:
                     print(f"Preprocessed accelerometer data")
