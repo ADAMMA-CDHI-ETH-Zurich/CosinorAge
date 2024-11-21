@@ -109,10 +109,10 @@ def preprocess_smartwatch_data(df: pd.DataFrame, sf: float, meta_dict: dict, pre
     filter_cutoff = preprocess_args.get('filter_cutoff', 15)
 
     if (filter_type == 'bandpass' or filter_type == 'bandstop') and (type(filter_cutoff) != list or len(filter_cutoff) != 2):
-        raise ValueError("Bandpass and bandstop filters require a list of two cutoff frequencies.")
+        raise ValueError('Bandpass and bandstop filters require a list of two cutoff frequencies.')
 
     if (filter_type == 'highpass' or filter_type == 'lowpass') and type(filter_cutoff) not in [float, int]:
-        raise ValueError("Highpass and lowpass filters require a single cutoff frequency.")
+        raise ValueError('Highpass and lowpass filters require a single cutoff frequency.')
 
     _df = remove_noise(_df, sf, filter_type, filter_cutoff)
     if verbose:
