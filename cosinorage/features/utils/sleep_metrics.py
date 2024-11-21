@@ -45,13 +45,11 @@ def waso(df: pd.DataFrame) -> pd.DataFrame:
     
     # Assign each record to a 24-hour cycle starting at 12 PM
     df_['day'] = df_.index.date  # Extract date
-    df_['cycle'] = df_.index + pd.Timedelta(hours=12)  # Shift start of cycle to 12 PM
-    df_['cycle'] = df_['cycle'].dt.date  # Extract shifted cycle date
 
     waso_results = []
 
     # Group by 24-hour cycle
-    for cycle_date, group in df_.groupby('cycle'):
+    for date, group in df_.groupby('day'):
         # Sort by timestamp within the group
         group = group.sort_index()
         
@@ -60,7 +58,7 @@ def waso(df: pd.DataFrame) -> pd.DataFrame:
             first_sleep_idx = group[group["sleep_predictions"] == 0].index[0]  # First occurrence of sleep
         except IndexError:
             # No sleep detected in this cycle
-            waso_results.append({"cycle": cycle_date, "waso_minutes": 0})
+            waso_results.append({"day": date, "waso_minutes": 0})
             continue
         
         # Calculate WASO: sum wake states (1) after first sleep onset
@@ -68,17 +66,11 @@ def waso(df: pd.DataFrame) -> pd.DataFrame:
         time_interval_minutes = (group.index[1] - group.index[0]).seconds / 60.0
         
         waso_results.append({
-            "cycle": cycle_date,
+            "day": date,
             "waso_minutes": float(waso * time_interval_minutes)
         })
     
-    # delete last row
-    waso_results = waso_results[:-1]
-
-    # set first and last row to nan
-    waso_results[-1]["waso_minutes"] = np.nan
-    
-    return pd.DataFrame(waso_results).set_index("cycle")["waso_minutes"]
+    return pd.DataFrame(waso_results).set_index("day")["waso_minutes"]
 
 def tst(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -89,62 +81,46 @@ def tst(df: pd.DataFrame) -> pd.DataFrame:
 
     df_.index = pd.to_datetime(df_.index)
     df_['day'] = df_.index.date  # Extract date
-    df_['cycle'] = df_.index + pd.Timedelta(hours=12)  # Shift start of cycle to 12 PM
-    df_['cycle'] = df_['cycle'].dt.date  # Extract shifted cycle date
 
     sleep_results = []
 
-    for cycle_date, group in df_.groupby('cycle'):
+    for date, group in df_.groupby('day'):
         # Sort by timestamp within the group
         group = group.sort_index()
 
         # Calculate total sleep time: sum sleep states (0)
         total_sleep = group[group["sleep_predictions"] == 0].shape[0]
         sleep_results.append({
-            "cycle": cycle_date,
+            "day": date,
             "total_sleep_minutes": total_sleep
         })
     
-    # delete last row
-    sleep_results = sleep_results[:-1]
+    return pd.DataFrame(sleep_results).set_index("day")["total_sleep_minutes"]
 
-    # set first and last row to nan
-    sleep_results[-1]["total_sleep_minutes"] = np.nan
-    
-    return pd.DataFrame(sleep_results).set_index("cycle")["total_sleep_minutes"]
-
-def PTA(df: pd.DataFrame) -> pd.DataFrame:
+def pta(df: pd.DataFrame) -> pd.DataFrame:
     """
     Calculate percent time asleep for a 24-hour cycle (12 PM to 12 PM).
     """
     df_ = df.copy()
     df_.index = pd.to_datetime(df_.index)
     df_['day'] = df_.index.date  # Extract date
-    df_['cycle'] = df_.index + pd.Timedelta(hours=12)  # Shift start of cycle to 12 PM
-    df_['cycle'] = df_['cycle'].dt.date  # Extract shifted cycle date
 
     sleep_results = []
 
-    for cycle_date, group in df_.groupby('cycle'):
+    for date, group in df_.groupby('day'):
         # Sort by timestamp within the group
         group = group.sort_index()
 
         # Calculate percent time asleep: sum sleep states (0) / total states
         percent_time_asleep = group[group["sleep_predictions"] == 0].shape[0] / group.shape[0]
         sleep_results.append({
-            "cycle": cycle_date,
+            "day": date,
             "percent_time_asleep": percent_time_asleep
         })
     
-    # delete last row
-    sleep_results = sleep_results[:-1]
+    return pd.DataFrame(sleep_results).set_index("day")["percent_time_asleep"]
 
-    # set first and last row to nan
-    sleep_results[-1]["percent_time_asleep"] = np.nan
-    
-    return pd.DataFrame(sleep_results).set_index("cycle")["percent_time_asleep"]
-
-def SRI(df: pd.DataFrame) -> pd.DataFrame:
+def sri(df: pd.DataFrame) -> pd.DataFrame:
     """
     Calculate sleep regularity for a 24-hour cycle (12 PM to 12 PM).
     """

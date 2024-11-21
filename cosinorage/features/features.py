@@ -21,10 +21,12 @@ class WearableFeatures:
 
     def get_cosinor_features(self):
         if "cosinor_features" not in self.feature_dict.keys():
-            res = act_cosinor(self.enmo)
-            self.feature_dict["cosinor_features"] = res["params"]
-            self.feature_dict["cosinor_ts"] = res["cosinor_ts"]
-        return self.feature_dict["cosinor_features"], self.feature_dict["cosinor_ts"]
+            res = cosinor(self.enmo)
+            self.feature_df["MESOR"] = res["MESOR"]
+            self.feature_df["amplitude"] = res["amplitude"] 
+            self.feature_df["acrophase"] = res["acrophase"]
+            self.feature_df["acrophase_time"] = res["acrophase_time"]
+        return pd.DataFrame(self.feature_df[["MESOR", "amplitude", "acrophase", "acrophase_time"]])
 
     def get_IV(self):
         if "IV" not in self.feature_df.columns:
@@ -116,14 +118,14 @@ class WearableFeatures:
         if "sleep_predictions" not in self.enmo.columns:
             self.enmo["sleep_predictions"] = apply_sleep_wake_predictions(self.enmo)
         if "PTA" not in self.feature_df.columns:
-            self.feature_df["PTA"] = PTA(self.enmo)
+            self.feature_df["PTA"] = pta(self.enmo)
         return pd.DataFrame(self.feature_df["PTA"])
 
     def get_SRI(self):
         if "sleep_predictions" not in self.enmo.columns:
             self.enmo["sleep_predictions"] = apply_sleep_wake_predictions(self.enmo)
         if "SRI" not in self.feature_df.columns:
-            self.feature_df["SRI"] = SRI(self.enmo)
+            self.feature_df["SRI"] = sri(self.enmo)
         return pd.DataFrame(self.feature_df["SRI"])
 
     def get_all(self):
@@ -140,3 +142,15 @@ class WearableFeatures:
         plt.ylim(1, 1)
         plt.yticks([])
         plt.show()
+
+    def plot_cosinor(self):
+        minutes = np.arange(1, 1441)
+
+        # for each day, plot the ENMO and the cosinor fit
+        for date, group in self.enmo.groupby(self.enmo.index.date):
+            plt.figure(figsize=(20, 5))
+            plt.plot(minutes, group["ENMO"], 'r.')
+            # cosinor fit based on the parameters from cosinor()
+            plt.plot(minutes, self.feature_df.loc[date, "MESOR"] + self.feature_df.loc[date, "amplitude"] * np.cos((2 * np.pi * minutes)/1440 + self.feature_df.loc[date, "acrophase"]), 'b-')
+            plt.show()
+
