@@ -1,80 +1,75 @@
-import numpy as np
 import pandas as pd
+import numpy as np
 from statsmodels.formula.api import ols
 
-def act_cosinor(df, window=1, export_ts=True):
+def cosinor(df: pd.DataFrame) -> pd.DataFrame:
     """
-    A parametric approach to study circadian rhythmicity assuming cosinor shape.
+    A parametric approach to study circadian rhythmicity assuming cosinor shape, fitting a model for each day.
 
     Parameters:
     df : pandas.DataFrame
-        DataFrame with a time index and a column 'ENMO' containing minute-level activity data.
-        The 'time' column is expected to be a datetime-like object.
+        DataFrame with a Timestamp index and a column 'ENMO' containing minute-level activity data.
     window : int
         The window size of the data (e.g., window=1 means each epoch is 1 minute).
     export_ts : bool
-        Whether to export time series data.
+        Whether to export time series data for each day.
 
     Returns:
-    dict:
-        Contains MESOR, amplitude, acrophase, acrophase time (hours), number of days, and optionally the time series.
+    pandas.DataFrame:
+        DataFrame with columns MESOR, amplitude, acrophase, acrophase time for each day.
     """
     # Ensure the DataFrame contains the required columns
     if 'ENMO' not in df.columns or not pd.api.types.is_datetime64_any_dtype(df.index):
-        raise ValueError("The DataFrame must have a datetime-like index and an 'ENMO' column.")
+        raise ValueError("The DataFrame must have a Timestamp index and an 'ENMO' column.")
 
-    df_ = df.copy()
-
-    # Check that data length matches 1440-minute cycles
-    total_minutes = len(df_)
-    dim = 1440 // window
+    # Ensure the data length is consistent
+    total_minutes = len(df)
+    dim = 1440  # Number of data points in a day
     if total_minutes % dim != 0:
         raise ValueError("Data length is not a multiple of a day (1440 minutes or adjusted for the window size).")
 
-    n_days = total_minutes // dim
+    # Group data by day
+    df['date'] = df.index.date
+    grouped = df.groupby('date')
 
-    # Prepare time variable for modeling
-    time_minutes = np.arange(1, total_minutes + 1) / (60 / window)
-    df_['time'] = time_minutes % 24  # Time within the day (hours)
+    results = []
+    for date, group in grouped:
+        if len(group) != dim:
+            raise ValueError(f"Day {date} does not have the expected number of data points ({dim}).")
+        
+        # Prepare time variable for modeling
+        time_minutes = np.arange(1, len(group) + 1)
+        group['time'] = time_minutes  # Time within the day (hours)
+        
+        # Add cosine and sine components
+        group['cos'] = np.cos(2 * np.pi * group['time'] / 1440)
+        group['sin'] = np.sin(2 * np.pi * group['time'] / 1440)
+        
+        # Fit cosinor model
+        model = ols("ENMO ~ cos + sin", data=group).fit()
+        
+        # Extract parameters
+        mesor = model.params['Intercept']
+        beta_cos = model.params['cos']
+        beta_sin = model.params['sin']
+        amplitude = np.sqrt(beta_cos**2 + beta_sin**2)
+        acrophase = np.arctan2(-beta_sin, beta_cos) + np.pi
+        acrophase_time = acrophase/(2*np.pi)*1440
 
-    # Add cosine and sine components
-    df_['cos'] = np.cos(2 * np.pi * df_['time'] / 24)
-    df_['sin'] = np.sin(2 * np.pi * df_['time'] / 24)
+        # Adjust acrophase time to 0-24 hours
+        if acrophase_time < 0:
+            acrophase_time += 24
 
-    # Fit cosinor model
-    model = ols("ENMO ~ cos + sin", data=df_).fit()
+        # Append the day's results to the list
+        results.append({
+            "date": date,
+            "MESOR": float(mesor),
+            "amplitude": float(amplitude),
+            "acrophase": float(acrophase),
+            "acrophase_time": float(acrophase_time),
+        })
 
-    # Extract parameters
-    mesor = model.params['Intercept']
-    beta_cos = model.params['cos']
-    beta_sin = model.params['sin']
-    amplitude = np.sqrt(beta_cos**2 + beta_sin**2)
-    acrophase = np.arctan2(-beta_sin, beta_cos)
-    acrophase_time = (-acrophase * 24) / (2 * np.pi)
+    # Convert the results into a DataFrame
+    results_df = pd.DataFrame(results).set_index("date")
 
-    # Adjust acrophase time to 0-24 hours
-    if acrophase_time < 0:
-        acrophase_time += 24
-
-    if export_ts:
-        # Create a fitted time series
-        df_['fitted'] = model.fittedvalues
-        time_across_days = df_['time'].copy()
-        drops = np.where(np.diff(df_['time']) < 0)[0] + 1
-        for k in drops:
-            time_across_days.iloc[k:] += 24
-        df_['time_across_days'] = time_across_days
-        cosinor_ts = df_[['ENMO', 'fitted']]
-    else:
-        cosinor_ts = None
-
-    # Prepare output
-    params = {
-        "MESOR": float(mesor),
-        "amp": float(amplitude),
-        "acr": float(acrophase),
-        "acrotime": float(acrophase_time),
-        "ndays": n_days
-    }
-
-    return {"params": params, "cosinor_ts": cosinor_ts}
+    return results_df
