@@ -52,6 +52,40 @@ smartwatch_loader.save_data(output_file_path='../data/62164_ENMO.csv')
 
 ### Wearable Feature Computation
 
-### Biological Age Prediction
+The `WearableFeatures` object can be used to compute various features from the minute-level ENMO data.
+
+```python
+features = WearableFeatures(smartwatch_loader)
+features.run()
+```
 
 ### CosinorAge Computation
+
+```python
+cosinor_age = CosinorAge(features)
+cosinor_age.fit()
+cosinor_age.predict()
+```
+
+## Execute Tests
+
+Go to the root directory of the repository and execute the following command to run the tests:
+
+```bash
+pytest
+```
+
+## Deploy Package
+
+Build the package:
+```bash
+pip install build
+python -m build
+```
+
+Upload the package to the PyPI repository:
+
+```bash
+pip install twine
+twine upload dist/*
+```
