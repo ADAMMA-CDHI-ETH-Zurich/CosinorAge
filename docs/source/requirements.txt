@@ -9,5 +9,6 @@ matplotlib
 seaborn
 scipy
 scikit-learn
+statsmodels
 
 git+https://github.com/readthedocs/sphinx-build-compatibility#egg=sphinx-build-compatibility
