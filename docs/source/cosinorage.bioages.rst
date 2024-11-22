@@ -8,3 +8,10 @@ module contents
    :members:
    :undoc-members:
    :show-inheritance:
+
+classes
+----------------------------------------
+
+.. autoclass:: cosinorage.dataloaders.CosinorAge
+   :members:
+
