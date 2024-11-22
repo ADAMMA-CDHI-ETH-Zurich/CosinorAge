@@ -4,7 +4,7 @@ from ..features.features import WearableFeatures
 # TODO: Implement Bioages class
 class CosinorAge:
     
-    def __init__(self, features: WearableFeatures):
+    def __init__(self, features: WearableFeatures, model=None):
         
         # patient data
         self.mesor = features.feature_df.loc["MESOR"]
@@ -14,12 +14,15 @@ class CosinorAge:
 
         # model parameters
         self.fit = False
-
         self.model = None
         self.beta_1 = None
         self.beta_2 = None
         self.beta_3 = None
         self.alpha = None
+
+        if model is not None:
+            self.fit = True
+            self.model = model
 
     def fit(self):
         pass
