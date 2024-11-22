@@ -12,6 +12,6 @@ module contents
 classes
 ----------------------------------------
 
-.. autoclass:: cosinorage.dataloaders.CosinorAge
+.. autoclass:: cosinorage.bioages.CosinorAge
    :members:
 
