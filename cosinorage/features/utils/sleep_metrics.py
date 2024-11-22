@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-def apply_sleep_wake_predictions(df: pd.DataFrame, mode: str="ggir") -> pd.DataFrame:
+def apply_sleep_wake_predictions(df: pd.DataFrame, mode: str="sleeppy") -> pd.DataFrame:
     """
     Apply sleep-wake prediction to a DataFrame with ENMO values.
 
@@ -20,7 +20,7 @@ def apply_sleep_wake_predictions(df: pd.DataFrame, mode: str="ggir") -> pd.DataF
     if mode == "sleeppy":
         # Run sleep-wake predictions using ColeKripke
         ck = ColeKripke(df_["ENMO"])  # Assuming ColeKripke class is implemented
-        df_["sleep_predictions"] = ck.predict()  # Add predictions to the DataFrame
+        df_["sleep_predictions"] = ck.predict(sf=1)  # Add predictions to the DataFrame
     elif mode == "ggir":
         df_["sleep_predictions"] = enmo_sleep_wake_windows(df_)
     else:
@@ -173,7 +173,7 @@ class ColeKripke:
         self.activity_index = activity_index
         self.predictions = None
 
-    def predict(self, sf:float=100):
+    def predict(self, sf:float=0.1):
         """
         Runs the prediction of sleep wake states based on activity index data.
 
@@ -243,7 +243,7 @@ class ColeKripke:
                 sleep_bin = 0
         self.predictions = rescored
 
-def enmo_sleep_wake_windows(df: pd.DataFrame, threshold: float=0.001, epoch_size: int=60, min_sleep_duration: int=30) -> pd.DataFrame:
+def enmo_sleep_wake_windows(df: pd.DataFrame, threshold: float=0.03, epoch_size: int=60, min_sleep_duration: int=60) -> pd.DataFrame:
     """
     Classifies a time series into sleep and wake periods based on ENMO values.
 

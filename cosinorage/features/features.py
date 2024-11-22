@@ -16,18 +16,18 @@ class WearableFeatures:
         self.enmo = loader.get_enmo_data().copy()
 
         self.feature_df = pd.DataFrame(index=pd.unique(self.enmo.index.date))
-        
         self.feature_dict = {}
 
     def get_cosinor_features(self):
         if "cosinor_features" not in self.feature_dict.keys():
-            res = cosinor(self.enmo)
-            self.feature_df["MESOR"] = res["MESOR"]
-            self.feature_df["amplitude"] = res["amplitude"] 
-            self.feature_df["acrophase"] = res["acrophase"]
-            self.feature_df["acrophase_time"] = res["acrophase_time"]
+            params, fitted = cosinor(self.enmo)
+            self.feature_df["MESOR"] = params["MESOR"]
+            self.feature_df["amplitude"] = params["amplitude"] 
+            self.feature_df["acrophase"] = params["acrophase"]
+            self.feature_df["acrophase_time"] = params["acrophase_time"]
+            self.enmo["cosinor_fitted"] = fitted
         return pd.DataFrame(self.feature_df[["MESOR", "amplitude", "acrophase", "acrophase_time"]])
-
+        
     def get_IV(self):
         if "IV" not in self.feature_df.columns:
             self.feature_df["IV"] = IV(self.enmo)
@@ -148,9 +148,9 @@ class WearableFeatures:
 
         # for each day, plot the ENMO and the cosinor fit
         for date, group in self.enmo.groupby(self.enmo.index.date):
-            plt.figure(figsize=(20, 5))
-            plt.plot(minutes, group["ENMO"], 'r.')
+            plt.figure(figsize=(20, 2))
+            plt.plot(minutes, group["ENMO"], 'r-')
             # cosinor fit based on the parameters from cosinor()
-            plt.plot(minutes, self.feature_df.loc[date, "MESOR"] + self.feature_df.loc[date, "amplitude"] * np.cos((2 * np.pi * minutes)/1440 + self.feature_df.loc[date, "acrophase"]), 'b-')
+            plt.plot(minutes, group["cosinor_fitted"], 'b-')
             plt.show()
 

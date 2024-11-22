@@ -32,7 +32,9 @@ def cosinor(df: pd.DataFrame) -> pd.DataFrame:
     df['date'] = df.index.date
     grouped = df.groupby('date')
 
-    results = []
+
+    params = []
+    fitted_vals_df = pd.DataFrame()
     for date, group in grouped:
         if len(group) != dim:
             raise ValueError(f"Day {date} does not have the expected number of data points ({dim}).")
@@ -56,12 +58,14 @@ def cosinor(df: pd.DataFrame) -> pd.DataFrame:
         acrophase = np.arctan2(-beta_sin, beta_cos) + np.pi
         acrophase_time = acrophase/(2*np.pi)*1440
 
+        fitted_vals_df = pd.concat([fitted_vals_df, model.fittedvalues], ignore_index=False)
+
         # Adjust acrophase time to 0-24 hours
         if acrophase_time < 0:
-            acrophase_time += 24
+            acrophase_time += 1440
 
         # Append the day's results to the list
-        results.append({
+        params.append({
             "date": date,
             "MESOR": float(mesor),
             "amplitude": float(amplitude),
@@ -70,6 +74,5 @@ def cosinor(df: pd.DataFrame) -> pd.DataFrame:
         })
 
     # Convert the results into a DataFrame
-    results_df = pd.DataFrame(results).set_index("date")
-
-    return results_df
+    params_df = pd.DataFrame(params).set_index("date")
+    return params_df, fitted_vals_df
