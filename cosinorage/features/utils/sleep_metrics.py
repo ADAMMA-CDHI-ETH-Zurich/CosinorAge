@@ -5,12 +5,27 @@ def apply_sleep_wake_predictions(df: pd.DataFrame, mode: str="ggir") -> pd.DataF
     """
     Apply sleep-wake prediction to a DataFrame with ENMO values.
 
-    Parameters:
-    df (pd.DataFrame): Input DataFrame containing ENMO values.
-    enmo_column (str): Column name containing ENMO values.
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input DataFrame containing ENMO values in a column named 'ENMO'.
+    mode : str, optional
+        Algorithm to use for sleep-wake prediction. Options are:
+        - 'ggir': Uses ENMO threshold-based classification
+        - 'sleeppy': Uses Cole-Kripke algorithm
+        Default is 'ggir'.
 
-    Returns:
-    pd.DataFrame: DataFrame with an additional 'sleep_predictions' column.
+    Returns
+    -------
+    pd.Series
+        Series containing sleep predictions where:
+        0 = sleep
+        1 = wake
+
+    Raises
+    ------
+    ValueError
+        If 'ENMO' column is not found in DataFrame or if mode is not supported.
     """
     if "ENMO" not in df.columns:
         raise ValueError(f"Column ENMO not found in the DataFrame.")
@@ -30,13 +45,22 @@ def apply_sleep_wake_predictions(df: pd.DataFrame, mode: str="ggir") -> pd.DataF
 
 def waso(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Calculate WASO (Wake After Sleep Onset) for a 24-hour cycle (12 PM to 12 PM).
+    Calculate Wake After Sleep Onset (WASO) for each 24-hour cycle.
 
-    Parameters:
-    df (pd.DataFrame): DataFrame with timestamp as index and sleep-wake predictions.
+    WASO represents the total time spent awake after the first sleep onset 
+    until the final wake time.
 
-    Returns:
-    pd.DataFrame: DataFrame with WASO values for each 24-hour cycle.
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame with:
+        - datetime index
+        - 'sleep_predictions' column (0=sleep, 1=wake)
+
+    Returns
+    -------
+    pd.Series
+        Series indexed by date containing WASO values in minutes for each 24-hour cycle.
     """
     df_ = df.copy()
 
@@ -74,7 +98,21 @@ def waso(df: pd.DataFrame) -> pd.DataFrame:
 
 def tst(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Calculate total sleep time for a 24-hour cycle (12 PM to 12 PM).
+    Calculate Total Sleep Time (TST) for each 24-hour cycle.
+
+    TST represents the total time spent in sleep state during the analysis period.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame with:
+        - datetime index
+        - 'sleep_predictions' column (0=sleep, 1=wake)
+
+    Returns
+    -------
+    pd.Series
+        Series indexed by date containing total sleep time in minutes for each 24-hour cycle.
     """
 
     df_ = df.copy()
@@ -99,7 +137,21 @@ def tst(df: pd.DataFrame) -> pd.DataFrame:
 
 def pta(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Calculate percent time asleep for a 24-hour cycle (12 PM to 12 PM).
+    Calculate Percent Time Asleep (PTA) for each 24-hour cycle.
+
+    PTA represents the percentage of time spent asleep relative to the total recording time.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame with:
+        - datetime index
+        - 'sleep_predictions' column (0=sleep, 1=wake)
+
+    Returns
+    -------
+    pd.Series
+        Series indexed by date containing percent time asleep (0-1) for each 24-hour cycle.
     """
     df_ = df.copy()
     df_.index = pd.to_datetime(df_.index)
@@ -122,7 +174,28 @@ def pta(df: pd.DataFrame) -> pd.DataFrame:
 
 def sri(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Calculate sleep regularity for a 24-hour cycle (12 PM to 12 PM).
+    Calculate Sleep Regularity Index (SRI) for each 24-hour cycle.
+
+    SRI quantifies the day-to-day similarity of sleep-wake patterns. It ranges from -100 
+    (completely irregular) to +100 (perfectly regular).
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame with:
+        - datetime index
+        - 'sleep_predictions' column (0=sleep, 1=wake)
+        Must contain at least 2 complete days of data.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame indexed by date containing SRI values for each day (starting from day 2).
+
+    Raises
+    ------
+    ValueError
+        If less than 2 complete days of data are provided.
     """
 
     sleep_states = df["sleep_predictions"].values
