@@ -268,14 +268,16 @@ class WearableFeatures:
             plt.xticks(minutes[::60])  # Tick every hour
             plt.gca().xaxis.set_major_formatter(
                 plt.FuncFormatter(lambda x, _: timestamps[int(x)].strftime("%H:%M") if 0 <= int(x) < 1440 else "")
-        )
-
-            # x ticks should be daytime hours
-            plt.axhline(self.feature_df.loc[date, "MESOR"]*1000, color='green', linestyle='--', label='Mesor')
-            plt.text(minutes[0]-80, self.feature_df.loc[date, "MESOR"]*1000, f'Mesor: {(self.feature_df.loc[date, "MESOR"]*1000):.2f}', color='green', fontsize=8, va='center')
+            )
 
             cosinor_columns = ["MESOR", "amplitude", "acrophase", "acrophase_time"]
             if all(col in self.feature_df.columns for col in cosinor_columns):
+
+                # x ticks should be daytime hours
+                plt.axhline(self.feature_df.loc[date, "MESOR"]*1000, color='green', linestyle='--', label='MESOR')
+                plt.text(minutes[0]-105, self.feature_df.loc[date, "MESOR"]*1000, f'MESOR: {(self.feature_df.loc[date, "MESOR"]*1000):.2f}mg', color='green', fontsize=8, va='center')
+
+                
                 plt.hlines(
                     y=max(group["ENMO"]*1000)*1.25, 
                     xmin=0, 
@@ -291,8 +293,8 @@ class WearableFeatures:
                 )
                 plt.text(
                     self.feature_df.loc[date, "acrophase_time"]/2, 
-                    max(group["ENMO"]*1000)*1.25+5, 
-                    f'Acrophase Time: {self.feature_df.loc[date, "acrophase_time"]/60:.2f} h', 
+                    max(group["ENMO"]*1000)*1.25+2, 
+                    f'Acrophase Time: {self.feature_df.loc[date, "acrophase_time"]/60:.2f}h', 
                     color='black', fontsize=8, ha='center'
                 )
 
@@ -311,7 +313,7 @@ class WearableFeatures:
                 plt.text(
                     1450, 
                 self.feature_df.loc[date, "MESOR"]*1000+self.feature_df.loc[date, "amplitude"]/2*1000, 
-                f'Amplitude: {self.feature_df.loc[date, "amplitude"] * 1000:.2f}', 
+                f'Amplitude: {self.feature_df.loc[date, "amplitude"] * 1000:.2f}mg', 
                         color='black', fontsize=8, va='center'
                     )
 
