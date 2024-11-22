@@ -218,13 +218,34 @@ class WearableFeatures:
     def get_enmo_data(self):
         return self.enmo
 
-    def plot_sleep_predictions(self):
-        plt.figure(figsize=(20, 0.5))
-        plt.plot(self.enmo["sleep_predictions"] == 0, 'r.')
-        plt.plot(self.enmo["sleep_predictions"] == 1, 'g.')
-        plt.ylim(1, 1)
-        plt.yticks([])
-        plt.show()
+    def plot_sleep_predictions(self, simple=True, start_date=None, end_date=None):
+        if start_date is None:
+            start_date = self.enmo.index[0]
+        if end_date is None:
+            end_date = self.enmo.index[-1]
+
+        selected_data = self.enmo[(self.enmo.index >= start_date) & (self.enmo.index <= end_date)]
+
+        if simple:
+            plt.figure(figsize=(20, 0.5))
+            plt.plot(selected_data["sleep_predictions"] == 0, 'r.')
+            plt.plot(selected_data["sleep_predictions"] == 1, 'g.')
+            plt.ylim(0.9, 1.1)
+            plt.yticks([])
+            plt.show()
+
+        else:
+            plt.figure(figsize=(30, 6))
+            plt.plot(selected_data['ENMO']*1000, label='ENMO', color='yellow')
+            # plot sleep predictions as red bands
+            plt.fill_between(selected_data.index, selected_data['sleep_predictions']*1000, color='green', alpha=0.5)
+            plt.fill_between(selected_data.index, (1-selected_data['sleep_predictions'])*1000, color='blue', alpha=0.5)
+            # y axis limits
+            plt.ylim(0, max(selected_data['ENMO'])*1000*1.25)
+            plt.legend()
+            plt.xlabel("Time")
+            plt.ylabel("ENMO")
+            plt.show()
 
     def plot_cosinor(self):
         if "cosinor_fitted" not in self.enmo.columns:
