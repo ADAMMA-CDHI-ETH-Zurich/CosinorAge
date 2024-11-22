@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-def apply_sleep_wake_predictions(df: pd.DataFrame, mode: str="sleeppy") -> pd.DataFrame:
+def apply_sleep_wake_predictions(df: pd.DataFrame, mode: str="ggir") -> pd.DataFrame:
     """
     Apply sleep-wake prediction to a DataFrame with ENMO values.
 

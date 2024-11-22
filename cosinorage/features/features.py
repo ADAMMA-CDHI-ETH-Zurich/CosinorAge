@@ -148,9 +148,53 @@ class WearableFeatures:
 
         # for each day, plot the ENMO and the cosinor fit
         for date, group in self.enmo.groupby(self.enmo.index.date):
-            plt.figure(figsize=(20, 2))
-            plt.plot(minutes, group["ENMO"], 'r-')
+            plt.figure(figsize=(20, 6))
+            plt.plot(minutes, group["ENMO"]*1000, 'r-')
             # cosinor fit based on the parameters from cosinor()
-            plt.plot(minutes, group["cosinor_fitted"], 'b-')
+            plt.plot(minutes, group["cosinor_fitted"]*1000, 'b-')
+            plt.ylim(0, max(group["ENMO"]*1000)*1.5)
+            plt.xlim(0, 1600)
+            plt.axhline(self.feature_df.loc[date, "MESOR"]*1000, color='green', linestyle='--', label='Mesor')
+            plt.text(minutes[0]-80, self.feature_df.loc[date, "MESOR"]*1000, f'Mesor: {(self.feature_df.loc[date, "MESOR"]*1000):.2f}', color='green', fontsize=8, va='center')
+
+            plt.hlines(
+                y=max(group["ENMO"]*1000)*1.25, 
+                xmin=0, 
+                xmax=self.feature_df.loc[date, "acrophase_time"], 
+                color='black', linewidth=1, label='Acrophase Time'
+            )
+
+            plt.vlines(
+                [0, self.feature_df.loc[date, "acrophase_time"]], 
+                ymin=max(group["ENMO"]*1000)*1.25-2, 
+                ymax=max(group["ENMO"]*1000)*1.25+2, 
+                color='black', linewidth=1
+            )
+            plt.text(
+                self.feature_df.loc[date, "acrophase_time"]/2, 
+                max(group["ENMO"]*1000)*1.25+5, 
+                f'Acrophase Time: {self.feature_df.loc[date, "acrophase_time"]/60:.2f} h', 
+                color='black', fontsize=8, ha='center'
+            )
+
+            plt.vlines(
+                x=1445, 
+                ymin=self.feature_df.loc[date, "MESOR"]*1000, 
+                ymax=self.feature_df.loc[date, "MESOR"]*1000+self.feature_df.loc[date, "amplitude"]*1000, 
+                color='black', linewidth=1, label='Amplitude'
+            )
+            plt.hlines(
+                y=[self.feature_df.loc[date, "MESOR"]*1000, self.feature_df.loc[date, "MESOR"]*1000+self.feature_df.loc[date, "amplitude"]*1000], 
+                xmin=1445 - 4, 
+                xmax=1445 + 4, 
+                color='black', linewidth=1
+            )
+            plt.text(
+                1450, 
+                self.feature_df.loc[date, "MESOR"]*1000+self.feature_df.loc[date, "amplitude"]/2*1000, 
+                f'Amplitude: {self.feature_df.loc[date, "amplitude"] * 1000:.2f}', 
+                color='black', fontsize=8, va='center'
+)
+
             plt.show()
 

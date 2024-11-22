@@ -55,7 +55,7 @@ def cosinor(df: pd.DataFrame) -> pd.DataFrame:
         beta_cos = model.params['cos']
         beta_sin = model.params['sin']
         amplitude = np.sqrt(beta_cos**2 + beta_sin**2)
-        acrophase = np.arctan2(-beta_sin, beta_cos) + np.pi
+        acrophase = np.arctan2(beta_sin, beta_cos)
         acrophase_time = acrophase/(2*np.pi)*1440
 
         fitted_vals_df = pd.concat([fitted_vals_df, model.fittedvalues], ignore_index=False)
