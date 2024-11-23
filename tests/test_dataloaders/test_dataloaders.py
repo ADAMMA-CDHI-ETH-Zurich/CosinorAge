@@ -24,8 +24,8 @@ def test_SmartwatchDataLoader(my_SmartwatchDataLoader):
 
     # check if data frame has the correct 2 columns
     assert acc_enmo_df.shape[
-               1] == 1, ("AccelerometerDataLoader() ENMO Data Frame should "
-                         "have 1 column")
+               1] == 2, ("AccelerometerDataLoader() ENMO Data Frame should "
+                         "have 2 columns")
     # index should be timestamp
     assert acc_enmo_df.index.name == 'TIMESTAMP', "Index should be 'TIMESTAMP'"
     assert acc_enmo_df.columns[
