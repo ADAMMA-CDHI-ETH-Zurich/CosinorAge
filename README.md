@@ -89,3 +89,8 @@ Upload the package to the PyPI repository:
 pip install twine
 twine upload dist/*
 ```
+
+
+## Package Data Scheme 
+
+![Package Data Scheme](figs/schema.png)

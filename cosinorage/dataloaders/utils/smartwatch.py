@@ -130,7 +130,7 @@ def preprocess_smartwatch_data(df: pd.DataFrame, sf: float, meta_dict: dict, pre
     return _df[['X', 'Y', 'Z', 'wear']]
 
 
-def auto_calibrate(df: pd.DataFrame, sf: float, meta_dict: dict, epoch_size: int = 10, max_iter: int = 1000, tol: float = 1e-10, verbose: bool = False) -> pd.DataFrame:
+def auto_calibrate(df: pd.DataFrame, sf: float, meta_dict: dict = {}, epoch_size: int = 10, max_iter: int = 1000, tol: float = 1e-10, verbose: bool = False) -> pd.DataFrame:
     """
     Perform autocalibration on accelerometer data, adjusting offset and scale to reduce calibration error. The implementation is based on the algorithm described in the GGIR R-package.
 
@@ -294,7 +294,7 @@ def auto_calibrate(df: pd.DataFrame, sf: float, meta_dict: dict, epoch_size: int
         return df
 
 
-def remove_noise(df: pd.DataFrame, sf: float, filter_type: str, filter_cutoff: float) -> pd.DataFrame:
+def remove_noise(df: pd.DataFrame, sf: float, filter_type: str = 'lowpass', filter_cutoff: float = 2) -> pd.DataFrame:
     """
     Remove noise from accelerometer data using a Butterworth low-pass filter.
 
