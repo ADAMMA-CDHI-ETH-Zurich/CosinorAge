@@ -93,4 +93,4 @@ twine upload dist/*
 
 ## Package Data Scheme 
 
-![Package Data Scheme](figs/schema.png)
+![Package Data Scheme](figs/schema.jpg)
