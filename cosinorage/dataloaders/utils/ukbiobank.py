@@ -1,7 +1,7 @@
 import pandas as pd
 from typing import Union, Any
 
-def read_ukbiobank_data(file_path: str, source: str) -> Union[pd.DataFrame, tuple[Any, Union[float, Any]]]:
+def read_ukbiobank_data(file_path: str, meta_dict: dict = {}) -> Union[pd.DataFrame, tuple[Any, Union[float, Any]]]:
     """
     Read UK Biobank data from a CSV file and process it.
 
@@ -14,17 +14,9 @@ def read_ukbiobank_data(file_path: str, source: str) -> Union[pd.DataFrame, tupl
         or an empty DataFrame in case of an error.
     """
 
-    # based on data doc_source file format might look different
-    if source == 'uk-biobank':
-        time_col = 'time'
-        enmo_col = 'ENMO_t'
-    else:
-        raise ValueError(
-            "Invalid doc_source specified. Please specify, e.g., 'uk-biobank'.")
-
     # Read the CSV file
     try:
-        data = pd.read_csv(file_path)[[time_col, enmo_col]]
+        data = pd.read_csv(file_path)
         data = data.sort_values(by=time_col)
         data.rename(columns={enmo_col: 'ENMO'}, inplace=True)
     except Exception as e:

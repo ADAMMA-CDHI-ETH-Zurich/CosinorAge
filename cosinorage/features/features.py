@@ -58,13 +58,21 @@ class WearableFeatures:
             - acrophase_time: Peak time of the rhythm in minutes from midnight
         """
         cosinor_columns = ["MESOR", "amplitude", "acrophase", "acrophase_time"]
+
+        # by day cosinor computation
         if not all(col in self.feature_df.columns for col in cosinor_columns) or "cosinor_fitted" not in self.enmo.columns:
-            params, fitted = cosinor(self.enmo)
+            params, fitted = cosinor_by_day(self.enmo)
             self.feature_df["MESOR"] = params["MESOR"]
             self.feature_df["amplitude"] = params["amplitude"]
             self.feature_df["acrophase"] = params["acrophase"]
             self.feature_df["acrophase_time"] = params["acrophase_time"]
-            self.enmo["cosinor_fitted"] = fitted
+            self.enmo["cosinor_by_day_fitted"] = fitted
+
+        # multiday cosinor computation
+        if not all(col in self.feature_dict for col in cosinor_columns):
+            params, fitted = cosinor_multiday(self.enmo)
+            self.feature_dict.update(params)
+            self.enmo["cosinor_multiday_fitted"] = fitted
 
     def get_cosinor_features(self):
         """Get computed cosinor features.
@@ -419,7 +427,7 @@ class WearableFeatures:
         Returns:
             pd.DataFrame: DataFrame containing all computed features
         """
-        return self.feature_df
+        return self.feature_df, self.feature_dict
 
     def get_enmo_data(self):
         """Returns the raw ENMO data.
@@ -465,7 +473,7 @@ class WearableFeatures:
             plt.ylabel("ENMO")
             plt.show()
 
-    def plot_cosinor(self):
+    def plot_cosinor(self, multiday=True):
         """Plot cosinor analysis results for each day.
         
         Creates plots showing:
@@ -478,74 +486,91 @@ class WearableFeatures:
         Raises:
             ValueError: If cosinor features haven't been computed
         """
-        if "cosinor_fitted" not in self.enmo.columns:
-            raise ValueError("Cosinor fitted values not computed.")
+        if multiday:
+            if "cosinor_multiday_fitted" not in self.enmo.columns:
+                raise ValueError("Multiday cosinor fitted values not computed.")
 
-        minutes = np.arange(0, 1440)
-        timestamps = pd.date_range("00:00", "23:59", freq="1min")
+            minutes = np.arange(0, len(self.enmo))
+            timestamps = self.enmo.index
 
-        # for each day, plot the ENMO and the cosinor fit
-        for date, group in self.enmo.groupby(self.enmo.index.date):
             plt.figure(figsize=(20, 10))
-            plt.plot(minutes, group["ENMO"]*1000, 'r-')
-            # cosinor fit based on the parameters from cosinor()
-            plt.plot(minutes, group["cosinor_fitted"]*1000, 'b-')
-            plt.ylim(0, max(group["ENMO"]*1000)*1.5)
-            plt.xlim(0, 1600)
+            plt.plot(timestamps, self.enmo["ENMO"]*1000, 'r-')
+            plt.plot(timestamps, self.enmo["cosinor_multiday_fitted"]*1000, 'b-')
 
-            plt.title(date)
-
-            plt.xticks(minutes[::60])  # Tick every hour
-            plt.gca().xaxis.set_major_formatter(
-                plt.FuncFormatter(lambda x, _: timestamps[int(x)].strftime("%H:%M") if 0 <= int(x) < 1440 else "")
-            )
+            plt.ylim(0, max(self.enmo["ENMO"]*1000)*1.5)
 
             cosinor_columns = ["MESOR", "amplitude", "acrophase", "acrophase_time"]
             if all(col in self.feature_df.columns for col in cosinor_columns):
-
                 # x ticks should be daytime hours
-                plt.axhline(self.feature_df.loc[date, "MESOR"]*1000, color='green', linestyle='--', label='MESOR')
-                plt.text(minutes[0]-105, self.feature_df.loc[date, "MESOR"]*1000, f'MESOR: {(self.feature_df.loc[date, "MESOR"]*1000):.2f}mg', color='green', fontsize=8, va='center')
+                plt.axhline(self.feature_dict["MESOR"]*1000, color='green', linestyle='--', label='MESOR')
 
-                
-                plt.hlines(
-                    y=max(group["ENMO"]*1000)*1.25, 
-                    xmin=0, 
-                    xmax=self.feature_df.loc[date, "acrophase_time"], 
-                    color='black', linewidth=1, label='Acrophase Time'
+
+        else:
+            if "cosinor_by_day_fitted" not in self.enmo.columns:
+                raise ValueError("By-day cosinor fitted values not computed.")
+
+            minutes = np.arange(0, 1440)
+            timestamps = pd.date_range("00:00", "23:59", freq="1min")
+
+            # for each day, plot the ENMO and the cosinor fit
+            for date, group in self.enmo.groupby(self.enmo.index.date):
+                plt.figure(figsize=(20, 10))
+                plt.plot(minutes, group["ENMO"]*1000, 'r-')
+                # cosinor fit based on the parameters from cosinor()
+                plt.plot(minutes, group["cosinor_by_day_fitted"]*1000, 'b-')
+                plt.ylim(0, max(group["ENMO"]*1000)*1.5)
+                plt.xlim(0, 1600)
+
+                plt.title(date)
+
+                plt.xticks(minutes[::60])  # Tick every hour
+                plt.gca().xaxis.set_major_formatter(
+                    plt.FuncFormatter(lambda x, _: timestamps[int(x)].strftime("%H:%M") if 0 <= int(x) < 1440 else "")
                 )
 
-                plt.vlines(
-                    [0, self.feature_df.loc[date, "acrophase_time"]], 
-                    ymin=max(group["ENMO"]*1000)*1.25-2, 
-                    ymax=max(group["ENMO"]*1000)*1.25+2, 
-                    color='black', linewidth=1
-                )
-                plt.text(
-                    self.feature_df.loc[date, "acrophase_time"]/2, 
-                    max(group["ENMO"]*1000)*1.25+2, 
-                    f'Acrophase Time: {self.feature_df.loc[date, "acrophase_time"]/60:.2f}h', 
-                    color='black', fontsize=8, ha='center'
-                )
+                cosinor_columns = ["MESOR", "amplitude", "acrophase", "acrophase_time"]
+                if all(col in self.feature_df.columns for col in cosinor_columns):
 
-                plt.vlines(
-                    x=1445, 
-                    ymin=self.feature_df.loc[date, "MESOR"]*1000, 
-                    ymax=self.feature_df.loc[date, "MESOR"]*1000+self.feature_df.loc[date, "amplitude"]*1000, 
-                    color='black', linewidth=1, label='Amplitude'
-                )
-                plt.hlines(
-                    y=[self.feature_df.loc[date, "MESOR"]*1000, self.feature_df.loc[date, "MESOR"]*1000+self.feature_df.loc[date, "amplitude"]*1000], 
-                    xmin=1445 - 4, 
-                    xmax=1445 + 4, 
+                    # x ticks should be daytime hours
+                    plt.axhline(self.feature_df.loc[date, "MESOR"]*1000, color='green', linestyle='--', label='MESOR')
+                    plt.text(minutes[0]-105, self.feature_df.loc[date, "MESOR"]*1000, f'MESOR: {(self.feature_df.loc[date, "MESOR"]*1000):.2f}mg', color='green', fontsize=8, va='center')
+
+                    plt.hlines(
+                        y=max(group["ENMO"]*1000)*1.25, 
+                        xmin=0, 
+                        xmax=self.feature_df.loc[date, "acrophase_time"], 
+                        color='black', linewidth=1, label='Acrophase Time'
+                    )
+                    plt.vlines(
+                        [0, self.feature_df.loc[date, "acrophase_time"]], 
+                        ymin=max(group["ENMO"]*1000)*1.25-2, 
+                        ymax=max(group["ENMO"]*1000)*1.25+2, 
                         color='black', linewidth=1
                     )
-                plt.text(
-                    1450, 
-                self.feature_df.loc[date, "MESOR"]*1000+self.feature_df.loc[date, "amplitude"]/2*1000, 
-                f'Amplitude: {self.feature_df.loc[date, "amplitude"] * 1000:.2f}mg', 
+                    plt.text(
+                        self.feature_df.loc[date, "acrophase_time"]/2, 
+                        max(group["ENMO"]*1000)*1.25+2, 
+                        f'Acrophase Time: {self.feature_df.loc[date, "acrophase_time"]/60:.2f}h', 
+                        color='black', fontsize=8, ha='center'
+                    )
+                    plt.vlines(
+                        x=1445, 
+                        ymin=self.feature_df.loc[date, "MESOR"]*1000, 
+                        ymax=self.feature_df.loc[date, "MESOR"]*1000+self.feature_df.loc[date, "amplitude"]*1000, 
+                        color='black', linewidth=1, label='Amplitude'
+                    )
+                    plt.hlines(
+                        y=[self.feature_df.loc[date, "MESOR"]*1000, self.feature_df.loc[date, "MESOR"]*1000+self.feature_df.loc[date, "amplitude"]*1000], 
+                        xmin=1445 - 4, 
+                        xmax=1445 + 4, 
+                        color='black', linewidth=1
+                    )
+                    plt.text(
+                        1450, 
+                        self.feature_df.loc[date, "MESOR"]*1000+self.feature_df.loc[date, "amplitude"]/2*1000, 
+                        f'Amplitude: {self.feature_df.loc[date, "amplitude"] * 1000:.2f}mg', 
                         color='black', fontsize=8, va='center'
                     )
 
-            plt.show()
+        plt.show()
 

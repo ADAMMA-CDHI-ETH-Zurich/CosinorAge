@@ -10,7 +10,7 @@ from .utils.calc_enmo import calculate_enmo, calculate_minute_level_enmo
 from .utils.filtering import filter_incomplete_days
 from .utils.smartwatch import read_smartwatch_data, preprocess_smartwatch_data
 from .utils.ukbiobank import read_ukbiobank_data
-
+from .utils.nhanes import read_nhanes_data
 
 def clock(func):
     """
@@ -47,11 +47,11 @@ class DataLoader:
         preprocess (bool): Whether to preprocess the data.
         acc_df (pd.DataFrame): A DataFrame storing accelerometer data.
         acc_freq (int): The frequency of the accelerometer data.
-        meta_dic (dict): A dictionary storing metadata.
+        meta_dict (dict): A dictionary storing metadata.
         enmo_df (pd.DataFrame): A DataFrame storing minute-level ENMO values.
     """
 
-    def __init__(self, datasource: str, input_path: str, preprocess: bool = True, preprocess_args: dict = {}):
+    def __init__(self, datasource: str, input_path: str, preprocess: bool = True, preprocess_args: dict = {}, person_id: str = None):
         """
         Initializes an empty DataLoader instance with an empty DataFrame
         for storing minute-level ENMO values.
@@ -73,7 +73,7 @@ class DataLoader:
             if not os.path.isfile(input_path):
                 raise ValueError("The input path should be a file path")
 
-        elif datasource == 'uk-biobank':
+        elif datasource == 'ukb':
             if not os.path.isfile(input_path):
                 raise ValueError("The input path should be a file path")
 
@@ -82,11 +82,12 @@ class DataLoader:
 
         self.preprocess = preprocess
         self.preprocess_args = preprocess_args
+
         if datasource in ['nhanes', 'smartwatch']:
             self.acc_df = None
-            self.acc_freq = None
 
-        self.meta_dic = {}
+        # add data source specific metadata
+        self.meta_dict = {'datasource': datasource}
         self.enmo_df = None
 
     @clock
@@ -104,14 +105,15 @@ class DataLoader:
         """
         if self.datasource == 'smartwatch':
             # load accelerometer data from csv files into a DataFrame
-            self.acc_df, self.acc_freq = read_smartwatch_data(self.input_path)
+            self.acc_df = read_smartwatch_data(self.input_path, meta_dict=self.meta_dict)
+            freq = self.meta_dict['original_freq']
             if verbose:
                 print(f"Loaded {self.acc_df.shape[0]} accelerometer data records from {self.input_path}")
-                print(f"The frequency of the accelerometer data is {self.acc_freq}Hz")
+                print(f"The frequency of the accelerometer data is {freq}Hz")
 
             # filter out incomplete days
             n = self.acc_df.shape[0]
-            self.acc_df = filter_incomplete_days(self.acc_df, self.acc_freq)
+            self.acc_df = filter_incomplete_days(self.acc_df, freq)
             if verbose:
                 print(f"Filtered out {n - self.acc_df.shape[0]} accelerometer records due to incomplete daily coverage")
 
@@ -123,7 +125,7 @@ class DataLoader:
             # conduct preprocessing if required
             if self.preprocess:
                 self.acc_df[['X_raw', 'Y_raw', 'Z_raw']] = self.acc_df[['X', 'Y', 'Z']]
-                self.acc_df[['X', 'Y', 'Z', 'wear']] = preprocess_smartwatch_data(self.acc_df[['X', 'Y', 'Z']], self.acc_freq, self.meta_dic, preprocess_args=self.preprocess_args, verbose=verbose)
+                self.acc_df[['X', 'Y', 'Z', 'wear']] = preprocess_smartwatch_data(self.acc_df[['X', 'Y', 'Z']], freq, self.meta_dict, preprocess_args=self.preprocess_args, verbose=verbose)
                 if verbose:
                     print(f"Preprocessed accelerometer data")
 
@@ -133,13 +135,13 @@ class DataLoader:
                 print(f"Calculated ENMO for {self.acc_df['ENMO'].shape[0]} accelerometer records")
 
             # aggregate ENMO values at the minute level
-            self.enmo_df = calculate_minute_level_enmo(self.acc_df, self.acc_freq)
+            self.enmo_df = calculate_minute_level_enmo(self.acc_df, freq)
             self.enmo_df.index = pd.to_datetime(self.enmo_df.index)
             if verbose:
                 print(f"Aggregated ENMO values at the minute level leading to {self.enmo_df.shape[0]} records")
 
-        elif self.datasource == 'uk-biobank':
-            self.enmo_df = read_ukbiobank_data(self.input_path, source='uk-biobank')
+        elif self.datasource == 'ukb':
+            self.enmo_df = read_ukbiobank_data(self.input_path, meta_dict=self.meta_dict)
             if verbose:
                 print(f"Loaded {self.enmo_df.shape[0]} minute-level ENMO records from {self.input_path}")
 
@@ -147,6 +149,16 @@ class DataLoader:
             self.enmo_df.index = pd.to_datetime(self.enmo_df.index)
             if verbose:
                 print(f"Filtered out {self.enmo_df.shape[0] - self.enmo_df.shape[0]} minute-level ENMO records due to incomplete daily coverage")
+
+        elif self.datasource == 'nhanes':
+            if self.person_id is None:
+                raise ValueError("The person_id is required for nhanes data")
+
+            self.enmo_df = read_nhanes_data(self.input_path, meta_dict=self.meta_dict, verbose=verbose, person_id=self.person_id)
+            
+
+        else:
+            raise ValueError("The datasource should be either 'smartwatch', 'nhanes' or 'uk-biobank'")
 
     def save_data(self, output_path: str):
         """
@@ -195,7 +207,7 @@ class DataLoader:
         Returns:
             dict: A dictionary containing the metadata.
         """
-        return self.meta_dic
+        return self.meta_dict
 
     def plot_orig_enmo(self, resample: str = '15min', wear: bool = True):
         """
