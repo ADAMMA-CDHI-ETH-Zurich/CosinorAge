@@ -1,6 +1,7 @@
 /cosinorage.egg-info/
 /R/
 /.idea/
+/data/
 
 *.pkl
 

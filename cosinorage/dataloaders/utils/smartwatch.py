@@ -8,7 +8,7 @@ from typing import Tuple, Optional, Dict, Union
 from glob import glob
 
 
-def read_smartwatch_data(directory_path: str) -> Tuple[pd.DataFrame, Optional[float]]:
+def read_smartwatch_data(directory_path: str, meta_dict: dict = {}) -> Tuple[pd.DataFrame, Optional[float]]:
     """
     Concatenate all CSV files in a directory into a single DataFrame.
 
@@ -71,11 +71,12 @@ def read_smartwatch_data(directory_path: str) -> Tuple[pd.DataFrame, Optional[fl
     # determine frequency in Hz of accelerometer data
     time_diffs = data['TIMESTAMP'].diff().dropna()
     acc_freq = 1 / time_diffs.mean().total_seconds()
+    meta_dict.update({'original_freq': acc_freq})
 
     # set timestamp as index
     data.set_index('TIMESTAMP', inplace=True)
 
-    return data, acc_freq
+    return data
 
 
 def preprocess_smartwatch_data(df: pd.DataFrame, sf: float, meta_dict: dict, preprocess_args: dict = {}, verbose: bool = False) -> pd.DataFrame:
