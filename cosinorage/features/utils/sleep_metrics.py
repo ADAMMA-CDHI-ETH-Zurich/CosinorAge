@@ -35,13 +35,13 @@ def apply_sleep_wake_predictions(df: pd.DataFrame, mode: str="ggir") -> pd.DataF
     if mode == "sleeppy":
         # Run sleep-wake predictions using ColeKripke
         ck = ColeKripke(df_["ENMO"])  # Assuming ColeKripke class is implemented
-        df_["sleep_predictions"] = ck.predict(sf=1)  # Add predictions to the DataFrame
+        df_["sleep"] = ck.predict(sf=1)  # Add predictions to the DataFrame
     elif mode == "ggir":
-        df_["sleep_predictions"] = enmo_sleep_wake_windows(df_)
+        df_["sleep"] = enmo_sleep_wake_windows(df_)
     else:
         raise ValueError(f"Mode {mode} not supported.")
     
-    return df_["sleep_predictions"]
+    return df_["sleep"]
 
 def waso(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -55,7 +55,7 @@ def waso(df: pd.DataFrame) -> pd.DataFrame:
     df : pd.DataFrame
         DataFrame with:
         - datetime index
-        - 'sleep_predictions' column (0=sleep, 1=wake)
+        - 'sleep' column (0=sleep, 1=wake)
 
     Returns
     -------
@@ -79,14 +79,14 @@ def waso(df: pd.DataFrame) -> pd.DataFrame:
         
         # Identify sleep onset (first transition from wake to sleep)
         try:
-            first_sleep_idx = group[group["sleep_predictions"] == 0].index[0]  # First occurrence of sleep
+            first_sleep_idx = group[group["sleep"] == 0].index[0]  # First occurrence of sleep
         except IndexError:
             # No sleep detected in this cycle
             waso_results.append({"day": date, "waso_minutes": 0})
             continue
         
         # Calculate WASO: sum wake states (1) after first sleep onset
-        waso = group.loc[first_sleep_idx:, "sleep_predictions"].sum()
+        waso = group.loc[first_sleep_idx:, "sleep"].sum()
         time_interval_minutes = (group.index[1] - group.index[0]).seconds / 60.0
         
         waso_results.append({
@@ -107,7 +107,7 @@ def tst(df: pd.DataFrame) -> pd.DataFrame:
     df : pd.DataFrame
         DataFrame with:
         - datetime index
-        - 'sleep_predictions' column (0=sleep, 1=wake)
+        - 'sleep' column (0=sleep, 1=wake)
 
     Returns
     -------
@@ -127,7 +127,7 @@ def tst(df: pd.DataFrame) -> pd.DataFrame:
         group = group.sort_index()
 
         # Calculate total sleep time: sum sleep states (0)
-        total_sleep = group[group["sleep_predictions"] == 0].shape[0]
+        total_sleep = group[group["sleep"] == 0].shape[0]
         sleep_results.append({
             "day": date,
             "total_sleep_minutes": total_sleep
@@ -146,7 +146,7 @@ def pta(df: pd.DataFrame) -> pd.DataFrame:
     df : pd.DataFrame
         DataFrame with:
         - datetime index
-        - 'sleep_predictions' column (0=sleep, 1=wake)
+        - 'sleep' column (0=sleep, 1=wake)
 
     Returns
     -------
@@ -164,7 +164,7 @@ def pta(df: pd.DataFrame) -> pd.DataFrame:
         group = group.sort_index()
 
         # Calculate percent time asleep: sum sleep states (0) / total states
-        percent_time_asleep = group[group["sleep_predictions"] == 0].shape[0] / group.shape[0]
+        percent_time_asleep = group[group["sleep"] == 0].shape[0] / group.shape[0]
         sleep_results.append({
             "day": date,
             "percent_time_asleep": percent_time_asleep
@@ -184,7 +184,7 @@ def sri(df: pd.DataFrame) -> pd.DataFrame:
     df : pd.DataFrame
         DataFrame with:
         - datetime index
-        - 'sleep_predictions' column (0=sleep, 1=wake)
+        - 'sleep' column (0=sleep, 1=wake)
         Must contain at least 2 complete days of data.
 
     Returns
@@ -198,7 +198,7 @@ def sri(df: pd.DataFrame) -> pd.DataFrame:
         If less than 2 complete days of data are provided.
     """
 
-    sleep_states = df["sleep_predictions"].values
+    sleep_states = df["sleep"].values
     epochs_per_day = 24 * 60 
     epochs_per_window = epochs_per_day * 2
 
@@ -269,7 +269,7 @@ class ColeKripke:
         for i in range(3):
             self.rescore(scores)
         self.predictions = scores
-        return self.predictions
+        return 1 - self.predictions
 
     def rescore(self, predictions):
         """
@@ -335,7 +335,7 @@ def enmo_sleep_wake_windows(df: pd.DataFrame, threshold: float=0.03, epoch_size:
         raise ValueError(f"Column ENMO not found in the DataFrame.")
 
     df_ = df.copy()
-    df_['sleep_predictions'] = 0  # Initialize diurnal classification (0: wake)
+    df_['sleep'] = 0  # Initialize diurnal classification (0: wake)
 
     # Identify potential sleep epochs (ENMO < threshold)
     is_sleep = df_["ENMO"] < threshold
@@ -362,6 +362,6 @@ def enmo_sleep_wake_windows(df: pd.DataFrame, threshold: float=0.03, epoch_size:
 
     # Mark sleep periods in the 'diur' column
     for start, end in sleep_periods:
-        df_.iloc[start:end, df_.columns.get_loc('sleep_predictions')] = 1
+        df_.iloc[start:end, df_.columns.get_loc('sleep')] = 1
 
-    return 1 - df_["sleep_predictions"]
+    return df_["sleep"]

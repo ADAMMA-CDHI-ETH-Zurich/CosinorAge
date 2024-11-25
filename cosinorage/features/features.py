@@ -317,10 +317,10 @@ class WearableFeatures:
         """Compute binary sleep/wake predictions for each timepoint.
         
         Updates enmo DataFrame with:
-            - sleep_predictions: Binary values where 1 indicates sleep and 0 indicates wake
+            - sleep: Binary values where 1 indicates sleep and 0 indicates wake
         """
-        if "sleep_predictions" not in self.enmo.columns:
-            self.enmo["sleep_predictions"] = apply_sleep_wake_predictions(self.enmo)
+        if "sleep" not in self.enmo.columns:
+            self.enmo["sleep"] = apply_sleep_wake_predictions(self.enmo, mode="sleeppy")
 
     def get_sleep_predictions(self):
         """Get computed sleep/wake predictions.
@@ -329,9 +329,9 @@ class WearableFeatures:
             pd.DataFrame: DataFrame containing binary sleep predictions where 
                          1 indicates sleep and 0 indicates wake
         """
-        if "sleep_predictions" not in self.enmo.columns:
+        if "sleep" not in self.enmo.columns:
             self.compute_sleep_predictions()
-        return pd.DataFrame(self.enmo["sleep_predictions"])
+        return pd.DataFrame(self.enmo["sleep"])
 
     def compute_TST(self):
         """Compute Total Sleep Time (TST).
@@ -339,8 +339,8 @@ class WearableFeatures:
         First ensures sleep predictions are computed, then calculates total
         sleep time for each day.
         """
-        if "sleep_predictions" not in self.enmo.columns:
-            self.enmo["sleep_predictions"] = apply_sleep_wake_predictions(self.enmo)
+        if "sleep" not in self.enmo.columns:
+            self.enmo["sleep"] = apply_sleep_wake_predictions(self.enmo)
         if "TST" not in self.feature_df.columns:
             self.feature_df["TST"] = tst(self.enmo)    
 
@@ -361,8 +361,8 @@ class WearableFeatures:
         First ensures sleep predictions are computed, then calculates wake
         time occurring after initial sleep onset.
         """
-        if "sleep_predictions" not in self.enmo.columns:
-            self.enmo["sleep_predictions"] = apply_sleep_wake_predictions(self.enmo)
+        if "sleep" not in self.enmo.columns:
+            self.enmo["sleep"] = apply_sleep_wake_predictions(self.enmo)
         if "WASO" not in self.feature_df.columns:
             self.feature_df["WASO"] = waso(self.enmo)
 
@@ -383,8 +383,8 @@ class WearableFeatures:
         First ensures sleep predictions are computed, then calculates
         periods of prolonged wakefulness.
         """
-        if "sleep_predictions" not in self.enmo.columns:
-            self.enmo["sleep_predictions"] = apply_sleep_wake_predictions(self.enmo)
+        if "sleep" not in self.enmo.columns:
+            self.enmo["sleep"] = apply_sleep_wake_predictions(self.enmo)
         if "PTA" not in self.feature_df.columns:
             self.feature_df["PTA"] = pta(self.enmo)
 
@@ -405,8 +405,9 @@ class WearableFeatures:
         First ensures sleep predictions are computed, then calculates
         the consistency of sleep timing between days.
         """
-        if "sleep_predictions" not in self.enmo.columns:
-            self.enmo["sleep_predictions"] = apply_sleep_wake_predictions(self.enmo)
+        if "sleep" not in self.enmo.columns:
+            self.enmo["sleep"] = apply_sleep_wake_predictions(self.enmo)
+            print("computed sleep predictions")
         if "SRI" not in self.feature_df.columns:
             self.feature_df["SRI"] = sri(self.enmo)
 
@@ -454,20 +455,21 @@ class WearableFeatures:
 
         if simple:
             plt.figure(figsize=(20, 0.5))
-            plt.plot(selected_data["sleep_predictions"] == 0, 'r.')
-            plt.plot(selected_data["sleep_predictions"] == 1, 'g.')
+            plt.plot(selected_data["sleep"] == 0, 'g.', label='Wake')
+            plt.plot(selected_data["sleep"] == 1, 'b.', label='Sleep')
             plt.ylim(0.9, 1.1)
             plt.yticks([])
+            plt.legend()
             plt.show()
 
         else:
             plt.figure(figsize=(30, 6))
-            plt.plot(selected_data['ENMO']*1000, label='ENMO', color='yellow')
+            plt.plot(selected_data['ENMO'], label='ENMO', color='black')
             # plot sleep predictions as red bands
-            plt.fill_between(selected_data.index, selected_data['sleep_predictions']*1000, color='green', alpha=0.5)
-            plt.fill_between(selected_data.index, (1-selected_data['sleep_predictions'])*1000, color='blue', alpha=0.5)
+            plt.fill_between(selected_data.index, (1-selected_data['sleep'])*1000, color='green', alpha=0.5, label='Wake')
+            plt.fill_between(selected_data.index, selected_data['sleep']*1000, color='blue', alpha=0.5, label='Sleep')
             # y axis limits
-            plt.ylim(0, max(selected_data['ENMO'])*1000*1.25)
+            plt.ylim(0, max(selected_data['ENMO'])*1.25)
             plt.legend()
             plt.xlabel("Time")
             plt.ylabel("ENMO")
@@ -494,15 +496,15 @@ class WearableFeatures:
             timestamps = self.enmo.index
 
             plt.figure(figsize=(20, 10))
-            plt.plot(timestamps, self.enmo["ENMO"]*1000, 'r-')
-            plt.plot(timestamps, self.enmo["cosinor_multiday_fitted"]*1000, 'b-')
+            plt.plot(timestamps, self.enmo["ENMO"], 'r-')
+            plt.plot(timestamps, self.enmo["cosinor_multiday_fitted"], 'b-')
 
-            plt.ylim(0, max(self.enmo["ENMO"]*1000)*1.5)
+            plt.ylim(0, max(self.enmo["ENMO"])*1.5)
 
             cosinor_columns = ["MESOR", "amplitude", "acrophase", "acrophase_time"]
             if all(col in self.feature_df.columns for col in cosinor_columns):
                 # x ticks should be daytime hours
-                plt.axhline(self.feature_dict["MESOR"]*1000, color='green', linestyle='--', label='MESOR')
+                plt.axhline(self.feature_dict["MESOR"], color='green', linestyle='--', label='MESOR')
 
 
         else:
@@ -515,10 +517,10 @@ class WearableFeatures:
             # for each day, plot the ENMO and the cosinor fit
             for date, group in self.enmo.groupby(self.enmo.index.date):
                 plt.figure(figsize=(20, 10))
-                plt.plot(minutes, group["ENMO"]*1000, 'r-')
+                plt.plot(minutes, group["ENMO"], 'r-')
                 # cosinor fit based on the parameters from cosinor()
-                plt.plot(minutes, group["cosinor_by_day_fitted"]*1000, 'b-')
-                plt.ylim(0, max(group["ENMO"]*1000)*1.5)
+                plt.plot(minutes, group["cosinor_by_day_fitted"], 'b-')
+                plt.ylim(0, max(group["ENMO"])*1.5)
                 plt.xlim(0, 1600)
 
                 plt.title(date)
@@ -532,43 +534,43 @@ class WearableFeatures:
                 if all(col in self.feature_df.columns for col in cosinor_columns):
 
                     # x ticks should be daytime hours
-                    plt.axhline(self.feature_df.loc[date, "MESOR"]*1000, color='green', linestyle='--', label='MESOR')
-                    plt.text(minutes[0]-105, self.feature_df.loc[date, "MESOR"]*1000, f'MESOR: {(self.feature_df.loc[date, "MESOR"]*1000):.2f}mg', color='green', fontsize=8, va='center')
+                    plt.axhline(self.feature_df.loc[date, "MESOR"], color='green', linestyle='--', label='MESOR')
+                    plt.text(minutes[0]-105, self.feature_df.loc[date, "MESOR"], f'MESOR: {(self.feature_df.loc[date, "MESOR"]):.2f}mg', color='green', fontsize=8, va='center')
 
                     plt.hlines(
-                        y=max(group["ENMO"]*1000)*1.25, 
+                        y=max(group["ENMO"])*1.25, 
                         xmin=0, 
                         xmax=self.feature_df.loc[date, "acrophase_time"], 
                         color='black', linewidth=1, label='Acrophase Time'
                     )
                     plt.vlines(
                         [0, self.feature_df.loc[date, "acrophase_time"]], 
-                        ymin=max(group["ENMO"]*1000)*1.25-2, 
-                        ymax=max(group["ENMO"]*1000)*1.25+2, 
+                        ymin=max(group["ENMO"])*1.25-2, 
+                        ymax=max(group["ENMO"])*1.25+2, 
                         color='black', linewidth=1
                     )
                     plt.text(
                         self.feature_df.loc[date, "acrophase_time"]/2, 
-                        max(group["ENMO"]*1000)*1.25+2, 
+                        max(group["ENMO"])*1.25+2, 
                         f'Acrophase Time: {self.feature_df.loc[date, "acrophase_time"]/60:.2f}h', 
                         color='black', fontsize=8, ha='center'
                     )
                     plt.vlines(
                         x=1445, 
-                        ymin=self.feature_df.loc[date, "MESOR"]*1000, 
-                        ymax=self.feature_df.loc[date, "MESOR"]*1000+self.feature_df.loc[date, "amplitude"]*1000, 
+                        ymin=self.feature_df.loc[date, "MESOR"], 
+                        ymax=self.feature_df.loc[date, "MESOR"]+self.feature_df.loc[date, "amplitude"], 
                         color='black', linewidth=1, label='Amplitude'
                     )
                     plt.hlines(
-                        y=[self.feature_df.loc[date, "MESOR"]*1000, self.feature_df.loc[date, "MESOR"]*1000+self.feature_df.loc[date, "amplitude"]*1000], 
+                        y=[self.feature_df.loc[date, "MESOR"], self.feature_df.loc[date, "MESOR"]+self.feature_df.loc[date, "amplitude"]], 
                         xmin=1445 - 4, 
                         xmax=1445 + 4, 
                         color='black', linewidth=1
                     )
                     plt.text(
                         1450, 
-                        self.feature_df.loc[date, "MESOR"]*1000+self.feature_df.loc[date, "amplitude"]/2*1000, 
-                        f'Amplitude: {self.feature_df.loc[date, "amplitude"] * 1000:.2f}mg', 
+                        self.feature_df.loc[date, "MESOR"]+self.feature_df.loc[date, "amplitude"]/2, 
+                        f'Amplitude: {self.feature_df.loc[date, "amplitude"] :.2f}mg', 
                         color='black', fontsize=8, va='center'
                     )
 
