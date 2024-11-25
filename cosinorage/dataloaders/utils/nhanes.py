@@ -13,21 +13,24 @@ def read_nhanes_data(file_dir: str, meta_dict: dict = {}, verbose: bool = False,
     versions = []
     for file in pax_files:
         if file.startswith('PAXDAY'):
-            version = file.split("_")[1]
+            version = file.split("_")[1].strip('.xpt')
             if f'PAXHD_{version}.xpt' in pax_files and f'PAXMIN_{version}.xpt' in pax_files:
                 versions.append(version)
 
     if verbose:
         print(f"Found {len(versions)} versions of NHANES data")
 
+    if len(versions) == 0:
+        raise ValueError(f"No valid versions of NHANES data found - this might be due to missing files. For each version we expect to find PAXDAY, PAXHD and PAXMIN files.")
+
     # read all day-level files
     day_x = pd.DataFrame()
     for version in tqdm(versions, desc="Reading day-level files"):
         curr = pd.read_sas(f"{file_dir}/PAXDAY_{version}.xpt")
-        curr = curr[curr['seqn'] == person_id]
+        curr = curr[curr['SEQN'] == person_id]
         day_x = pd.concat([day_x, curr], ignore_index=True)
 
-    day_x.columns = day_x.columns.str.lower()
+    day_x = day_x.rename(columns=str.lower)
     day_x = remove_bytes(day_x)
 
     if verbose:
@@ -49,7 +52,7 @@ def read_nhanes_data(file_dir: str, meta_dict: dict = {}, verbose: bool = False,
         itr_x = pd.read_sas(f"{file_dir}/PAXMIN_{version}.xpt", chunksize=100000)
         for chunk in tqdm(itr_x, desc=f"Processing chunks for version {version}"):
             curr = clean_data(chunk, day_x)
-            curr = curr[curr['seqn'] == person_id]
+            curr = curr[curr['SEQN'] == person_id]
             min_x = pd.concat([min_x, curr], ignore_index=True)
 
     min_x = min_x.rename(columns=str.lower)
@@ -62,7 +65,7 @@ def read_nhanes_data(file_dir: str, meta_dict: dict = {}, verbose: bool = False,
     head_x = pd.DataFrame()
     for version in tqdm(versions, desc="Reading header files"):
         curr = pd.read_sas(f"{file_dir}/PAXHD_{version}.xpt")
-        curr = curr[curr['seqn'] == person_id]
+        curr = curr[curr['SEQN'] == person_id]
         head_x = pd.concat([head_x, curr], ignore_index=True)
 
     head_x = head_x.rename(columns=str.lower)
@@ -93,32 +96,35 @@ def read_nhanes_data(file_dir: str, meta_dict: dict = {}, verbose: bool = False,
 
     epoch = min_x[['seqn', 'paxdaym', 'myepoch']].drop_duplicates()
 
-    check = epoch.groupby(['seqn', 'paxdaym']).size().reset_index(name='n_epoch')
-    epoch2 = epoch.merge(check, on=['seqn', 'paxdaym'])
-    epoch2 = epoch2[epoch2['n_epoch'] == 288]
+    # Count epochs per day and filter for complete days (288 epochs)
+    epoch_counts = min_x.groupby(['seqn', 'paxdaym'])['myepoch'].nunique().reset_index()
+    epoch_counts = epoch_counts[epoch_counts['myepoch'] == 288]
+    min_x = min_x.merge(epoch_counts[['seqn', 'paxdaym']], on=['seqn', 'paxdaym'])
 
-    check2 = epoch2.groupby('seqn').size().reset_index(name='n_days')
-    epoch3 = epoch2.merge(check2, on='seqn')
-    epoch3 = epoch3[epoch3['n_days'] >= 4]
+    # Count valid days per participant and filter for at least 4 valid days
+    valid_days = min_x.groupby('seqn')['paxdaym'].nunique().reset_index()
+    valid_days = valid_days[valid_days['paxdaym'] >= 4]
+    min_x = min_x[min_x['seqn'].isin(valid_days['seqn'])]
 
     min_x = min_x.rename(columns={
-        'paxmxm': 'x', 'paxmym': 'y', 'paxmzm': 'z', 'measure_time': 'timestamp'
+        'paxmxm': 'X', 'paxmym': 'Y', 'paxmzm': 'Z', 'measure_time': 'TIMESTAMP', 
     })
 
     if verbose:
         print(f"Renamed columns and set timestamp index for person {person_id}")
 
-    min_x.set_index('timestamp', inplace=True)
-    min_x = min_x[['x', 'y', 'z']]
+    # set wear and sleep columns
+    min_x['wear'] = min_x['paxpredm'].astype(int).isin([1, 2]).astype(int)
+    min_x['sleep'] = min_x['paxpredm'].astype(int).isin([2]).astype(int)
+
+    min_x.set_index('TIMESTAMP', inplace=True)
+    min_x = min_x[['X', 'Y', 'Z', 'wear', 'sleep', 'paxpredm']]
     min_x['ENMO'] = calculate_enmo(min_x)
 
     if verbose:
         print(f"Calculated ENMO for person {person_id}")
 
     return min_x
-
-
-
 
 def remove_bytes(df: pd.DataFrame) -> pd.DataFrame:
     for col in df.select_dtypes([object]):  # Select columns with object type (likely byte strings)

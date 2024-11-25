@@ -65,26 +65,23 @@ class DataLoader:
         self.input_path = input_path
 
         # check if filepaths are valid w.r.t. the datasource
-        if datasource == 'smartwatch':
+        if datasource in ['smartwatch', 'nhanes']:
             if not os.path.isdir(input_path):
                 raise ValueError("The input path should be a directory path")
-
-        elif datasource == 'nhanes':
-            if not os.path.isfile(input_path):
-                raise ValueError("The input path should be a file path")
-
         elif datasource == 'ukb':
             if not os.path.isfile(input_path):
                 raise ValueError("The input path should be a file path")
-
         else:
             raise ValueError("The datasource should be either 'smartwatch', 'nhanes' or 'uk-biobank'")
 
         self.preprocess = preprocess
         self.preprocess_args = preprocess_args
 
-        if datasource in ['nhanes', 'smartwatch']:
+        if datasource == 'smartwatch':
             self.acc_df = None
+
+        if datasource == 'nhanes':
+            self.person_id = person_id
 
         # add data source specific metadata
         self.meta_dict = {'datasource': datasource}
@@ -134,14 +131,21 @@ class DataLoader:
             if verbose:
                 print(f"Calculated ENMO for {self.acc_df['ENMO'].shape[0]} accelerometer records")
 
-            # aggregate ENMO values at the minute level
+            # aggregate ENMO values at the minute level in mg
             self.enmo_df = calculate_minute_level_enmo(self.acc_df, freq)
+            self.enmo_df['ENMO'] = self.enmo_df['ENMO']*1000
             self.enmo_df.index = pd.to_datetime(self.enmo_df.index)
             if verbose:
                 print(f"Aggregated ENMO values at the minute level leading to {self.enmo_df.shape[0]} records")
 
         elif self.datasource == 'ukb':
-            self.enmo_df = read_ukbiobank_data(self.input_path, meta_dict=self.meta_dict)
+            raise NotImplementedError("UK Biobank data is not yet implemented")
+
+        elif self.datasource == 'nhanes':
+            if self.person_id is None:
+                raise ValueError("The person_id is required for nhanes data")
+
+            self.enmo_df = read_nhanes_data(self.input_path, meta_dict=self.meta_dict, verbose=verbose, person_id=self.person_id)
             if verbose:
                 print(f"Loaded {self.enmo_df.shape[0]} minute-level ENMO records from {self.input_path}")
 
@@ -149,13 +153,6 @@ class DataLoader:
             self.enmo_df.index = pd.to_datetime(self.enmo_df.index)
             if verbose:
                 print(f"Filtered out {self.enmo_df.shape[0] - self.enmo_df.shape[0]} minute-level ENMO records due to incomplete daily coverage")
-
-        elif self.datasource == 'nhanes':
-            if self.person_id is None:
-                raise ValueError("The person_id is required for nhanes data")
-
-            self.enmo_df = read_nhanes_data(self.input_path, meta_dict=self.meta_dict, verbose=verbose, person_id=self.person_id)
-            
 
         else:
             raise ValueError("The datasource should be either 'smartwatch', 'nhanes' or 'uk-biobank'")
