@@ -30,6 +30,10 @@ def read_nhanes_data(file_dir: str, meta_dict: dict = {}, verbose: bool = False,
         curr = curr[curr['SEQN'] == person_id]
         day_x = pd.concat([day_x, curr], ignore_index=True)
 
+    if day_x.empty:
+        raise ValueError(f"No day-level data found for person {person_id}")
+
+    # rename columns
     day_x = day_x.rename(columns=str.lower)
     day_x = remove_bytes(day_x)
 
