@@ -2,6 +2,7 @@ import pandas as pd
 from typing import Union, Any
 import os
 import glob
+import pyreadr
 
 def read_ukbiobank_data(qc_file_path: str, enmo_file_dir: str, person_id: str, meta_dict: dict = {}) -> Union[pd.DataFrame, tuple[Any, Union[float, Any]]]:
     """
@@ -58,13 +59,36 @@ def read_ukbiobank_data(qc_file_path: str, enmo_file_dir: str, person_id: str, m
         raise ValueError(f"Person ID {person_id} has no valid accelerometer data - check for interrupted recording periods")
 
     # read acc file
-    enmo_file_names = glob.glob(os.path.join(enmo_file_dir, f"{person_id}*.csv"))
+    enmo_file_names = glob.glob(os.path.join(enmo_file_dir, "ukb_enmo_*.RDS"))
+
+    keeplist = []
+
+    for file in enmo_file_names:
+        result = pyreadr.read_r(file)
+        enmo_data = result[None]
+
+        # Filter for person_id
+        enmo_data = enmo_data[enmo_data['eid'] == person_id]
+
+        # Filter out day 1 and calculate 5-minute epochs
+        enmo_data = enmo_data[enmo_data['day'] >= 2]
+        enmo_data['myepoch'] = (12 * enmo_data['hour'].astype(int) + (enmo_data['minute'] // 5 + 1).astype(int))
+
+        # Calculate how many epochs per day
+        check = (enmo_data.groupby(['eid', 'day'])['myepoch']
+                .nunique()
+             .reset_index(name='n_epoch'))
+
+        # Keep only days with 288 epochs
+        ukb_keep = check[check['n_epoch'] == 288][['eid', 'day']]
+        keeplist.append(ukb_keep)
+
+    # Concatenate all kept data
+    data = pd.concat(keeplist, ignore_index=True)
 
 
 
-
-
-
+    """
     # Read the CSV file
     try:
         data = pd.read_csv(file_path)
@@ -92,5 +116,6 @@ def read_ukbiobank_data(qc_file_path: str, enmo_file_dir: str, person_id: str, m
         raise ValueError("Inconsistent timestamp frequency detected.")
 
     data.set_index('TIMESTAMP', inplace=True)
+    """
 
     return data[['ENMO']]
