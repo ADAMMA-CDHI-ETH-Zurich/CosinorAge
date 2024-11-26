@@ -1,4 +1,7 @@
 import pandas as pd
+import numpy as np
+from typing import List
+from datetime import datetime, timedelta
 
 
 def filter_incomplete_days(df: pd.DataFrame, data_freq: float) -> pd.DataFrame:
@@ -45,3 +48,42 @@ def filter_incomplete_days(df: pd.DataFrame, data_freq: float) -> pd.DataFrame:
     except Exception as e:
         print(f"Error filtering incomplete days: {e}")
         return pd.DataFrame()
+
+
+def filter_consecutive_days(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Return data frame containing only consecutive days.
+    """
+    days = np.unique(df.index.date)
+    days = largest_consecutive_sequence(days)
+
+    if len(days) < 4:
+        raise ValueError("Less than 4 consecutive days found")
+
+    df = df[pd.Index(df.index.date).isin(days)]
+    return df
+
+
+def largest_consecutive_sequence(dates: List[datetime]) -> List[datetime]:
+    if len(dates) == 0:  # Handle empty list
+        return []
+    
+    # Sort and remove duplicates
+    dates = sorted(set(dates))
+    longest_sequence = []
+    current_sequence = [dates[0]]
+    
+    for i in range(1, len(dates)):
+        if dates[i] - dates[i - 1] == timedelta(days=1):  # Check for consecutive days
+            current_sequence.append(dates[i])
+        else:
+            # Update longest sequence if current is longer
+            if len(current_sequence) > len(longest_sequence):
+                longest_sequence = current_sequence
+            current_sequence = [dates[i]]  # Start a new sequence
+    
+    # Final check after loop
+    if len(current_sequence) > len(longest_sequence):
+        longest_sequence = current_sequence
+    
+    return longest_sequence
