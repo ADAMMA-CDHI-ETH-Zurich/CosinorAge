@@ -4,7 +4,7 @@ from typing import List
 from datetime import datetime, timedelta
 
 
-def filter_incomplete_days(df: pd.DataFrame, data_freq: float) -> pd.DataFrame:
+def filter_incomplete_days(df: pd.DataFrame, data_freq: float, expected_points_per_day: int = None) -> pd.DataFrame:
     """
     Filter out data from incomplete days to ensure 24-hour data periods.
 
@@ -25,7 +25,8 @@ def filter_incomplete_days(df: pd.DataFrame, data_freq: float) -> pd.DataFrame:
     # Filter out incomplete days
     try:
         # Calculate expected number of data points for a full 24-hour day
-        expected_points_per_day = data_freq * 60 * 60 * 24
+        if expected_points_per_day == None:
+            expected_points_per_day = data_freq * 60 * 60 * 24
 
         # Extract the date from each timestamp
         _df = df.copy()

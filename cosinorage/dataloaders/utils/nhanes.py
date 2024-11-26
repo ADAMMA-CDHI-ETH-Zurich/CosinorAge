@@ -127,6 +127,10 @@ def read_nhanes_data(file_dir: str, meta_dict: dict = {}, verbose: bool = False,
     if verbose:
         print(f"Calculated ENMO for person {person_id}")
 
+    meta_dict['raw_data_frequency'] = 1 / (min_x.index[1] - min_x.index[0]).total_seconds()
+    meta_dict['raw_data_type'] = 'accelerometer'
+    meta_dict['raw_data_unit'] = 'm/s^2'
+
     return min_x
 
 def remove_bytes(df: pd.DataFrame) -> pd.DataFrame:

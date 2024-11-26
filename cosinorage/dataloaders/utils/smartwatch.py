@@ -71,7 +71,7 @@ def read_smartwatch_data(directory_path: str, meta_dict: dict = {}) -> Tuple[pd.
     # determine frequency in Hz of accelerometer data
     time_diffs = data['TIMESTAMP'].diff().dropna()
     acc_freq = 1 / time_diffs.mean().total_seconds()
-    meta_dict.update({'original_freq': acc_freq})
+    meta_dict.update({'raw_data_frequency': acc_freq})
 
     # set timestamp as index
     data.set_index('TIMESTAMP', inplace=True)
@@ -101,8 +101,11 @@ def preprocess_smartwatch_data(df: pd.DataFrame, sf: float, meta_dict: dict, pre
     epoch_size = preprocess_args.get('autocalib_epoch_size', 10)
     max_iter = preprocess_args.get('autocalib_max_iter', 1000)
     tol = preprocess_args.get('autocalib_tol', 1e-10)
+    sd_criter = preprocess_args.get('autocalib_sd_criter', 0.013)
+    mean_criter = preprocess_args.get('autocalib_mean_criter', 2)
+    sphere_crit = preprocess_args.get('autocalib_sphere_crit', 0.3)
 
-    _df = auto_calibrate(_df, sf, meta_dict, epoch_size, max_iter, tol, verbose=verbose)
+    _df = auto_calibrate(_df, sf, meta_dict, epoch_size, max_iter, tol, sd_criter, mean_criter, sphere_crit, verbose=verbose)
     if verbose:
         print('Calibration done')
 
@@ -131,7 +134,7 @@ def preprocess_smartwatch_data(df: pd.DataFrame, sf: float, meta_dict: dict, pre
     return _df[['X', 'Y', 'Z', 'wear']]
 
 
-def auto_calibrate(df: pd.DataFrame, sf: float, meta_dict: dict = {}, epoch_size: int = 10, max_iter: int = 1000, tol: float = 1e-10, verbose: bool = False) -> pd.DataFrame:
+def auto_calibrate(df: pd.DataFrame, sf: float, meta_dict: dict = {}, epoch_size: int = 10, max_iter: int = 1000, tol: float = 1e-10, sd_criter: float = 0.013, mean_criter: float = 2, sphere_crit: float = 0.3, verbose: bool = False) -> pd.DataFrame:
     """
     Perform autocalibration on accelerometer data, adjusting offset and scale to reduce calibration error. The implementation is based on the algorithm described in the GGIR R-package.
 
@@ -174,11 +177,10 @@ def auto_calibrate(df: pd.DataFrame, sf: float, meta_dict: dict = {}, epoch_size
     sd_gz = roll_sd(gz, window_size)
 
     # Step 2: Filter features for nonmovement periods based on low standard deviation
-    sd_criter = 0.013  # Example threshold for standard deviation
 
     nonmovement_idx = np.where(
-        (sd_gx < sd_criter) & (sd_gy < sd_criter) & (sd_gz < sd_criter) & (mean_gx < 2) & (mean_gy < 2) & (
-                mean_gz < 2))[0]
+        (sd_gx < sd_criter) & (sd_gy < sd_criter) & (sd_gz < sd_criter) & (mean_gx < mean_criter) & (mean_gy < mean_criter) & (
+                mean_gz < mean_criter))[0]
 
     mean_gx = mean_gx[nonmovement_idx]
     mean_gy = mean_gy[nonmovement_idx]
@@ -188,7 +190,6 @@ def auto_calibrate(df: pd.DataFrame, sf: float, meta_dict: dict = {}, epoch_size
     if len(mean_gx) > 10:
         
         # Check if the data points are within the sphere criterion
-        sphere_crit = 0.3
         sphere_populated = (
             (mean_gx.min() < -sphere_crit) and
             (mean_gx.max() > sphere_crit) and
@@ -422,7 +423,7 @@ def roll_mean(df , window_size: int) -> np.ndarray:
     if df.size == 0:
         raise ValueError("Dataframe is empty.")
 
-    return np.convolve(df, np.ones(window_size) / window_size, mode='valid')
+    return pd.Series(df).rolling(window=window_size, min_periods=1).mean().fillna(0).values
 
 
 def roll_sd(df , window_size: int) -> np.ndarray:
@@ -446,7 +447,7 @@ def roll_sd(df , window_size: int) -> np.ndarray:
     if df.size == 0:
         raise ValueError("Dataframe is empty.")
 
-    return pd.Series(df).rolling(window=window_size).std().dropna().values
+    return pd.Series(df).rolling(window=window_size, min_periods=1).std().fillna(0).values
 
 
 def _detect_wear(data: pd.DataFrame, sampling_rate: float) -> pd.DataFrame:
