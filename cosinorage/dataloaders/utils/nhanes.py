@@ -15,7 +15,8 @@ def read_nhanes_data(file_dir: str, meta_dict: dict = {}, verbose: bool = False,
         if file.startswith('PAXDAY'):
             version = file.split("_")[1].strip('.xpt')
             if f'PAXHD_{version}.xpt' in pax_files and f'PAXMIN_{version}.xpt' in pax_files:
-                versions.append(version)
+                if person_id in pd.read_sas(f"{file_dir}/PAXDAY_{version}.xpt")['SEQN'].unique():
+                    versions.append(version)
 
     if verbose:
         print(f"Found {len(versions)} versions of NHANES data")
@@ -98,16 +99,14 @@ def read_nhanes_data(file_dir: str, meta_dict: dict = {}, verbose: bool = False,
     min_x['measure_min'] = min_x['measure_time'].dt.minute
     min_x['myepoch'] = (12 * min_x['measure_hour'] + np.floor(min_x['measure_min'] / 5 + 1)).astype(int)
 
-    epoch = min_x[['seqn', 'paxdaym', 'myepoch']].drop_duplicates()
-
     # Count epochs per day and filter for complete days (288 epochs)
     epoch_counts = min_x.groupby(['seqn', 'paxdaym'])['myepoch'].nunique().reset_index()
     epoch_counts = epoch_counts[epoch_counts['myepoch'] == 288]
     min_x = min_x.merge(epoch_counts[['seqn', 'paxdaym']], on=['seqn', 'paxdaym'])
 
     # Count valid days per participant and filter for at least 4 valid days
-    valid_days = min_x.groupby('seqn')['paxdaym'].nunique().reset_index()
-    valid_days = valid_days[valid_days['paxdaym'] >= 4]
+    valid_days = min_x.groupby('seqn')['paxdaym'].unique().reset_index()
+    valid_days = valid_days[valid_days['paxdaym'].apply(len) >= 4]
     min_x = min_x[min_x['seqn'].isin(valid_days['seqn'])]
 
     min_x = min_x.rename(columns={
@@ -146,3 +145,4 @@ def calculate_measure_time(row):
     base_time = datetime.strptime(row['day1_start_time'], "%H:%M:%S")
     measure_time = base_time + timedelta(seconds=row['paxssnmp'] / 80)
     return measure_time
+

@@ -7,7 +7,7 @@ from tqdm import tqdm
 from scipy.signal import welch
 
 from .utils.calc_enmo import calculate_enmo, calculate_minute_level_enmo
-from .utils.filtering import filter_incomplete_days
+from .utils.filtering import filter_incomplete_days, filter_consecutive_days
 from .utils.smartwatch import read_smartwatch_data, preprocess_smartwatch_data
 from .utils.ukbiobank import read_ukbiobank_data
 from .utils.nhanes import read_nhanes_data
@@ -153,6 +153,8 @@ class DataLoader:
             self.enmo_df.index = pd.to_datetime(self.enmo_df.index)
             if verbose:
                 print(f"Filtered out {self.enmo_df.shape[0] - self.enmo_df.shape[0]} minute-level ENMO records due to incomplete daily coverage")
+
+            self.enmo_df = filter_consecutive_days(self.enmo_df)
 
         else:
             raise ValueError("The datasource should be either 'smartwatch', 'nhanes' or 'uk-biobank'")

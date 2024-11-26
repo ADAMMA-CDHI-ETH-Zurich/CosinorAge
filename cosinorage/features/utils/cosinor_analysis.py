@@ -110,12 +110,12 @@ def cosinor_multiday(df: pd.DataFrame) -> pd.DataFrame:
     beta_sin = model.params['sin']
     amplitude = np.sqrt(beta_cos**2 + beta_sin**2)
     acrophase = np.arctan2(beta_sin, beta_cos)
-    acrophase_time = acrophase/(2*np.pi)*1440
+    acrophase_time = acrophase/(2*np.pi)*24
     fitted_vals_df = model.fittedvalues
 
     # Adjust acrophase time to 0-24 hours
     if acrophase_time < 0:
-        acrophase_time += 1440
+        acrophase_time += 24
 
     # Convert the results into a DataFrame
     return {'MESOR': mesor, 'amplitude': amplitude, 'acrophase': acrophase, 'acrophase_time': acrophase_time}, fitted_vals_df
