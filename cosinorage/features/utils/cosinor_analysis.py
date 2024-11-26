@@ -55,13 +55,15 @@ def cosinor_by_day(df: pd.DataFrame) -> pd.DataFrame:
         beta_sin = model.params['sin']
         amplitude = np.sqrt(beta_cos**2 + beta_sin**2)
         acrophase = np.arctan2(beta_sin, beta_cos)
-        acrophase_time = acrophase/(2*np.pi)*1440
+        acrophase_time = acrophase/(2*np.pi)*24
 
         fitted_vals_df = pd.concat([fitted_vals_df, model.fittedvalues], ignore_index=False)
 
-        # Adjust acrophase time to 0-24 hours
+        if acrophase < 0:
+            acrophase += 2*np.pi
+
         if acrophase_time < 0:
-            acrophase_time += 1440
+            acrophase_time += 24
 
         # Append the day's results to the list
         params.append({
@@ -105,13 +107,16 @@ def cosinor_multiday(df: pd.DataFrame) -> pd.DataFrame:
     model = ols("ENMO ~ cos + sin", data=df).fit()
     
     # Extract parameters
-    mesor = model.params['Intercept']
+    mesor = float(model.params['Intercept'])
     beta_cos = model.params['cos']
     beta_sin = model.params['sin']
-    amplitude = np.sqrt(beta_cos**2 + beta_sin**2)
-    acrophase = np.arctan2(beta_sin, beta_cos)
-    acrophase_time = acrophase/(2*np.pi)*24
+    amplitude = float(np.sqrt(beta_cos**2 + beta_sin**2))
+    acrophase = float(np.arctan2(beta_sin, beta_cos))
+    acrophase_time = float(acrophase/(2*np.pi)*24)
     fitted_vals_df = model.fittedvalues
+
+    if acrophase < 0:
+        acrophase += 2*np.pi
 
     # Adjust acrophase time to 0-24 hours
     if acrophase_time < 0:
