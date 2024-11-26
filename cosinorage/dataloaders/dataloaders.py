@@ -9,7 +9,7 @@ from scipy.signal import welch
 from .utils.calc_enmo import calculate_enmo, calculate_minute_level_enmo
 from .utils.filtering import filter_incomplete_days, filter_consecutive_days
 from .utils.smartwatch import read_smartwatch_data, preprocess_smartwatch_data
-from .utils.ukbiobank import read_ukbiobank_data
+from .utils.ukb import read_ukbiobank_data
 from .utils.nhanes import read_nhanes_data
 
 def clock(func):

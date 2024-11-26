@@ -83,7 +83,8 @@ class WearableFeatures:
         cosinor_columns = ["MESOR", "amplitude", "acrophase", "acrophase_time"]
         if not all(col in self.feature_df.columns for col in cosinor_columns):
             self.compute_cosinor_features()
-        return pd.DataFrame(self.feature_df[cosinor_columns])
+
+        return pd.DataFrame(self.feature_df[cosinor_columns]), {key: self.feature_dict[key] for key in cosinor_columns}
         
     def compute_IV(self):
         """Compute Intradaily Variability (IV).
