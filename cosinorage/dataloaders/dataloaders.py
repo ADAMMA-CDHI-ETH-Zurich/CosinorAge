@@ -263,3 +263,50 @@ class DataLoader:
         plt.figure(figsize=(20, 5))
         plt.plot(f, Pxx)
         plt.show()
+
+
+class NHANESDataLoader(DataLoader):
+    def __init__(self, nhanes_file_dir: str, person_id: str = None):
+        super().__init__()
+
+        if not os.path.isdir(nhanes_file_dir):
+            raise ValueError("The input path should be a directory path")
+
+        self.nhanes_file_dir = nhanes_file_dir
+
+        self.person_id = person_id
+
+        self.meta_dict['datasource'] = 'nhanes'
+    pass
+
+class UKBDataLoader(DataLoader):
+    def __init__(self, qa_file_path: str, ukb_file_dir: str, person_id: str = None):
+        super().__init__()
+
+        if not os.path.isfile(qa_file_path):
+            raise ValueError("The QA file path should be a file path")
+        if not os.path.isdir(ukb_file_dir):
+            raise ValueError("The UKB file directory should be a directory path")
+
+        self.qa_file_path = qa_file_path
+        self.ukb_file_dir = ukb_file_dir
+
+        self.person_id = person_id
+
+        self.meta_dict['datasource'] = 'uk-biobank'
+    pass    
+
+class GalaxyWatchDataLoader(DataLoader):
+    def __init__(self, gw_file_dir: str):
+        super().__init__()
+
+        if not os.path.isdir(gw_file_dir):
+            raise ValueError("The Galaxy Watch file directory should be a directory path")
+
+        self.gw_file_dir = gw_file_dir
+
+        self.meta_dict['datasource'] = 'samsung galaxy watch'
+    pass
+
+class SmartwatchDataLoader(DataLoader):
+    pass
