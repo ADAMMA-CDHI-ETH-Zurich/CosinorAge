@@ -193,6 +193,8 @@ class GalaxyDataLoader(AccelerometerDataLoader):
 
         self.gw_file_dir = gw_file_dir
 
+        self.raw_data = None
+
         self.preprocess = preprocess
         self.preprocess_args = preprocess_args
 
@@ -200,25 +202,48 @@ class GalaxyDataLoader(AccelerometerDataLoader):
     
     @clock
     def load_data(self, verbose: bool = False):
-        self.acc_df = read_galaxy_data(self.gw_file_dir, meta_dict=self.meta_dict, verbose=verbose)
+        # load raw data
+        self.raw_data = read_galaxy_data(self.gw_file_dir, meta_dict=self.meta_dict, verbose=verbose)
         if verbose:
-            print(f"Loaded {self.acc_df.shape[0]} accelerometer data records from {self.gw_file_dir}")
-        self.meta_dict['raw_acc_timesteps'] = self.acc_df.shape[0]
+            print(f"Loaded {self.raw_data.shape[0]} accelerometer data records from {self.gw_file_dir}")
+        self.meta_dict['raw_n_timesteps'] = self.raw_data.shape[0]
+        self.meta_dict['raw_n_days'] = len(np.unique(self.raw_data.index.date))
+        self.meta_dict['raw_start_datetime'] = self.raw_data.index.min()
+        self.meta_dict['raw_end_datetime'] = self.raw_data.index.max()
+        self.meta_dict['raw_frequency'] = 'irregular (~25Hz)'
+        self.meta_dict['raw_datatype'] = 'accelerometer'
+        self.meta_dict['raw_unit'] = ''
 
+        # filter out first and last day
+        n_old = self.raw_data.shape[0]
+        self.acc_df = self.raw_data.loc[(self.raw_data.index.date != self.raw_data.index.date.min()) & (self.raw_data.index.date != self.raw_data.index.date.max())]
+        if verbose:
+            print(f"Filtered out {self.raw_data.shape[0] - self.acc_df.shape[0]}/{self.raw_data.shape[0]} accelerometer records due to filtering out first and last day")
+
+        # filter out sparse days
         n_old = self.acc_df.shape[0]
-        self.acc_df = filter_incomplete_days(self.acc_df, data_freq=self.meta_dict['raw_data_frequency'], expected_points_per_day=2000000)
+        self.acc_df = filter_incomplete_days(self.acc_df, data_freq=25, expected_points_per_day=2000000)
         if verbose:
-            print(f"Filtered out {n_old - self.acc_df.shape[0]} accelerometer records due to incomplete daily coverage")
+            print(f"Filtered out {n_old - self.acc_df.shape[0]}/{n_old} accelerometer records due to incomplete daily coverage")
 
+        # filter for longest consecutive sequence of days
         old_n = self.acc_df.shape[0]
-        self.acc_df = filter_consecutive_days(self.acc_df).sort_index()
+        self.acc_df = filter_consecutive_days(self.acc_df)
         if verbose:
-            print(f"Filtered out {old_n - self.acc_df.shape[0]} minute-level accelerometer records due to filtering for longest consecutive sequence of days")
+            print(f"Filtered out {old_n - self.acc_df.shape[0]}/{old_n} minute-level accelerometer records due to filtering for longest consecutive sequence of days")
 
-        # if not data left, return
-        if self.acc_df.empty:
-            self.enmo_df = pd.DataFrame()
-            return
+        # bring data so consistent frequency of 25Hz 
+        n_old = self.acc_df.shape[0]
+        self.acc_df = self.acc_df.resample('40ms').interpolate(method='linear').bfill()
+        if verbose:
+            print(f"Resampled {n_old} to {self.acc_df.shape[0]} timestamps")
+        self.meta_dict['resampled_n_timestamps'] = self.acc_df.shape[0]
+        self.meta_dict['resampled_n_days'] = len(np.unique(self.acc_df.index.date))
+        self.meta_dict['resampled_start_datetime'] = self.acc_df.index.min()
+        self.meta_dict['resampled_end_datetime'] = self.acc_df.index.max()
+        self.meta_dict['resampled_frequency'] = '25Hz'
+        self.meta_dict['resampled_datatype'] = 'accelerometer'
+        self.meta_dict['resampled_unit'] = ''
 
         if self.preprocess:
             self.acc_df[['X_raw', 'Y_raw', 'Z_raw']] = self.acc_df[['X', 'Y', 'Z']]
@@ -226,7 +251,13 @@ class GalaxyDataLoader(AccelerometerDataLoader):
             if verbose:
                 print(f"Preprocessed accelerometer data")
 
-        self.meta_dict['preprocessed_acc_timesteps'] = self.acc_df.shape[0]
+        self.meta_dict['preprocessed_n_timesteps'] = self.acc_df.shape[0]
+        self.meta_dict['preprocessed_n_days'] = len(np.unique(self.acc_df.index.date))
+        self.meta_dict['preprocessed_start_datetime'] = self.acc_df.index.min()
+        self.meta_dict['preprocessed_end_datetime'] = self.acc_df.index.max()
+        self.meta_dict['preprocessed_frequency'] = '25Hz'
+        self.meta_dict['preprocessed_datatype'] = 'accelerometer'
+        self.meta_dict['preprocessed_unit'] = ''
 
         # calculate ENMO values at original frequency
         self.acc_df['ENMO'] = calculate_enmo(self.acc_df)
@@ -234,16 +265,19 @@ class GalaxyDataLoader(AccelerometerDataLoader):
             print(f"Calculated ENMO for {self.acc_df['ENMO'].shape[0]} accelerometer records")
 
         # aggregate ENMO values at the minute level in mg
-        self.enmo_df = calculate_minute_level_enmo(self.acc_df, self.meta_dict['raw_data_frequency'])
+        self.enmo_df = calculate_minute_level_enmo(self.acc_df, 25)
         self.enmo_df['ENMO'] = self.enmo_df['ENMO']-self.enmo_df['ENMO'].min()
         self.enmo_df.index = pd.to_datetime(self.enmo_df.index)
         if verbose:
             print(f"Aggregated ENMO values at the minute level leading to {self.enmo_df.shape[0]} records")
 
-        self.meta_dict['enmo_timesteps'] = self.enmo_df.shape[0]
-        self.meta_dict['n_days'] = len(np.unique(self.enmo_df.index.date))
-        self.meta_dict['start_datetime'] = self.enmo_df.index.min()
-        self.meta_dict['end_datetime'] = self.enmo_df.index.max()
+        self.meta_dict['minute-level_n_timesteps'] = self.enmo_df.shape[0]
+        self.meta_dict['minute-level_n_days'] = len(np.unique(self.enmo_df.index.date))
+        self.meta_dict['minute-level_start_datetime'] = self.enmo_df.index.min()
+        self.meta_dict['minute-level_end_datetime'] = self.enmo_df.index.max()
+        self.meta_dict['minute-level_frequency'] = 'minute-level'
+        self.meta_dict['minute-level_datatype'] = 'enmo'
+        self.meta_dict['minute-level_unit'] = ''
 
 
 class SmartwatchDataLoader(AccelerometerDataLoader):
@@ -267,7 +301,6 @@ class SmartwatchDataLoader(AccelerometerDataLoader):
         self.acc_df = read_smartwatch_data(self.smartwatch_file_dir, meta_dict=self.meta_dict)
         if verbose:
             print(f"Loaded {self.acc_df.shape[0]} accelerometer data records from {self.smartwatch_file_dir}")
-            print(f"The frequency of the accelerometer data is {self.meta_dict['raw_data_frequency']}Hz")
 
         # filter out incomplete days
         n_old = self.acc_df.shape[0]

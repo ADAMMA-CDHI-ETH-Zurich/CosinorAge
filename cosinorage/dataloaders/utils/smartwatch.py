@@ -122,12 +122,15 @@ def preprocess_smartwatch_data(df: pd.DataFrame, sf: float, meta_dict: dict, pre
     if verbose:
         print('Noise removal done')
 
-    _df['wear'] = detect_wear(_df, sf)['wear']
+    std_threshold = preprocess_args.get('wear_detection_std_threshold', 0.013)
+    range_threshold = preprocess_args.get('wear_detection_range_threshold', 0.15)
+
+    _df['wear'] = detect_wear(_df, sf, std_threshold, range_threshold)['wear']
     if verbose:
         print('Wear detection done')
 
     total, wear, nonwear = calc_weartime(_df, sf)
-    meta_dict.update({'total time': total, 'wear time': wear, 'non-wear time': nonwear})
+    meta_dict.update({'resampled_total_time': total, 'resampled_wear_time': wear, 'resampled_non-wear_time': nonwear})
     if verbose:
         print('Wear time calculated')
 
@@ -206,7 +209,7 @@ def auto_calibrate(df: pd.DataFrame, sf: float, meta_dict: dict = {}, epoch_size
 
         # Calculate initial calibration error based on distance from expected 1g magnitude
         calib_error_start = np.mean(np.abs(np.sqrt(mean_gx ** 2 + mean_gy ** 2 + mean_gz ** 2) - 1))
-        meta_dict.update({'initial calibration error': float(calib_error_start)})
+        meta_dict.update({'calibration_initial_error': float(calib_error_start)})
 
         # Step 4: Iterative adjustment to minimize calibration error
 
@@ -274,7 +277,7 @@ def auto_calibrate(df: pd.DataFrame, sf: float, meta_dict: dict = {}, epoch_size
         mean_gy_end = (mean_gy + offset[1]) * scale[1]
         mean_gz_end = (mean_gz + offset[2]) * scale[2]
         calib_error_end = np.mean(np.abs(np.sqrt(mean_gx_end ** 2 + mean_gy_end ** 2 + mean_gz_end ** 2) - 1))
-        meta_dict.update({'final calibration error': float(calib_error_end)})
+        meta_dict.update({'calibration_final_error': float(calib_error_end)})
 
         if (calib_error_end < calib_error_start) and (calib_error_end < 0.01):
             if verbose:
@@ -285,7 +288,7 @@ def auto_calibrate(df: pd.DataFrame, sf: float, meta_dict: dict = {}, epoch_size
             offset = np.array([0.0, 0.0, 0.0])
             scale = np.array([1.0, 1.0, 1.0])
 
-        meta_dict.update({'offset': offset, 'scale': scale})
+        meta_dict.update({'calibration_offset': offset, 'calibration_scale': scale})
         # Return calibration results
         return (df + offset) * scale
     else:
@@ -335,7 +338,7 @@ def remove_noise(df: pd.DataFrame, sf: float, filter_type: str = 'lowpass', filt
     return _df
 
 
-def detect_wear(df: pd.DataFrame, sf: float) -> pd.DataFrame:
+def detect_wear(df: pd.DataFrame, sf: float, acc_std_threshold: float = 0.013, acc_range_threshold: float = 0.15) -> pd.DataFrame:
     """
     Detect wear and non-wear periods from accelerometer data. The implementation is based on the algorithm described in the BioPsyKit package.
 
@@ -360,7 +363,7 @@ def detect_wear(df: pd.DataFrame, sf: float) -> pd.DataFrame:
     # copy and rename acc columns of the dataframe
     _df = df[['X', 'Y', 'Z']].copy()
 
-    wnw = _detect_wear(_df, sf)
+    wnw = _detect_wear(_df, sf, acc_std_threshold, acc_range_threshold)
 
     # bring wear detection results back to the original frequency
     start_time = wnw['start'].min()
@@ -379,7 +382,7 @@ def detect_wear(df: pd.DataFrame, sf: float) -> pd.DataFrame:
     wear_series = pd.concat(expanded_data)
 
     # Calculate the mean for each time period, which averages any overlaps
-    wear_mean = wear_series.groupby(level=0).mean().to_frame(name='wear')
+    wear_mean = wear_series.groupby(level=0).min().to_frame(name='wear')
     return wear_mean
 
 
@@ -450,7 +453,7 @@ def roll_sd(df , window_size: int) -> np.ndarray:
     return pd.Series(df).rolling(window=window_size, min_periods=1).std().fillna(0).values
 
 
-def _detect_wear(data: pd.DataFrame, sampling_rate: float) -> pd.DataFrame:
+def _detect_wear(data: pd.DataFrame, sampling_rate: float, acc_std_threshold: float = 0.013, acc_range_threshold: float = 0.15) -> pd.DataFrame:
     """
     Detect non-wear times from raw acceleration data. The implementation is based on the algorithm described in the BioPsyKit package.
 
@@ -499,9 +502,6 @@ def _detect_wear(data: pd.DataFrame, sampling_rate: float) -> pd.DataFrame:
     })
 
     # Apply thresholds
-    acc_std_threshold = 0.013
-    acc_range_threshold = 0.15
-
     acc_std_binary = (acc_std >= acc_std_threshold).astype(int)
     acc_range_binary = (acc_range >= acc_range_threshold).astype(int)
 

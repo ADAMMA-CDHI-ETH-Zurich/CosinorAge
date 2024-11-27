@@ -27,17 +27,8 @@ def read_galaxy_data(gw_file_dir: str, meta_dict: dict, verbose: bool = False):
     data.set_index('TIMESTAMP', inplace=True)
     data.drop(columns=['effective_time_frame', 'sensor_body_location'], inplace=True)
 
-    #min_val = data[['X', 'Y', 'Z']].min().min()
-    #max_val = data[['X', 'Y', 'Z']].max().max()
-    #data[['X', 'Y', 'Z']] = 6*(data[['X', 'Y', 'Z']] - min_val) / (max_val - min_val)
     data = data.fillna(0)
-    data.sort_index()
-
-    # compute raw data frequency
-    meta_dict['raw_data_frequency'] = int(1 / (data.index[1] - data.index[0]).total_seconds())
-    meta_dict['raw_data_type'] = 'accelerometer'
-    meta_dict['raw_data_unit'] = 'm/s^2'
-
+    data.sort_index(inplace=True)
     return data
 
 def acceleration_data_to_dataframe(data):
