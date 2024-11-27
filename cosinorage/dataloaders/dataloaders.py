@@ -166,7 +166,7 @@ class NHANESDataLoader(ENMODDataLoader):
         self.meta_dict['n_days'] = self.enmo_df.index.date.nunique()
 
 class UKBDataLoader(AccelerometerDataLoader):
-    def __init__(self, qa_file_path: str, ukb_file_dir: str, person_id: str = None):
+    def __init__(self, qa_file_path: str, ukb_file_dir: str, eid: int):
         super().__init__()
 
         if not os.path.isfile(qa_file_path):
@@ -177,12 +177,22 @@ class UKBDataLoader(AccelerometerDataLoader):
         self.qa_file_path = qa_file_path
         self.ukb_file_dir = ukb_file_dir
 
-        self.person_id = person_id
+        self.eid = eid
+
+        self.raw_data = None
 
         self.meta_dict['datasource'] = 'uk-biobank'
 
+    @clock
     def load_data(self, verbose: bool = False):
-        pass
+        
+        self.raw_data = read_ukbiobank_data(self.qa_file_path, self.ukb_file_dir, self.eid, meta_dict=self.meta_dict, verbose=verbose)
+        if verbose: 
+            print(f"Loaded {self.raw_data.shape[0]} minute-level ENMO records from {self.ukb_file_dir}")
+
+        self.enmo_df = filter_incomplete_days(self.raw_data, data_freq=1/60, expected_points_per_day=1440)
+        if verbose:
+            print(f"Filtered out {self.raw_data.shape[0] - self.enmo_df.shape[0]} minute-level ENMO records due to incomplete daily coverage")
 
 class GalaxyDataLoader(AccelerometerDataLoader):
     def __init__(self, gw_file_dir: str, preprocess: bool = True, preprocess_args: dict = {}):

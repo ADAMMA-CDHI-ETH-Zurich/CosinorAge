@@ -2,6 +2,7 @@
 /R/
 /.idea/
 /data/
+/examples/ukb_example.ipynb
 
 *.pkl
 

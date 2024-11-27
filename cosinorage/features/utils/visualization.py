@@ -18,7 +18,8 @@ def plot_sleep_predictions(feature_obj, simple=True, start_date=None, end_date=N
         plt.figure(figsize=(20, 0.5))
         plt.plot(selected_data["sleep"] == 0, 'g.', label='Wake')
         plt.plot(selected_data["sleep"] == 1, 'b.', label='Sleep')
-        plt.plot(selected_data["wear"] != 1, 'r.', label='Non-wear')
+        if 'wear' in selected_data.columns:
+            plt.plot(selected_data["wear"] != 1, 'r.', label='Non-wear')
         plt.ylim(0.9, 1.1)
         plt.yticks([])
         plt.legend()
@@ -28,7 +29,8 @@ def plot_sleep_predictions(feature_obj, simple=True, start_date=None, end_date=N
         # plot sleep predictions as red bands
         plt.fill_between(selected_data.index, (1-selected_data['sleep'])*1000, color='green', alpha=0.5, label='Wake')
         plt.fill_between(selected_data.index, selected_data['sleep']*1000, color='blue', alpha=0.5, label='Sleep')
-        plt.fill_between(selected_data.index, (1-selected_data['wear'])*1000, color='red', alpha=0.5, label='Non-wear')
+        if 'wear' in selected_data.columns:
+            plt.fill_between(selected_data.index, (1-selected_data['wear'])*1000, color='red', alpha=0.5, label='Non-wear')
         plt.plot(selected_data['ENMO'], label='ENMO', color='black')
         # y axis limits
         plt.ylim(0, max(selected_data['ENMO'])*1.25)
