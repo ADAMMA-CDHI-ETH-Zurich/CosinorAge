@@ -27,8 +27,8 @@ class WearableFeatures:
         Args:
             loader (DataLoader): DataLoader instance containing ENMO data
         """
-        self.enmo = loader.get_enmo_data().copy()
-        self.feature_df = pd.DataFrame(index=pd.unique(self.enmo.index.date))
+        self.ml_data = loader.get_ml_data().copy()
+        self.feature_df = pd.DataFrame(index=pd.unique(self.ml_data.index.date))
         self.feature_dict = {}   
 
     def run(self):
@@ -60,19 +60,19 @@ class WearableFeatures:
         cosinor_columns = ["MESOR", "amplitude", "acrophase", "acrophase_time"]
 
         # by day cosinor computation
-        if not all(col in self.feature_df.columns for col in cosinor_columns) or "cosinor_fitted" not in self.enmo.columns:
-            params, fitted = cosinor_by_day(self.enmo)
+        if not all(col in self.feature_df.columns for col in cosinor_columns) or "cosinor_fitted" not in self.ml_data.columns:
+            params, fitted = cosinor_by_day(self.ml_data)
             self.feature_df["MESOR"] = params["MESOR"]
             self.feature_df["amplitude"] = params["amplitude"]
             self.feature_df["acrophase"] = params["acrophase"]
             self.feature_df["acrophase_time"] = params["acrophase_time"]
-            self.enmo["cosinor_by_day_fitted"] = fitted
+            self.ml_data["cosinor_by_day_fitted"] = fitted
 
         # multiday cosinor computation
         if not all(col in self.feature_dict for col in cosinor_columns):
-            params, fitted = cosinor_multiday(self.enmo)
+            params, fitted = cosinor_multiday(self.ml_data)
             self.feature_dict.update(params)
-            self.enmo["cosinor_multiday_fitted"] = fitted
+            self.ml_data["cosinor_multiday_fitted"] = fitted
 
     def get_cosinor_features(self):
         """Get computed cosinor features.
@@ -93,7 +93,7 @@ class WearableFeatures:
         indicating more frequent transitions between rest and activity.
         """
         if "IV" not in self.feature_df.columns:
-            self.feature_df["IV"] = IV(self.enmo)
+            self.feature_df["IV"] = IV(self.ml_data)
 
     def get_IV(self):
         """Get computed Intradaily Variability (IV) values.
@@ -113,7 +113,7 @@ class WearableFeatures:
         indicating more consistent day-to-day patterns.
         """
         if "IS" not in self.feature_df.columns:
-            self.feature_df["IS"] = IS(self.enmo)
+            self.feature_df["IS"] = IS(self.ml_data)
 
     def get_IS(self):
         """Get computed Interdaily Stability (IS) values.
@@ -132,7 +132,7 @@ class WearableFeatures:
         10-hour period and L5 is the least active 5-hour period.
         """
         if "RA" not in self.feature_df.columns:
-            self.feature_df["RA"] = RA(self.enmo)
+            self.feature_df["RA"] = RA(self.ml_data)
 
     def get_RA(self):
         """Get computed Relative Amplitude (RA) values.
@@ -153,7 +153,7 @@ class WearableFeatures:
             - M10_start: Start time of most active period
         """
         if "M10" or "M10_start" not in self.feature_df.columns:
-            res = M10(self.enmo)
+            res = M10(self.ml_data)
             self.feature_df["M10"] = res["M10"]
             self.feature_df["M10_start"] = res["M10_start"]
 
@@ -176,7 +176,7 @@ class WearableFeatures:
             - L5_start: Start time of least active period
         """
         if "L5" or "L5_start" not in self.feature_df.columns:
-            res = L5(self.enmo)
+            res = L5(self.ml_data)
             self.feature_df["L5"] = res["L5"]
             self.feature_df["L5_start"] = res["L5_start"]
 
@@ -199,7 +199,7 @@ class WearableFeatures:
             - M10_start: Start time of most active period in minutes from midnight
         """
         if "M10" or "M10_start" not in self.feature_df.columns:
-            res = M10(self.enmo)
+            res = M10(self.ml_data)
             self.feature_df["M10"] = res["M10"]
             self.feature_df["M10_start"] = res["M10_start"]
 
@@ -223,7 +223,7 @@ class WearableFeatures:
             - L5_start: Start time of least active period in minutes from midnight
         """
         if "L5" or "L5_start" not in self.feature_df.columns:
-            res = L5(self.enmo)
+            res = L5(self.ml_data)
             self.feature_df["L5"] = res["L5"]
             self.feature_df["L5_start"] = res["L5_start"]
 
@@ -248,7 +248,7 @@ class WearableFeatures:
             - MVPA: Time spent in moderate-to-vigorous physical activity
         """
         if "SB" or "LIPA" or "MVPA" not in self.feature_df.columns:
-            res = activity_metrics(self.enmo)
+            res = activity_metrics(self.ml_data)
             self.feature_df["SB"] = res["SB"]
             self.feature_df["LIPA"] = res["LIPA"]
             self.feature_df["MVPA"] = res["MVPA"]
@@ -273,7 +273,7 @@ class WearableFeatures:
             - MVPA: Time spent in moderate-to-vigorous physical activity
         """
         if "SB" or "LIPA" or "MVPA" not in self.feature_df.columns:
-            res = activity_metrics(self.enmo)
+            res = activity_metrics(self.ml_data)
             self.feature_df["SB"] = res["SB"]
             self.feature_df["LIPA"] = res["LIPA"]
             self.feature_df["MVPA"] = res["MVPA"]
@@ -298,7 +298,7 @@ class WearableFeatures:
             - MVPA: Time spent in moderate-to-vigorous physical activity
         """
         if "SB" or "LIPA" or "MVPA" not in self.feature_df.columns:
-            res = activity_metrics(self.enmo)
+            res = activity_metrics(self.ml_data)
             self.feature_df["SB"] = res["SB"]
             self.feature_df["LIPA"] = res["LIPA"]
             self.feature_df["MVPA"] = res["MVPA"]
@@ -320,8 +320,8 @@ class WearableFeatures:
         Updates enmo DataFrame with:
             - sleep: Binary values where 1 indicates sleep and 0 indicates wake
         """
-        if "sleep" not in self.enmo.columns:
-            self.enmo["sleep"] = apply_sleep_wake_predictions(self.enmo, mode="ggir")
+        if "sleep" not in self.ml_data.columns:
+            self.ml_data["sleep"] = apply_sleep_wake_predictions(self.ml_data, mode="ggir")
 
     def get_sleep_predictions(self):
         """Get computed sleep/wake predictions.
@@ -330,9 +330,9 @@ class WearableFeatures:
             pd.DataFrame: DataFrame containing binary sleep predictions where 
                          1 indicates sleep and 0 indicates wake
         """
-        if "sleep" not in self.enmo.columns:
+        if "sleep" not in self.ml_data.columns:
             self.compute_sleep_predictions()
-        return pd.DataFrame(self.enmo["sleep"])
+        return pd.DataFrame(self.ml_data["sleep"])
 
     def compute_TST(self):
         """Compute Total Sleep Time (TST).
@@ -340,10 +340,10 @@ class WearableFeatures:
         First ensures sleep predictions are computed, then calculates total
         sleep time for each day.
         """
-        if "sleep" not in self.enmo.columns:
-            self.enmo["sleep"] = apply_sleep_wake_predictions(self.enmo)
+        if "sleep" not in self.ml_data.columns:
+            self.ml_data["sleep"] = apply_sleep_wake_predictions(self.ml_data)
         if "TST" not in self.feature_df.columns:
-            self.feature_df["TST"] = tst(self.enmo)    
+            self.feature_df["TST"] = tst(self.ml_data)    
 
     def get_TST(self):
         """Get computed Total Sleep Time (TST) values.
@@ -362,10 +362,10 @@ class WearableFeatures:
         First ensures sleep predictions are computed, then calculates wake
         time occurring after initial sleep onset.
         """
-        if "sleep" not in self.enmo.columns:
-            self.enmo["sleep"] = apply_sleep_wake_predictions(self.enmo)
+        if "sleep" not in self.ml_data.columns:
+            self.ml_data["sleep"] = apply_sleep_wake_predictions(self.ml_data)
         if "WASO" not in self.feature_df.columns:
-            self.feature_df["WASO"] = waso(self.enmo)
+            self.feature_df["WASO"] = waso(self.ml_data)
 
     def get_WASO(self):
         """Get computed Wake After Sleep Onset (WASO) values.
@@ -384,10 +384,10 @@ class WearableFeatures:
         First ensures sleep predictions are computed, then calculates
         periods of prolonged wakefulness.
         """
-        if "sleep" not in self.enmo.columns:
-            self.enmo["sleep"] = apply_sleep_wake_predictions(self.enmo)
+        if "sleep" not in self.ml_data.columns:
+            self.ml_data["sleep"] = apply_sleep_wake_predictions(self.ml_data)
         if "PTA" not in self.feature_df.columns:
-            self.feature_df["PTA"] = pta(self.enmo)
+            self.feature_df["PTA"] = pta(self.ml_data)
 
     def get_PTA(self):
         """Get computed Prolonged Time Awake (PTA) values.
@@ -406,11 +406,11 @@ class WearableFeatures:
         First ensures sleep predictions are computed, then calculates
         the consistency of sleep timing between days.
         """
-        if "sleep" not in self.enmo.columns:
-            self.enmo["sleep"] = apply_sleep_wake_predictions(self.enmo)
+        if "sleep" not in self.ml_data.columns:
+            self.ml_data["sleep"] = apply_sleep_wake_predictions(self.ml_data)
             print("computed sleep predictions")
         if "SRI" not in self.feature_df.columns:
-            self.feature_df["SRI"] = sri(self.enmo)
+            self.feature_df["SRI"] = sri(self.ml_data)
 
     def get_SRI(self):
         """Get computed Sleep Regularity Index (SRI) values.
@@ -431,10 +431,10 @@ class WearableFeatures:
         """
         return self.feature_df, self.feature_dict
 
-    def get_enmo_data(self):
+    def get_ml_data(self):
         """Returns the raw ENMO data.
         
         Returns:
             pd.DataFrame: DataFrame containing ENMO data with datetime index
         """
-        return self.enmo
+        return self.ml_data

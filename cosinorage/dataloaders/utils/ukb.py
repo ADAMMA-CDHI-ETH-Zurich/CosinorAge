@@ -5,7 +5,9 @@ import glob
 import numpy as np
 from tqdm import tqdm
 
-def read_ukbiobank_data(qc_file_path: str, enmo_file_dir: str, eid: int, meta_dict: dict = {}, verbose: bool = False) -> Union[pd.DataFrame, tuple[Any, Union[float, Any]]]:
+from .filtering import filter_incomplete_days, filter_consecutive_days
+
+def read_ukb_data(qc_file_path: str, enmo_file_dir: str, eid: int, meta_dict: dict = {}, verbose: bool = False) -> Union[pd.DataFrame, tuple[Any, Union[float, Any]]]:
     """
     Read UK Biobank data from a CSV file and process it.
 
@@ -121,6 +123,31 @@ def read_ukbiobank_data(qc_file_path: str, enmo_file_dir: str, eid: int, meta_di
     data.sort_index(inplace=True)
 
     if verbose:
-        print(f"Data loaded for eid {eid}")
+        print(f"Loaded {data.shape[0]} minute-level ENMO records from {enmo_file_dir}")
 
     return data[['ENMO']]
+
+
+def filter_ukb_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+    _data = data.copy()
+
+    _data = filter_incomplete_days(_data, data_freq=1/60, expected_points_per_day=1440)
+    if verbose:
+        print(f"Filtered out {data.shape[0] - _data.shape[0]} minute-level ENMO records due to incomplete daily coverage")
+
+    _data = filter_consecutive_days(_data)
+    if verbose:
+        print(f"Filtered out {_data.shape[0] - data.shape[0]} minute-level ENMO records due to non-consecutive days")
+
+    return _data
+
+
+def resample_ukb_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+    _data = data.copy()
+
+    _data = _data.resample('1min').interpolate(method='linear').bfill()
+    if verbose:
+        print(f"Resampled {data.shape[0]} to {_data.shape[0]} timestamps")
+
+    return _data
+

@@ -12,7 +12,7 @@ def plot_orig_enmo(acc_loader, resample: str = '15min', wear: bool = True):
         wear (bool): Whether to add color bands for wear and non-wear periods (default is True).
     """
     #_data = self.acc_df.resample('5min').mean().reset_index(inplace=False)
-    _data = acc_loader.get_acc_data().resample(f'{resample}').mean().reset_index(inplace=False)
+    _data = acc_loader.get_sf_data().resample(f'{resample}').mean().reset_index(inplace=False)
     
 
     plt.figure(figsize=(12, 6))
@@ -38,7 +38,7 @@ def plot_enmo(loader):
     Returns:
         None
     """
-    _data = loader.get_enmo_data().reset_index(inplace=False)
+    _data = loader.get_ml_data().reset_index(inplace=False)
 
     plt.figure(figsize=(12, 6))
     plt.plot(_data['TIMESTAMP'], _data['ENMO'], label='ENMO', color='black')
@@ -53,7 +53,7 @@ def plot_enmo(loader):
 
 def plot_orig_enmo_freq(acc_loader):
     # convert to frequency domain
-    f, Pxx = welch(acc_loader.get_acc_data()['ENMO'], fs=80, nperseg=1024)
+    f, Pxx = welch(acc_loader.get_sf_data()['ENMO'], fs=80, nperseg=1024)
 
     plt.figure(figsize=(20, 5))
     plt.plot(f, Pxx)

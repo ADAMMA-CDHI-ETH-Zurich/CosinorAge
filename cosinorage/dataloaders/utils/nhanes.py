@@ -4,9 +4,15 @@ import numpy as np
 from datetime import datetime, timedelta
 from tqdm import tqdm
 
-from cosinorage.dataloaders.utils.calc_enmo import calculate_enmo
+from .calc_enmo import calculate_enmo
+from .filtering import filter_incomplete_days, filter_consecutive_days
 
-def read_nhanes_data(file_dir: str, meta_dict: dict = {}, verbose: bool = False, person_id: str = None) -> pd.DataFrame:
+
+def read_nhanes_data(file_dir: str, person_id: str = None, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+
+    if person_id is None:
+        raise ValueError("The person_id is required for nhanes data")
+
     # list all files in directory starting with PAX
     pax_files = [f for f in os.listdir(file_dir) if f.startswith('PAX')]
     # for each file starting with PAXDAY check if PAXHD and PAXMIN are present
@@ -131,7 +137,40 @@ def read_nhanes_data(file_dir: str, meta_dict: dict = {}, verbose: bool = False,
     meta_dict['raw_data_type'] = 'accelerometer'
     meta_dict['raw_data_unit'] = 'm/s^2'
 
+    if verbose:
+        print(f"Loaded {min_x.shape[0]} minute-level ENMO records from {file_dir}")
+
     return min_x
+
+def filter_nhanes_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+    _data = data.copy()
+    
+    old_n = _data.shape[0]
+    _data = filter_incomplete_days(_data, data_freq=meta_dict['raw_data_frequency'])
+    if verbose:
+        print(f"Filtered out {old_n - data.shape[0]} minute-level ENMO records due to incomplete daily coverage")
+
+    _data.index = pd.to_datetime(_data.index)
+        
+    old_n = _data.shape[0]
+    _data = filter_consecutive_days(_data)
+    if verbose:
+        print(f"Filtered out {old_n - _data.shape[0]} minute-level ENMO records due to filtering for longest consecutive sequence of days")
+
+    meta_dict['n_days'] = len(np.unique(_data.index.date))
+
+    return _data
+
+def resample_nhanes_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+    _data = data.copy()
+
+    _data = _data.resample('1min').interpolate(method='linear').bfill()
+    if verbose:
+        print(f"Resampled {data.shape[0]} to {_data.shape[0]} timestamps")
+
+    return _data
+
+
 
 def remove_bytes(df: pd.DataFrame) -> pd.DataFrame:
     for col in df.select_dtypes([object]):  # Select columns with object type (likely byte strings)

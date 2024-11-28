@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 
-def calculate_enmo(data: pd.DataFrame) -> pd.DataFrame:
+def calculate_enmo(data: pd.DataFrame, verbose: bool = False) -> pd.DataFrame:
     """
     Calculate the Euclidean Norm Minus One (ENMO) metric from accelerometer data.
 
@@ -25,10 +25,13 @@ def calculate_enmo(data: pd.DataFrame) -> pd.DataFrame:
         print(f"Error calculating ENMO: {e}")
         _enmo_vals = np.nan
 
+    if verbose:
+        print(f"Calculated ENMO for {data.shape[0]} accelerometer records")
+
     return _enmo_vals
 
 
-def calculate_minute_level_enmo(data: pd.DataFrame, sf: float) -> pd.DataFrame:
+def calculate_minute_level_enmo(data: pd.DataFrame, sf: float, verbose: bool = False) -> pd.DataFrame:
     """
     Resample high-frequency ENMO data to minute-level by averaging over each minute.
 
@@ -54,5 +57,10 @@ def calculate_minute_level_enmo(data: pd.DataFrame, sf: float) -> pd.DataFrame:
     except Exception as e:
         print(f"Error resampling ENMO data: {e}")
         minute_level_enmo_df = pd.DataFrame()
+
+    minute_level_enmo_df.index = pd.to_datetime(minute_level_enmo_df.index)
+    
+    if verbose:
+        print(f"Aggregated ENMO values at the minute level leading to {minute_level_enmo_df.shape[0]} records")
 
     return minute_level_enmo_df
