@@ -321,7 +321,7 @@ class WearableFeatures:
             - sleep: Binary values where 1 indicates sleep and 0 indicates wake
         """
         if "sleep" not in self.ml_data.columns:
-            self.ml_data["sleep"] = apply_sleep_wake_predictions(self.ml_data, mode="ggir")
+            self.ml_data["sleep"] = apply_sleep_wake_predictions(self.ml_data)
 
     def get_sleep_predictions(self):
         """Get computed sleep/wake predictions.
