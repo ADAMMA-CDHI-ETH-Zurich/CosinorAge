@@ -10,10 +10,10 @@ def plot_sleep_predictions(feature_obj, simple=True, start_date=None, end_date=N
         end_date (datetime, optional): End date for plotting. Defaults to None (latest date).
     """
     if start_date is None:
-        start_date = feature_obj.enmo.index[0]
+        start_date = feature_obj.ml_data.index[0]
     if end_date is None:
-        end_date = feature_obj.enmo.index[-1]
-    selected_data = feature_obj.enmo[(feature_obj.enmo.index >= start_date) & (feature_obj.enmo.index <= end_date)]
+        end_date = feature_obj.ml_data.index[-1]
+    selected_data = feature_obj.ml_data[(feature_obj.ml_data.index >= start_date) & (feature_obj.ml_data.index <= end_date)]
     if simple:
         plt.figure(figsize=(20, 0.5))
         plt.plot(selected_data["sleep"] == 0, 'g.', label='Wake')
@@ -47,10 +47,10 @@ def plot_non_wear(feature_obj, simple=True, start_date=None, end_date=None):
         end_date (datetime, optional): End date for plotting. Defaults to None (latest date).
     """
     if start_date is None:
-        start_date = feature_obj.enmo.index[0]
+        start_date = feature_obj.ml_data.index[0]
     if end_date is None:
-        end_date = feature_obj.enmo.index[-1]
-    selected_data = feature_obj.enmo[(feature_obj.enmo.index >= start_date) & (feature_obj.enmo.index <= end_date)]
+        end_date = feature_obj.ml_data.index[-1]
+    selected_data = feature_obj.ml_data[(feature_obj.ml_data.index >= start_date) & (feature_obj.ml_data.index <= end_date)]
     if simple:
         plt.figure(figsize=(20, 0.5))
         plt.plot(selected_data["wear"] == 1, 'g.', label='Wear')
@@ -86,25 +86,25 @@ def plot_cosinor(feature_obj, multiday=True):
         ValueError: If cosinor features haven't been computed
     """
     if multiday:
-        if "cosinor_multiday_fitted" not in feature_obj.enmo.columns:
+        if "cosinor_multiday_fitted" not in feature_obj.ml_data.columns:
             raise ValueError("Multiday cosinor fitted values not computed.")
-        minutes = np.arange(0, len(feature_obj.enmo))
-        timestamps = feature_obj.enmo.index
+        minutes = np.arange(0, len(feature_obj.ml_data))
+        timestamps = feature_obj.ml_data.index
         plt.figure(figsize=(20, 10))
-        plt.plot(timestamps, feature_obj.enmo["ENMO"], 'r-')
-        plt.plot(timestamps, feature_obj.enmo["cosinor_multiday_fitted"], 'b-')
-        plt.ylim(0, max(feature_obj.enmo["ENMO"])*1.5)
+        plt.plot(timestamps, feature_obj.ml_data["ENMO"], 'r-')
+        plt.plot(timestamps, feature_obj.ml_data["cosinor_multiday_fitted"], 'b-')
+        plt.ylim(0, max(feature_obj.ml_data["ENMO"])*1.5)
         cosinor_columns = ["MESOR", "amplitude", "acrophase", "acrophase_time"]
         if all(col in feature_obj.feature_df.columns for col in cosinor_columns):
             # x ticks should be daytime hours
             plt.axhline(feature_obj.feature_dict["MESOR"], color='green', linestyle='--', label='MESOR')
     else:
-        if "cosinor_by_day_fitted" not in feature_obj.enmo.columns:
+        if "cosinor_by_day_fitted" not in feature_obj.ml_data.columns:
             raise ValueError("By-day cosinor fitted values not computed.")
         minutes = np.arange(0, 1440)
         timestamps = pd.date_range("00:00", "23:59", freq="1min")
         # for each day, plot the ENMO and the cosinor fit
-        for date, group in feature_obj.enmo.groupby(feature_obj.enmo.index.date):
+        for date, group in feature_obj.ml_data.groupby(feature_obj.ml_data.index.date):
             plt.figure(figsize=(20, 10))
             plt.plot(minutes, group["ENMO"], 'r-')
             # cosinor fit based on the parameters from cosinor()
