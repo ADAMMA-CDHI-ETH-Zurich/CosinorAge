@@ -2,7 +2,7 @@ import pandas as pd
 import os
 import numpy as np
 from typing import Tuple
-from skdh.preprocessing import CountWearDetection, CalibrateAccelerometer
+from skdh.preprocessing import CountWearDetection, CalibrateAccelerometer, AccelThresholdWearDetection
 from scipy.signal import butter, filtfilt
 from claid.data_collection.load.load_sensor_data import *
 
@@ -111,7 +111,11 @@ def preprocess_galaxy_data(data: pd.DataFrame, preprocess_args: dict = {}, meta_
     _data[['X', 'Y', 'Z']] = remove_noise(_data, sf=25, filter_type=type, filter_cutoff=cutoff, verbose=verbose)
 
     # wear detection
-    _data['wear'] = detect_wear(_data, 25, meta_dict=meta_dict, verbose=verbose)
+    sd_crit = preprocess_args.get('wear_sd_crit', 0.00013)
+    range_crit = preprocess_args.get('wear_range_crit', 0.00067)
+    window_length = preprocess_args.get('wear_window_length', 30)
+    window_skip = preprocess_args.get('wear_window_skip', 7)
+    _data['wear'] = detect_wear(_data, 25, sd_crit, range_crit, window_length, window_skip, meta_dict=meta_dict, verbose=verbose)
 
     # calculate total, wear, and non-wear time
     calc_weartime(_data, sf=25, meta_dict=meta_dict, verbose=verbose)
@@ -206,13 +210,14 @@ def remove_noise(data: pd.DataFrame, sf: float, filter_type: str = 'lowpass', fi
     return _data[['X', 'Y', 'Z']]
 
 
-def detect_wear(data: pd.DataFrame, sf: float, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+def detect_wear(data: pd.DataFrame, sf: float, sd_crit:float, range_crit:float, window_length:int, window_skip:int, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
     _data = data.copy()
 
     time = np.array(_data.index.astype('int64') // 10 ** 9)
     acc = np.array(_data[["X", "Y", "Z"]]).astype(np.float64) / 1000
 
-    wear_predictor = CountWearDetection()
+    #wear_predictor = CountWearDetection()
+    wear_predictor = AccelThresholdWearDetection(sd_crit=sd_crit, range_crit=range_crit, window_length=window_length, window_skip=window_skip)
     ranges = wear_predictor.predict(time=time, accel=acc, fs=sf)['wear']
 
     wear_array = np.zeros(len(data.index))
