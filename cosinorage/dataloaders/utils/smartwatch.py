@@ -6,7 +6,7 @@ from sklearn.linear_model import LinearRegression
 from tqdm import tqdm
 from typing import Tuple, Optional, Dict, Union
 from glob import glob
-from skdh.preprocessing import CountWearDetection
+from skdh.preprocessing import CountWearDetection, CalibrateAccelerometer
 
 
 def read_smartwatch_data(directory_path: str, meta_dict: dict = {}) -> Tuple[pd.DataFrame, Optional[float]]:
@@ -80,7 +80,7 @@ def read_smartwatch_data(directory_path: str, meta_dict: dict = {}) -> Tuple[pd.
     return data
 
 
-def preprocess_smartwatch_data(df: pd.DataFrame, sf: float, meta_dict: dict, preprocess_args: dict = {}, verbose: bool = False) -> pd.DataFrame:
+def preprocess_smartwatch_data(data: pd.DataFrame, sf: float, meta_dict: dict, preprocess_args: dict = {}, verbose: bool = False) -> pd.DataFrame:
     """
     Preprocess smartwatch data by performing auto-calibration, noise removal, and wear detection.
 
@@ -97,51 +97,49 @@ def preprocess_smartwatch_data(df: pd.DataFrame, sf: float, meta_dict: dict, pre
         pd.DataFrame: Preprocessed DataFrame containing columns 'X', 'Y', 'Z', and 'wear'.
     """
 
-    _df = df.copy()
+    _data = data.copy()
 
-    epoch_size = preprocess_args.get('autocalib_epoch_size', 10)
-    max_iter = preprocess_args.get('autocalib_max_iter', 1000)
-    tol = preprocess_args.get('autocalib_tol', 1e-10)
-    sd_criter = preprocess_args.get('autocalib_sd_criter', 0.013)
-    mean_criter = preprocess_args.get('autocalib_mean_criter', 2)
-    sphere_crit = preprocess_args.get('autocalib_sphere_crit', 0.3)
+    # calibration
+    sphere_crit = preprocess_args.get('autocalib_sphere_crit', 1)
+    sd_criter = preprocess_args.get('autocalib_sd_criter', 0.3)
+    _data = calibrate(data, sf=sf, sphere_crit=sphere_crit, sd_criteria=sd_criter, meta_dict=meta_dict, verbose=verbose)
 
-    _df = auto_calibrate(_df, sf, meta_dict, epoch_size, max_iter, tol, sd_criter, mean_criter, sphere_crit, verbose=verbose)
+    # noise removal
+    type = preprocess_args.get('filter_type', 'highpass')
+    cutoff = preprocess_args.get('filter_cutoff', 15)
+    _data = remove_noise(_data, sf=sf, filter_type=type, filter_cutoff=cutoff, verbose=verbose)
+
+    # wear detection
+    _data['wear'] = detect_wear(_data, sf, meta_dict=meta_dict, verbose=verbose)
+
+    total, wear, nonwear = calc_weartime(_data, sf=sf, meta_dict=meta_dict, verbose=verbose)
+
+    return _data[['X', 'Y', 'Z', 'wear']]
+
+
+def calibrate(data: pd.DataFrame, sf: float, sphere_crit: float, sd_criteria: float, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+
+    _data = data.copy()
+
+    time = np.array(_data.index.astype('int64') // 10 ** 9)
+    acc = np.array(_data[["X", "Y", "Z"]]).astype(np.float64) / 1000
+
+    calibrator = CalibrateAccelerometer(sphere_crit=sphere_crit, sd_criteria=sd_criteria)
+    result = calibrator.predict(time=time, accel=acc, fs=sf)
+
+    _data = pd.DataFrame(result['accel'], columns=['X', 'Y', 'Z'])
+    _data.set_index(data.index, inplace=True)
+
+    meta_dict.update({'calibration_offset': result['offset']})
+    meta_dict.update({'calibration_scale': result['scale']})
+
     if verbose:
         print('Calibration done')
 
-    filter_type = preprocess_args.get('filter_type', 'highpass')
-    filter_cutoff = preprocess_args.get('filter_cutoff', 15)
-
-    if (filter_type == 'bandpass' or filter_type == 'bandstop') and (type(filter_cutoff) != list or len(filter_cutoff) != 2):
-        raise ValueError('Bandpass and bandstop filters require a list of two cutoff frequencies.')
-
-    if (filter_type == 'highpass' or filter_type == 'lowpass') and type(filter_cutoff) not in [float, int]:
-        raise ValueError('Highpass and lowpass filters require a single cutoff frequency.')
-
-    _df = remove_noise(_df, sf, filter_type, filter_cutoff)
-    if verbose:
-        print('Noise removal done')
-
-    std_threshold = preprocess_args.get('wear_detection_std_threshold', 0.013)
-    range_threshold = preprocess_args.get('wear_detection_range_threshold', 0.15)
-
-    _df['wear'] = detect_wear(_df, sf, std_threshold, range_threshold)['wear']
-    if verbose:
-        print('Wear detection done')
-
-    total, wear, nonwear = calc_weartime(_df, sf)
-    meta_dict.update({'resampled_total_time': total, 'resampled_wear_time': wear, 'resampled_non-wear_time': nonwear})
-    if verbose:
-        print('Wear time calculated')
-
-    return _df[['X', 'Y', 'Z', 'wear']]
+    return _data
 
 
-def calibrate():
-    pass
-
-def remove_noise(df: pd.DataFrame, sf: float, filter_type: str = 'lowpass', filter_cutoff: float = 2) -> pd.DataFrame:
+def remove_noise(df: pd.DataFrame, sf: float, filter_type: str = 'lowpass', filter_cutoff: float = 2, verbose: bool = False) -> pd.DataFrame:
     """
     Remove noise from accelerometer data using a Butterworth low-pass filter.
 
@@ -154,6 +152,11 @@ def remove_noise(df: pd.DataFrame, sf: float, filter_type: str = 'lowpass', filt
     Returns:
         pd.DataFrame: DataFrame with noise removed from the 'X', 'Y', and 'Z' columns.
     """
+    if (filter_type == 'bandpass' or filter_type == 'bandstop') and (type(filter_cutoff) != list or len(filter_cutoff) != 2):
+        raise ValueError('Bandpass and bandstop filters require a list of two cutoff frequencies.')
+
+    if (filter_type == 'highpass' or filter_type == 'lowpass') and type(filter_cutoff) not in [float, int]:
+        raise ValueError('Highpass and lowpass filters require a single cutoff frequency.')
 
     if df.empty:
         raise ValueError("Dataframe is empty.")
@@ -177,12 +180,34 @@ def remove_noise(df: pd.DataFrame, sf: float, filter_type: str = 'lowpass', filt
     _df['Y'] = butter_lowpass_filter(_df['Y'], cutoff, sf, btype=filter_type)
     _df['Z'] = butter_lowpass_filter(_df['Z'], cutoff, sf, btype=filter_type)
 
+    if verbose:
+        print('Noise removal done')
+
     return _df
 
-def detect_non_wear():
-    pass
 
-def calc_weartime(df: pd.DataFrame, sf: float) -> Tuple[float, float, float]:
+def detect_wear(data: pd.DataFrame, sf: float, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+    _data = data.copy()
+
+    time = np.array(_data.index.astype('int64') // 10 ** 9)
+    acc = np.array(_data[["X", "Y", "Z"]]).astype(np.float64) / 1000
+
+    wear_predictor = CountWearDetection()
+    ranges = wear_predictor.predict(time=time, accel=acc, fs=sf)['wear']
+
+    wear_array = np.zeros(len(data.index))
+    for start, end in ranges:
+        wear_array[start:end + 1] = 1
+
+    _data['wear'] = pd.DataFrame(wear_array, columns=['wear']).set_index(data.index)
+
+    if verbose:
+        print('Wear detection done')
+
+    return _data[['wear']]
+
+
+def calc_weartime(data: pd.DataFrame, sf: float, meta_dict: dict, verbose: bool) -> Tuple[float, float, float]:
     """
     Calculate total, wear, and non-wear time from accelerometer data.
 
@@ -193,34 +218,17 @@ def calc_weartime(df: pd.DataFrame, sf: float) -> Tuple[float, float, float]:
     Returns:
         Tuple[float, float, float]: A tuple containing total time, wear time, and non-wear time in seconds.
     """
+    _data = data.copy()
 
-    total = float((df.index[-1] - df.index[0]).total_seconds())
-    wear = float((df['wear'].sum()) * (1 / sf))
+    total = float((_data.index[-1] - _data.index[0]).total_seconds())
+    wear = float((_data['wear'].sum()) * (1 / sf))
     nonwear = float((total - wear))
+
+    meta_dict.update({'resampled_total_time': total, 'resampled_wear_time': wear, 'resampled_non-wear_time': nonwear})
+    if verbose:
+        print('Wear time calculated')
 
     return total, wear, nonwear
 
 
-
-    """
-    Calculate the rolling standard deviation of a DataFrame.
-
-    Args:
-        df (pd.DataFrame): DataFrame containing data to calculate the rolling standard deviation.
-        window_size (int): Size of the rolling window.
-
-    Returns:
-        np.ndarray: Array containing the rolling standard deviation values.
-    """
-
-    if len(df) < window_size:
-        raise ValueError("Window size is larger than the number of data points.")
-
-    if window_size <= 0:
-        raise ValueError("Window size must be greater than 0.")
-
-    if df.size == 0:
-        raise ValueError("Dataframe is empty.")
-
-    return pd.Series(df).rolling(window=window_size, min_periods=1).std().fillna(0).values
 
