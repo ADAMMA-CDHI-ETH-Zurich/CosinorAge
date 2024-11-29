@@ -33,8 +33,8 @@ def apply_sleep_wake_predictions(data: pd.DataFrame) -> pd.DataFrame:
         raise ValueError(f"Column ENMO not found in the DataFrame.")
     
     data_ = data.copy()
-
-    result = compute_sleep_predictions(data_["ENMO"], sf=0.035)
+    # make sf higher
+    result = compute_sleep_predictions(data_["ENMO"], sf=5)
     data_['sleep'] = pd.DataFrame(result, columns=['sleep']).set_index(data_.index)['sleep']
 
     return data_['sleep']
