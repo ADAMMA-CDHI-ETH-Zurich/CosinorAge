@@ -9,6 +9,22 @@ from .filtering import filter_incomplete_days, filter_consecutive_days
 
 
 def read_nhanes_data(file_dir: str, person_id: str = None, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+    """
+    Read and process NHANES accelerometer data files for a specific person.
+
+    Args:
+        file_dir (str): Directory containing NHANES data files (PAXDAY, PAXHD, PAXMIN)
+        person_id (str, optional): Unique identifier for the participant. Required.
+        meta_dict (dict, optional): Dictionary to store metadata. Defaults to {}.
+        verbose (bool, optional): Whether to print processing status. Defaults to False.
+
+    Returns:
+        pd.DataFrame: Processed accelerometer data with columns for X, Y, Z, wear, sleep, paxpredm, and ENMO,
+                     indexed by timestamp.
+
+    Raises:
+        ValueError: If person_id is None or if no valid NHANES data is found.
+    """
 
     if person_id is None:
         raise ValueError("The person_id is required for nhanes data")
@@ -143,6 +159,17 @@ def read_nhanes_data(file_dir: str, person_id: str = None, meta_dict: dict = {},
     return min_x
 
 def filter_nhanes_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+    """
+    Filter NHANES accelerometer data for incomplete days and non-consecutive sequences.
+
+    Args:
+        data (pd.DataFrame): Raw NHANES accelerometer data
+        meta_dict (dict, optional): Dictionary to store metadata. Defaults to {}.
+        verbose (bool, optional): Whether to print processing status. Defaults to False.
+
+    Returns:
+        pd.DataFrame: Filtered accelerometer data containing only complete, consecutive days
+    """
     _data = data.copy()
     
     old_n = _data.shape[0]
@@ -162,6 +189,17 @@ def filter_nhanes_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool =
     return _data
 
 def resample_nhanes_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+    """
+    Resample NHANES accelerometer data to 1-minute intervals using linear interpolation.
+
+    Args:
+        data (pd.DataFrame): NHANES accelerometer data
+        meta_dict (dict, optional): Dictionary to store metadata. Defaults to {}.
+        verbose (bool, optional): Whether to print processing status. Defaults to False.
+
+    Returns:
+        pd.DataFrame: Resampled accelerometer data with 1-minute intervals
+    """
     _data = data.copy()
 
     _data = _data.resample('1min').interpolate(method='linear').bfill()
@@ -173,11 +211,30 @@ def resample_nhanes_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool
 
 
 def remove_bytes(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Convert byte string columns to regular strings in a DataFrame.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame containing potential byte string columns
+
+    Returns:
+        pd.DataFrame: DataFrame with byte strings converted to UTF-8 strings
+    """
     for col in df.select_dtypes([object]):  # Select columns with object type (likely byte strings)
         df[col] = df[col].apply(lambda x: x.decode('utf-8') if isinstance(x, bytes) else x)
     return df
 
 def clean_data(df: pd.DataFrame, days: pd.DataFrame) -> pd.DataFrame:
+    """
+    Clean NHANES minute-level data by applying quality filters.
+
+    Args:
+        df (pd.DataFrame): Raw minute-level NHANES data
+        days (pd.DataFrame): Day-level NHANES data for filtering
+
+    Returns:
+        pd.DataFrame: Cleaned minute-level data excluding invalid measurements and participants
+    """
     df = df[df['SEQN'].isin(days['seqn'])]
     df = df[df['PAXMTSM'] != -0.01]
     df = df[~df['PAXPREDM'].isin([3, 4])]
@@ -185,6 +242,15 @@ def clean_data(df: pd.DataFrame, days: pd.DataFrame) -> pd.DataFrame:
     return df
 
 def calculate_measure_time(row):
+    """
+    Calculate the measurement timestamp for a row of NHANES data.
+
+    Args:
+        row (pd.Series): Row containing 'day1_start_time' and 'paxssnmp' values
+
+    Returns:
+        datetime: Calculated measurement timestamp
+    """
     base_time = datetime.strptime(row['day1_start_time'], "%H:%M:%S")
     measure_time = base_time + timedelta(seconds=row['paxssnmp'] / 80)
     return measure_time

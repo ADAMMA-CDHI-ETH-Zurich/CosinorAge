@@ -4,17 +4,31 @@ import numpy as np
 
 def min_max_scaling_exclude_outliers(data, upper_quantile=0.999):
     """
-    Scales the data using min-max scaling, excluding outliers based on quantiles.
+    Scales the data using min-max scaling to a [0,100] range, excluding outliers based on quantiles.
+    Values above the upper quantile threshold are not excluded from the final result but may exceed 100.
     
     Parameters:
-        data (pd.Series or np.ndarray): Input data to be scaled.
-        upper_quantile (float): Upper quantile threshold for excluding outliers.
+        data (pd.Series or np.ndarray): Input data to be scaled. Can be either a pandas Series 
+            or numpy array of numeric values.
+        upper_quantile (float, optional): Upper quantile threshold for excluding outliers when 
+            calculating min/max bounds. Defaults to 0.999 (99.9th percentile).
     
     Returns:
-        pd.Series: Scaled data with min-max scaling applied.
+        pd.Series: Scaled data with values generally ranging from 0 to 100. Note:
+            - If input contains all identical values, returns zeros
+            - Values above the upper_quantile may exceed 100 in the output
+            - Output maintains the same length as input
         
     Raises:
         ValueError: If input data is empty.
+        
+    Examples:
+        >>> data = pd.Series([1, 2, 3, 100])
+        >>> min_max_scaling_exclude_outliers(data, upper_quantile=0.75)
+        0    0.0
+        1    50.0
+        2    100.0
+        3    4950.0
     """
     # Convert to pandas Series if input is numpy array
     if isinstance(data, np.ndarray):

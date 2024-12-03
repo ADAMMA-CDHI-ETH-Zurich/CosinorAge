@@ -9,13 +9,8 @@ def apply_sleep_wake_predictions(data: pd.DataFrame) -> pd.DataFrame:
 
     Parameters
     ----------
-    df : pd.DataFrame
+    data : pd.DataFrame
         Input DataFrame containing ENMO values in a column named 'ENMO'.
-    mode : str, optional
-        Algorithm to use for sleep-wake prediction. Options are:
-        - 'ggir': Uses ENMO threshold-based classification
-        - 'sleeppy': Uses Cole-Kripke algorithm
-        Default is 'ggir'.
 
     Returns
     -------
@@ -27,7 +22,7 @@ def apply_sleep_wake_predictions(data: pd.DataFrame) -> pd.DataFrame:
     Raises
     ------
     ValueError
-        If 'ENMO' column is not found in DataFrame or if mode is not supported.
+        If 'ENMO' column is not found in DataFrame.
     """
     if "ENMO" not in data.columns:
         raise ValueError(f"Column ENMO not found in the DataFrame.")
@@ -57,6 +52,11 @@ def waso(df: pd.DataFrame) -> pd.DataFrame:
     -------
     pd.Series
         Series indexed by date containing WASO values in minutes for each 24-hour cycle.
+
+    Notes
+    -----
+    The function processes data in 24-hour cycles starting at midnight.
+    Zero is returned for days where no sleep is detected.
     """
     df_ = df.copy()
 
@@ -109,6 +109,11 @@ def tst(df: pd.DataFrame) -> pd.DataFrame:
     -------
     pd.Series
         Series indexed by date containing total sleep time in minutes for each 24-hour cycle.
+
+    Notes
+    -----
+    The function processes data in 24-hour cycles starting at midnight.
+    Sleep time is calculated by counting all epochs marked as sleep (0).
     """
 
     df_ = df.copy()
@@ -148,6 +153,11 @@ def pta(df: pd.DataFrame) -> pd.DataFrame:
     -------
     pd.Series
         Series indexed by date containing percent time asleep (0-1) for each 24-hour cycle.
+
+    Notes
+    -----
+    The function processes data in 24-hour cycles starting at midnight.
+    PTA is calculated as: (number of sleep epochs) / (total number of epochs).
     """
     df_ = df.copy()
     df_.index = pd.to_datetime(df_.index)
@@ -187,11 +197,19 @@ def sri(df: pd.DataFrame) -> pd.DataFrame:
     -------
     pd.DataFrame
         DataFrame indexed by date containing SRI values for each day (starting from day 2).
+        The SRI column contains values ranging from -100 to +100.
 
     Raises
     ------
     ValueError
         If less than 2 complete days of data are provided.
+
+    Notes
+    -----
+    - SRI is calculated by comparing sleep states between consecutive 24-hour periods
+    - The first day will not have an SRI value as it requires a previous day for comparison
+    - Incomplete days at the end of the recording are trimmed
+    - Formula: SRI = (2 * concordance_rate - 1) * 100
     """
 
     sleep_states = df["sleep"].values

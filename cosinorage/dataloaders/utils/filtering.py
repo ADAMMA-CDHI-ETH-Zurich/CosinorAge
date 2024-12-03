@@ -8,18 +8,21 @@ def filter_incomplete_days(df: pd.DataFrame, data_freq: float, expected_points_p
     """
     Filter out data from incomplete days to ensure 24-hour data periods.
 
-    This function removes data from the first and last days in the DataFrame
+    This function removes data from days that don't have the expected number of data points
     to ensure that only complete 24-hour data is retained.
 
     Args:
-        data_all (pd.DataFrame): DataFrame with a 'TIMESTAMP' column in datetime
-            format, which is used to determine the day.
+        df (pd.DataFrame): DataFrame with datetime index, which is used to determine the day
+        data_freq (float): Frequency of data collection in Hz
+        expected_points_per_day (int, optional): Expected number of data points per day. 
+            If None, calculated using data_freq
 
     Returns:
-        pd.DataFrame: Filtered DataFrame excluding the first and last days.
-        If there
-        are fewer than two unique dates in the data, an empty DataFrame is
-        returned.
+        pd.DataFrame: Filtered DataFrame containing only complete days.
+            Returns empty DataFrame if an error occurs during processing.
+
+    Raises:
+        Exception: Prints error message and returns empty DataFrame if processing fails
     """
 
     # Filter out incomplete days
@@ -53,7 +56,16 @@ def filter_incomplete_days(df: pd.DataFrame, data_freq: float, expected_points_p
 
 def filter_consecutive_days(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Return data frame containing only consecutive days.
+    Filter DataFrame to retain only the longest sequence of consecutive days.
+
+    Args:
+        df (pd.DataFrame): DataFrame with datetime index
+
+    Returns:
+        pd.DataFrame: Filtered DataFrame containing only consecutive days
+
+    Raises:
+        ValueError: If less than 4 consecutive days are found in the data
     """
     days = np.unique(df.index.date)
     days = largest_consecutive_sequence(days)
@@ -66,6 +78,21 @@ def filter_consecutive_days(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def largest_consecutive_sequence(dates: List[datetime]) -> List[datetime]:
+    """
+    Find the longest sequence of consecutive dates in a list.
+
+    Args:
+        dates (List[datetime]): List of dates to analyze
+
+    Returns:
+        List[datetime]: Longest sequence of consecutive dates found.
+            Returns empty list if input is empty.
+
+    Example:
+        >>> dates = [datetime(2023,1,1), datetime(2023,1,2), datetime(2023,1,4)]
+        >>> largest_consecutive_sequence(dates)
+        [datetime(2023,1,1), datetime(2023,1,2)]
+    """
     if len(dates) == 0:  # Handle empty list
         return []
     

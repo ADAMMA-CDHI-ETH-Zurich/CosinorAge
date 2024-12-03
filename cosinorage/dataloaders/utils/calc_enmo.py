@@ -7,11 +7,18 @@ def calculate_enmo(data: pd.DataFrame, verbose: bool = False) -> pd.DataFrame:
     Calculate the Euclidean Norm Minus One (ENMO) metric from accelerometer data.
 
     Args:
-        acc_df (pd.DataFrame): DataFrame containing accelerometer data with columns
-            'X', 'Y', and 'Z' for accelerometer readings along the three axes, and 'TIMESTAMP' for time information.
+        data (pd.DataFrame): DataFrame containing accelerometer data with columns
+            'X', 'Y', and 'Z' for accelerometer readings along the three axes.
+        verbose (bool, optional): If True, prints processing information. Defaults to False.
 
     Returns:
-        pd.DataFrame: DataFrame containing columns 'TIMESTAMP' and 'ENMO'. The frequency of the records is the same as for the input data.
+        numpy.ndarray: Array of ENMO values. Values are truncated at 0, meaning negative
+            values are set to 0. Returns np.nan if calculation fails.
+
+    Notes:
+        ENMO is calculated as the Euclidean norm of the acceleration vector minus one
+        gravity unit. This metric is commonly used in physical activity research to
+        quantify acceleration while accounting for gravity.
     """
 
     if data.empty:
@@ -36,10 +43,23 @@ def calculate_minute_level_enmo(data: pd.DataFrame, sf: float, verbose: bool = F
     Resample high-frequency ENMO data to minute-level by averaging over each minute.
 
     Args:
-        data (pd.DataFrame): DataFrame with 'TIMESTAMP' and 'ENMO' column containing high-frequency ENMO data.
+        data (pd.DataFrame): DataFrame with 'TIMESTAMP' as index and 'ENMO' column 
+            containing high-frequency ENMO data. Optional 'wear' column for wear time.
+        sf (float): Sampling frequency of the data in Hz (samples per second).
+        verbose (bool, optional): If True, prints processing information. Defaults to False.
 
     Returns:
-        pd.DataFrame: DataFrame containing columns 'TIMESTAMP' and 'ENMO'. The records are aggregated at the minute level.
+        pd.DataFrame: DataFrame containing minute-level aggregated data with:
+            - 'ENMO': Mean ENMO value for each minute
+            - 'wear': Mean wear time for each minute (if wear column exists in input)
+            Index is datetime at minute resolution.
+
+    Raises:
+        ValueError: If sampling frequency is less than 1/60 Hz (less than one sample per minute).
+
+    Notes:
+        The function resamples the data to minute-level using mean aggregation.
+        Timestamps are converted to datetime format in the output.
     """
 
     if sf < 1/60:

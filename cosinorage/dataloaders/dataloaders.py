@@ -132,6 +132,21 @@ class DataLoader:
 
     
 class NHANESDataLoader(DataLoader):
+    """
+    Data loader for NHANES accelerometer data.
+
+    This class handles loading, filtering, and processing of NHANES accelerometer data.
+
+    Args:
+        nhanes_file_dir (str): Directory path containing NHANES data files.
+        person_id (str, optional): Specific person ID to load. Defaults to None.
+        verbose (bool, optional): Whether to print processing information. Defaults to False.
+
+    Attributes:
+        nhanes_file_dir (str): Directory containing NHANES data files.
+        person_id (str): ID of the person whose data is being loaded.
+    """
+
     def __init__(self, nhanes_file_dir: str, person_id: str = None, verbose: bool = False):
         super().__init__()
 
@@ -147,6 +162,12 @@ class NHANESDataLoader(DataLoader):
     
     @clock
     def __load_data(self, verbose: bool = False):
+        """
+        Internal method to load and process NHANES data.
+
+        Args:
+            verbose (bool, optional): Whether to print processing information. Defaults to False.
+        """
 
         self.raw_data = read_nhanes_data(self.nhanes_file_dir, person_id=self.person_id, meta_dict=self.meta_dict, verbose=verbose)
         self.sf_data = filter_nhanes_data(self.raw_data, meta_dict=self.meta_dict, verbose=verbose)
@@ -155,6 +176,23 @@ class NHANESDataLoader(DataLoader):
 
 
 class UKBDataLoader(DataLoader):
+    """
+    Data loader for UK Biobank accelerometer data.
+
+    This class handles loading, filtering, and processing of UK Biobank accelerometer data.
+
+    Args:
+        qa_file_path (str): Path to the quality assessment file.
+        ukb_file_dir (str): Directory path containing UK Biobank data files.
+        eid (int): Participant ID in the UK Biobank.
+        verbose (bool, optional): Whether to print processing information. Defaults to False.
+
+    Attributes:
+        qa_file_path (str): Path to quality assessment file.
+        ukb_file_dir (str): Directory containing UK Biobank data files.
+        eid (int): Participant ID.
+    """
+
     def __init__(self, qa_file_path: str, ukb_file_dir: str, eid: int, verbose: bool = False):
         super().__init__()
 
@@ -173,6 +211,12 @@ class UKBDataLoader(DataLoader):
 
     @clock
     def __load_data(self, verbose: bool = False):
+        """
+        Internal method to load and process UK Biobank data.
+
+        Args:
+            verbose (bool, optional): Whether to print processing information. Defaults to False.
+        """
         
         self.raw_data = read_ukb_data(self.qa_file_path, self.ukb_file_dir, self.eid, meta_dict=self.meta_dict, verbose=verbose)
         self.sf_data = filter_ukb_data(self.raw_data, meta_dict=self.meta_dict, verbose=verbose)
@@ -181,6 +225,23 @@ class UKBDataLoader(DataLoader):
 
 
 class GalaxyDataLoader(DataLoader):
+    """
+    Data loader for Samsung Galaxy Watch accelerometer data.
+
+    This class handles loading, filtering, and processing of Galaxy Watch accelerometer data.
+
+    Args:
+        gw_file_dir (str): Directory path containing Galaxy Watch data files.
+        preprocess (bool, optional): Whether to preprocess the data. Defaults to True.
+        preprocess_args (dict, optional): Arguments for preprocessing. Defaults to {}.
+        verbose (bool, optional): Whether to print processing information. Defaults to False.
+
+    Attributes:
+        gw_file_dir (str): Directory containing Galaxy Watch data files.
+        preprocess (bool): Whether to preprocess the data.
+        preprocess_args (dict): Arguments for preprocessing.
+    """
+
     def __init__(self, gw_file_dir: str, preprocess: bool = True, preprocess_args: dict = {}, verbose: bool = False):
         super().__init__()
 
@@ -197,6 +258,12 @@ class GalaxyDataLoader(DataLoader):
     
     @clock
     def __load_data(self, verbose: bool = False):
+        """
+        Internal method to load and process Galaxy Watch data.
+
+        Args:
+            verbose (bool, optional): Whether to print processing information. Defaults to False.
+        """
 
         self.raw_data = read_galaxy_data(self.gw_file_dir, meta_dict=self.meta_dict, verbose=verbose)
         self.sf_data = filter_galaxy_data(self.raw_data, meta_dict=self.meta_dict, verbose=verbose)
@@ -210,6 +277,21 @@ class GalaxyDataLoader(DataLoader):
 
 
 class SmartwatchDataLoader(DataLoader):
+    """
+    Data loader for generic smartwatch accelerometer data.
+
+    This class handles loading, filtering, and processing of smartwatch accelerometer data.
+
+    Args:
+        smartwatch_file_dir (str): Directory path containing smartwatch data files.
+        preprocess (bool, optional): Whether to preprocess the data. Defaults to True.
+        preprocess_args (dict, optional): Arguments for preprocessing. Defaults to {}.
+
+    Attributes:
+        smartwatch_file_dir (str): Directory containing smartwatch data files.
+        preprocess (bool): Whether to preprocess the data.
+        preprocess_args (dict): Arguments for preprocessing.
+    """
 
     def __init__(self, smartwatch_file_dir: str, preprocess: bool = True, preprocess_args: dict = {}):
         super().__init__()
@@ -226,6 +308,16 @@ class SmartwatchDataLoader(DataLoader):
 
     @clock
     def load_data(self, verbose: bool = False):
+        """
+        Load and process smartwatch accelerometer data.
+
+        This method loads raw accelerometer data, filters incomplete days,
+        performs preprocessing if enabled, calculates ENMO values, and
+        aggregates data to minute-level intervals.
+
+        Args:
+            verbose (bool, optional): Whether to print processing information. Defaults to False.
+        """
         # load accelerometer data from csv files into a DataFrame
         self.sf_data = read_smartwatch_data(self.smartwatch_file_dir, meta_dict=self.meta_dict)
         if verbose:
