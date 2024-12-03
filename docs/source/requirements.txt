@@ -10,6 +10,6 @@ seaborn
 scipy
 scikit-learn
 statsmodels
-skdh
+scikit-digital-health
 
 git+https://github.com/readthedocs/sphinx-build-compatibility#egg=sphinx-build-compatibility
