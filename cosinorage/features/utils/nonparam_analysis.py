@@ -1,5 +1,5 @@
 import pandas as pd
-
+import numpy as np
 
 def IV(data: pd.Series) -> pd.DataFrame:
     r"""Calculate the intradaily variability for each day separately
@@ -9,22 +9,31 @@ def IV(data: pd.Series) -> pd.DataFrame:
     pd.DataFrame
         DataFrame with date index and IV values for each day
     """
+    if len(data) == 0:
+        return pd.DataFrame(columns=['IV'])
+
     data_ = data.copy()[['ENMO']]
-    #data_['date'] = data_.index.date
+
     daily_groups = data_.groupby(data_.index.date)
     
     # Calculate IV for each day
     daily_ivs = []
     for date, day_data in daily_groups:
-
-        c_1h = day_data.diff(1).pow(2).mean().values[0]
-        d_1h = day_data.var().values[0]
-        iv = (c_1h / d_1h)
+        if len(day_data) <= 1:
+            iv = np.nan
+        else:
+            c_1h = day_data.diff(1).pow(2).mean().values[0]
+            d_1h = day_data.var().values[0]
+            if d_1h == 0:
+                iv = np.nan
+            else:
+                iv = (c_1h / d_1h)
         daily_ivs.append({'date': date, 'IV': iv})
     
     # Create DataFrame with results
     iv_df = pd.DataFrame(daily_ivs)
-    iv_df.set_index('date', inplace=True)
+    if not iv_df.empty:
+        iv_df.set_index('date', inplace=True)
     
     return iv_df
 
@@ -37,6 +46,9 @@ def IS(data: pd.Series) -> pd.DataFrame:
     pd.DataFrame
         DataFrame with date index and IS values for each day.
     """
+    if len(data) == 0:
+        return pd.DataFrame(columns=['IS'])
+
     data_ = data.copy()[['ENMO']]
     data_['hour'] = data_.index.hour
     data_['minute'] = data_.index.minute
@@ -75,6 +87,9 @@ def RA(data: pd.Series) -> pd.DataFrame:
     pd.DataFrame
         DataFrame with date index and RA values for each day.
     """
+    if len(data) == 0:
+        return pd.DataFrame(columns=['RA'])
+
     data_ = data.copy()[['ENMO']]
     data_['hour'] = data_.index.hour
 
@@ -112,6 +127,9 @@ def M10(data: pd.Series) -> pd.DataFrame:
     pd.DataFrame
         DataFrame with date index, M10 values, and M10_start for each day.
     """
+    if len(data) == 0:
+        return pd.DataFrame(columns=['M10', 'M10_start'])
+
     data_ = data.copy()[['ENMO']]
     data_['hour'] = data_.index.hour
 
@@ -147,6 +165,9 @@ def L5(data: pd.Series) -> pd.DataFrame:
     pd.DataFrame
         DataFrame with date index, L5 values, and L5_start for each day.
     """
+    if len(data) == 0:
+        return pd.DataFrame(columns=['L5', 'L5_start'])
+
     data_ = data.copy()[['ENMO']]
     data_['hour'] = data_.index.hour
 

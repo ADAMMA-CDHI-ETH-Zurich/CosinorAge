@@ -19,7 +19,12 @@ def activity_metrics(data: pd.Series) -> pd.DataFrame:
     -------
     pd.DataFrame
         DataFrame with date index and columns for SB, LIPA, and MVPA (in hours).
+        
     """
+
+    if data.empty:
+        return pd.DataFrame(columns=['SB', 'LIPA', 'MVPA'])
+
     data_ = data.copy()[['ENMO']]
 
     # Group data by day

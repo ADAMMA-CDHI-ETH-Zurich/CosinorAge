@@ -57,7 +57,10 @@ def cosinor_by_day(df: pd.DataFrame) -> pd.DataFrame:
         acrophase = np.arctan2(beta_sin, beta_cos)
         acrophase_time = acrophase/(2*np.pi)*24
 
-        fitted_vals_df = pd.concat([fitted_vals_df, model.fittedvalues], ignore_index=False)
+        if not fitted_vals_df.empty:
+            fitted_vals_df = pd.concat([fitted_vals_df, model.fittedvalues], ignore_index=False)
+        else:
+            fitted_vals_df = pd.DataFrame(model.fittedvalues)
 
         if acrophase < 0:
             acrophase += 2*np.pi

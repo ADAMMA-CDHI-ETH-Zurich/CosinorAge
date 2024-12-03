@@ -118,7 +118,6 @@ def preprocess_smartwatch_data(data: pd.DataFrame, sf: float, meta_dict: dict, p
 
 
 def calibrate(data: pd.DataFrame, sf: float, sphere_crit: float, sd_criteria: float, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
-
     _data = data.copy()
 
     time = np.array(_data.index.astype('int64') // 10 ** 9)
@@ -127,11 +126,20 @@ def calibrate(data: pd.DataFrame, sf: float, sphere_crit: float, sd_criteria: fl
     calibrator = CalibrateAccelerometer(sphere_crit=sphere_crit, sd_criteria=sd_criteria)
     result = calibrator.predict(time=time, accel=acc, fs=sf)
 
-    _data = pd.DataFrame(result['accel'], columns=['X', 'Y', 'Z'])
+    # If no calibration was performed, result will be None or won't contain 'accel'
+    if result is None or 'accel' not in result:
+        # Return the original data, converted to g units
+        _data = pd.DataFrame(acc, columns=['X', 'Y', 'Z'])
+    else:
+        _data = pd.DataFrame(result['accel'], columns=['X', 'Y', 'Z'])
+    
     _data.set_index(data.index, inplace=True)
 
-    meta_dict.update({'calibration_offset': result['offset']})
-    meta_dict.update({'calibration_scale': result['scale']})
+    if result is not None:
+        meta_dict.update({
+            'calibration_offset': result.get('offset', None),
+            'calibration_scale': result.get('scale', None)
+        })
 
     if verbose:
         print('Calibration done')
