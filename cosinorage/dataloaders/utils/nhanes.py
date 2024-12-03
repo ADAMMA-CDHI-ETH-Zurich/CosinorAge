@@ -208,8 +208,6 @@ def resample_nhanes_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool
 
     return _data
 
-
-
 def remove_bytes(df: pd.DataFrame) -> pd.DataFrame:
     """
     Convert byte string columns to regular strings in a DataFrame.
