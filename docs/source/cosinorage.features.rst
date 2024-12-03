@@ -21,7 +21,10 @@ utility functions
 cosinor (circadian rhythm analysis) analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: cosinorage.features.cosinor()
+.. autofunction:: cosinorage.features.cosinor_by_day()
+
+.. autofunction:: cosinorage.features.cosinor_multiday()
+
 
 nonparametric (circadian rhythm analysis) analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -53,3 +56,20 @@ sleep metrics
 .. autofunction:: cosinorage.features.pta()
 
 .. autofunction:: cosinorage.features.sri()
+
+
+rescaling functions
+~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: cosinorage.features.utils.rescaling.min_max_scaling_exclude_outliers()
+
+
+visualization functions
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: cosinorage.features.utils.visualization.plot_sleep_predictions()
+
+.. autofunction:: cosinorage.features.utils.visualization.plot_non_wear()
+
+.. autofunction:: cosinorage.features.utils.visualization.plot_cosinor()
+
