@@ -8,8 +8,12 @@ def plot_orig_enmo(acc_loader, resample: str = '15min', wear: bool = True):
     Plot the original ENMO values resampled at a specified interval.
 
     Args:
-        resample (str): The resampling interval (default is '15min').
-        wear (bool): Whether to add color bands for wear and non-wear periods (default is True).
+        acc_loader: Accelerometer data loader object containing the raw data
+        resample (str): The resampling interval (default is '15min')
+        wear (bool): Whether to add color bands for wear and non-wear periods (default is True)
+
+    Returns:
+        None: Displays a matplotlib plot
     """
     #_data = self.acc_df.resample('5min').mean().reset_index(inplace=False)
     _data = acc_loader.get_sf_data().resample(f'{resample}').mean().reset_index(inplace=False)
@@ -33,10 +37,14 @@ def plot_orig_enmo(acc_loader, resample: str = '15min', wear: bool = True):
 
 def plot_enmo(loader):
     """
-    Plot minute-level ENMO values.
+    Plot minute-level ENMO values with optional wear/non-wear period highlighting.
+
+    Args:
+        loader: Data loader object containing the minute-level ENMO data
 
     Returns:
-        None
+        None: Displays a matplotlib plot showing ENMO values over time with optional
+            wear/non-wear period highlighting in green/red
     """
     _data = loader.get_ml_data().reset_index(inplace=False)
 
@@ -52,6 +60,16 @@ def plot_enmo(loader):
     plt.show()
 
 def plot_orig_enmo_freq(acc_loader):
+    """
+    Plot the frequency domain representation of the original ENMO signal using Welch's method.
+
+    Args:
+        acc_loader: Accelerometer data loader object containing the raw ENMO data
+
+    Returns:
+        None: Displays a matplotlib plot showing the power spectral density of the ENMO signal
+            computed using Welch's method with a sampling frequency of 80Hz and segment length of 1024
+    """
     # convert to frequency domain
     f, Pxx = welch(acc_loader.get_sf_data()['ENMO'], fs=80, nperseg=1024)
 

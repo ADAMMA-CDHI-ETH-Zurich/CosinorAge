@@ -4,10 +4,19 @@ import pandas as pd
 
 def plot_sleep_predictions(feature_obj, simple=True, start_date=None, end_date=None):
     """Plot sleep predictions over time.
+    
+    Creates visualization of sleep/wake predictions, optionally including non-wear periods.
+    Simple mode shows a binary plot with dots, while detailed mode shows ENMO data
+    with colored bands for sleep/wake states.
+
     Args:
+        feature_obj: Feature object containing ml_data with sleep predictions
         simple (bool, optional): If True, shows simple binary plot. If False, shows detailed plot. Defaults to True.
         start_date (datetime, optional): Start date for plotting. Defaults to None (earliest date).
         end_date (datetime, optional): End date for plotting. Defaults to None (latest date).
+
+    Returns:
+        None: Displays the plot using matplotlib
     """
     if start_date is None:
         start_date = feature_obj.ml_data.index[0]
@@ -40,11 +49,19 @@ def plot_sleep_predictions(feature_obj, simple=True, start_date=None, end_date=N
         plt.show()
 
 def plot_non_wear(feature_obj, simple=True, start_date=None, end_date=None):
-    """Plot sleep predictions over time.
+    """Plot non-wear periods over time.
+    
+    Creates visualization of wear/non-wear periods. Simple mode shows a binary plot
+    with dots, while detailed mode shows ENMO data with colored bands for wear states.
+
     Args:
+        feature_obj: Feature object containing ml_data with wear/non-wear predictions
         simple (bool, optional): If True, shows simple binary plot. If False, shows detailed plot. Defaults to True.
         start_date (datetime, optional): Start date for plotting. Defaults to None (earliest date).
         end_date (datetime, optional): End date for plotting. Defaults to None (latest date).
+
+    Returns:
+        None: Displays the plot using matplotlib
     """
     if start_date is None:
         start_date = feature_obj.ml_data.index[0]
@@ -73,17 +90,22 @@ def plot_non_wear(feature_obj, simple=True, start_date=None, end_date=None):
         plt.show()
 
 def plot_cosinor(feature_obj, multiday=True):
-    """Plot cosinor analysis results for each day.
+    """Plot cosinor analysis results for activity rhythm analysis.
     
-    Creates plots showing:
-        - Raw ENMO data
-        - Fitted cosinor curve
-        - MESOR line
-        - Amplitude visualization
-        - Acrophase time marker
-        
+    Creates detailed visualizations of circadian rhythm analysis showing raw activity data (ENMO)
+    overlaid with fitted cosinor curves. Includes markers for key circadian parameters:
+    MESOR (rhythm-adjusted mean), amplitude, and acrophase (peak timing).
+
+    Args:
+        feature_obj: Feature object containing cosinor analysis results and ENMO data
+        multiday (bool, optional): If True, shows analysis across all days combined. 
+            If False, shows individual daily plots. Defaults to True.
+
+    Returns:
+        None: Displays the plot(s) using matplotlib
+
     Raises:
-        ValueError: If cosinor features haven't been computed
+        ValueError: If cosinor features haven't been computed (either multiday or by-day)
     """
     if multiday:
         if "cosinor_multiday_fitted" not in feature_obj.ml_data.columns:

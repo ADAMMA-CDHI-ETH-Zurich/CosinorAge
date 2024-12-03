@@ -2,12 +2,23 @@ import pandas as pd
 import numpy as np
 
 def IV(data: pd.Series) -> pd.DataFrame:
-    r"""Calculate the intradaily variability for each day separately
+    r"""Calculate the intradaily variability for each day separately.
+
+    Intradaily variability quantifies the fragmentation of rest-activity patterns
+    within each 24-hour period. It is calculated as the ratio of the mean squared
+    first derivative to the variance.
+
+    Parameters
+    ----------
+    data : pd.Series
+        Time series data containing activity measurements with datetime index
+        and 'ENMO' column
 
     Returns
     -------
     pd.DataFrame
-        DataFrame with date index and IV values for each day
+        DataFrame with date index and 'IV' column containing intradaily
+        variability values for each day
     """
     if len(data) == 0:
         return pd.DataFrame(columns=['IV'])
@@ -41,10 +52,21 @@ def IV(data: pd.Series) -> pd.DataFrame:
 def IS(data: pd.Series) -> pd.DataFrame:
     r"""Calculate the interdaily stability (IS) for each day separately.
 
+    Interdaily stability quantifies the strength of coupling between the
+    rest-activity rhythm and environmental zeitgebers. It compares the
+    24-hour pattern across days.
+
+    Parameters
+    ----------
+    data : pd.Series
+        Time series data containing activity measurements with datetime index
+        and 'ENMO' column
+
     Returns
     -------
     pd.DataFrame
-        DataFrame with date index and IS values for each day.
+        DataFrame with date index and 'IS' column containing interdaily
+        stability values for each day
     """
     if len(data) == 0:
         return pd.DataFrame(columns=['IS'])
@@ -82,10 +104,21 @@ def IS(data: pd.Series) -> pd.DataFrame:
 def RA(data: pd.Series) -> pd.DataFrame:
     r"""Calculate the relative amplitude (RA) for each day separately.
 
+    Relative amplitude is calculated as the difference between the most active
+    10-hour period and least active 5-hour period, divided by their sum.
+    This provides a normalized measure of the daily activity rhythm strength.
+
+    Parameters
+    ----------
+    data : pd.Series
+        Time series data containing activity measurements with datetime index
+        and 'ENMO' column
+
     Returns
     -------
     pd.DataFrame
-        DataFrame with date index and RA values for each day.
+        DataFrame with date index and 'RA' column containing relative
+        amplitude values for each day
     """
     if len(data) == 0:
         return pd.DataFrame(columns=['RA'])
@@ -122,10 +155,21 @@ def M10(data: pd.Series) -> pd.DataFrame:
     r"""Calculate the M10 (mean activity during the 10 most active hours) 
     and the start time of the 10 most active hours (M10_start) for each day.
 
+    M10 provides information about the most active period during each day,
+    which typically corresponds to the main activity phase.
+
+    Parameters
+    ----------
+    data : pd.Series
+        Time series data containing activity measurements with datetime index
+        and 'ENMO' column
+
     Returns
     -------
     pd.DataFrame
-        DataFrame with date index, M10 values, and M10_start for each day.
+        DataFrame with date index and two columns:
+        - 'M10': Mean activity during the 10 most active hours
+        - 'M10_start': Hour (0-23) when the most active period starts
     """
     if len(data) == 0:
         return pd.DataFrame(columns=['M10', 'M10_start'])
@@ -160,10 +204,21 @@ def L5(data: pd.Series) -> pd.DataFrame:
     r"""Calculate the L5 (mean activity during the 5 least active hours) 
     and the start time of the 5 least active hours (L5_start) for each day.
 
+    L5 provides information about the least active period during each day,
+    which typically corresponds to the main rest phase.
+
+    Parameters
+    ----------
+    data : pd.Series
+        Time series data containing activity measurements with datetime index
+        and 'ENMO' column
+
     Returns
     -------
     pd.DataFrame
-        DataFrame with date index, L5 values, and L5_start for each day.
+        DataFrame with date index and two columns:
+        - 'L5': Mean activity during the 5 least active hours
+        - 'L5_start': Hour (0-23) when the least active period starts
     """
     if len(data) == 0:
         return pd.DataFrame(columns=['L5', 'L5_start'])

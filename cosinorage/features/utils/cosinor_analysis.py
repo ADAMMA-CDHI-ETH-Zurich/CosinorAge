@@ -7,16 +7,26 @@ def cosinor_by_day(df: pd.DataFrame) -> pd.DataFrame:
     A parametric approach to study circadian rhythmicity assuming cosinor shape, fitting a model for each day.
 
     Parameters:
+    -----------
     df : pandas.DataFrame
         DataFrame with a Timestamp index and a column 'ENMO' containing minute-level activity data.
-    window : int
-        The window size of the data (e.g., window=1 means each epoch is 1 minute).
-    export_ts : bool
-        Whether to export time series data for each day.
 
     Returns:
-    pandas.DataFrame:
-        DataFrame with columns MESOR, amplitude, acrophase, acrophase time for each day.
+    --------
+    tuple:
+        - pandas.DataFrame: DataFrame with columns:
+            - MESOR: Midline Estimating Statistic Of Rhythm (rhythm-adjusted mean)
+            - amplitude: Half the difference between maximum and minimum values
+            - acrophase: Time of peak relative to midnight in radians
+            - acrophase_time: Time of peak in hours (0-24)
+        - pandas.DataFrame: Fitted values for each timepoint
+    
+    Raises:
+    -------
+    ValueError:
+        If DataFrame doesn't have required 'ENMO' column or timestamp index
+        If data length is not a multiple of 1440 (minutes in a day)
+        If any day doesn't have exactly 1440 data points
     """
     # Ensure the DataFrame contains the required columns
     if 'ENMO' not in df.columns or not pd.api.types.is_datetime64_any_dtype(df.index):
@@ -85,6 +95,27 @@ def cosinor_by_day(df: pd.DataFrame) -> pd.DataFrame:
 def cosinor_multiday(df: pd.DataFrame) -> pd.DataFrame:
     """
     A parametric approach to study circadian rhythmicity assuming cosinor shape, fitting a model for multiple days.
+
+    Parameters:
+    -----------
+    df : pandas.DataFrame
+        DataFrame with a Timestamp index and a column 'ENMO' containing minute-level activity data.
+
+    Returns:
+    --------
+    tuple:
+        - dict: Dictionary containing cosinor parameters:
+            - MESOR: Midline Estimating Statistic Of Rhythm (rhythm-adjusted mean)
+            - amplitude: Half the difference between maximum and minimum values
+            - acrophase: Time of peak relative to midnight in radians
+            - acrophase_time: Time of peak in hours (0-24)
+        - pandas.Series: Fitted values for each timepoint
+
+    Raises:
+    -------
+    ValueError:
+        If DataFrame doesn't have required 'ENMO' column or timestamp index
+        If data length is not a multiple of 1440 (minutes in a day)
     """
     # Ensure the DataFrame contains the required columns
     if 'ENMO' not in df.columns or not pd.api.types.is_datetime64_any_dtype(df.index):

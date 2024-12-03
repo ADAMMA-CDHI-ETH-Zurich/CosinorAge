@@ -85,13 +85,15 @@ def preprocess_smartwatch_data(data: pd.DataFrame, sf: float, meta_dict: dict, p
     Preprocess smartwatch data by performing auto-calibration, noise removal, and wear detection.
 
     Args:
-        df (pd.DataFrame): DataFrame containing accelerometer data with columns 'X', 'Y', and 'Z'.
+        data (pd.DataFrame): DataFrame containing accelerometer data with columns 'X', 'Y', and 'Z'.
         sf (float): Sampling frequency of the accelerometer data in Hz.
-        meta_dict (dict): Dictionary to store metadata such as total time, wear time, and non-wear time.
-        epoch_size (int): Epoch size for calibration in seconds (default is 10).
-        max_iter (int): Maximum number of iterations for auto-calibration (default is 1000).
-        tol (float): Tolerance for convergence in auto-calibration (default is 1e-10).
-        verbose (bool): Whether to print detailed information during preprocessing (default is False).
+        meta_dict (dict): Dictionary to store metadata about the preprocessing steps.
+        preprocess_args (dict): Dictionary containing preprocessing parameters:
+            - autocalib_sphere_crit (float): Sphere criterion for auto-calibration (default: 1)
+            - autocalib_sd_criter (float): Standard deviation criterion for auto-calibration (default: 0.3)
+            - filter_type (str): Type of filter to use ('highpass', 'lowpass', 'bandpass', 'bandstop')
+            - filter_cutoff (float or list): Cutoff frequency/frequencies for the filter
+        verbose (bool): Whether to print detailed information during preprocessing.
 
     Returns:
         pd.DataFrame: Preprocessed DataFrame containing columns 'X', 'Y', 'Z', and 'wear'.
@@ -118,6 +120,20 @@ def preprocess_smartwatch_data(data: pd.DataFrame, sf: float, meta_dict: dict, p
 
 
 def calibrate(data: pd.DataFrame, sf: float, sphere_crit: float, sd_criteria: float, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+    """
+    Calibrate accelerometer data using auto-calibration techniques.
+
+    Args:
+        data (pd.DataFrame): DataFrame containing accelerometer data with columns 'X', 'Y', and 'Z'.
+        sf (float): Sampling frequency of the accelerometer data in Hz.
+        sphere_crit (float): Sphere criterion for auto-calibration.
+        sd_criteria (float): Standard deviation criterion for auto-calibration.
+        meta_dict (dict): Dictionary to store calibration metadata.
+        verbose (bool): Whether to print detailed information during calibration.
+
+    Returns:
+        pd.DataFrame: Calibrated accelerometer data with columns 'X', 'Y', and 'Z'.
+    """
     _data = data.copy()
 
     time = np.array(_data.index.astype('int64') // 10 ** 9)
@@ -195,6 +211,18 @@ def remove_noise(df: pd.DataFrame, sf: float, filter_type: str = 'lowpass', filt
 
 
 def detect_wear(data: pd.DataFrame, sf: float, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+    """
+    Detect periods of device wear using count-based wear detection.
+
+    Args:
+        data (pd.DataFrame): DataFrame containing accelerometer data with columns 'X', 'Y', and 'Z'.
+        sf (float): Sampling frequency of the accelerometer data in Hz.
+        meta_dict (dict): Dictionary to store wear detection metadata.
+        verbose (bool): Whether to print detailed information during wear detection.
+
+    Returns:
+        pd.DataFrame: DataFrame containing a 'wear' column with binary wear status (1 for wear, 0 for non-wear).
+    """
     _data = data.copy()
 
     time = np.array(_data.index.astype('int64') // 10 ** 9)
@@ -219,12 +247,31 @@ def calc_weartime(data: pd.DataFrame, sf: float, meta_dict: dict, verbose: bool)
     """
     Calculate total, wear, and non-wear time from accelerometer data.
 
+    This function analyzes the wear detection data to compute the total recording duration,
+    the time the device was worn, and the time it wasn't worn. The results are stored in
+    the provided metadata dictionary and returned as a tuple.
+
     Args:
-        df (pd.DataFrame): DataFrame containing accelerometer data with a 'wear' column.
+        data (pd.DataFrame): DataFrame containing accelerometer data with a 'wear' column
+            where 1 indicates wear and 0 indicates non-wear.
         sf (float): Sampling frequency of the accelerometer data in Hz.
+        meta_dict (dict): Dictionary to store the calculated wear times under the keys
+            'resampled_total_time', 'resampled_wear_time', and 'resampled_non-wear_time'.
+        verbose (bool): If True, prints a confirmation message when wear time calculation
+            is complete.
 
     Returns:
-        Tuple[float, float, float]: A tuple containing total time, wear time, and non-wear time in seconds.
+        Tuple[float, float, float]: A tuple containing:
+            - total_time (float): Total recording duration in seconds
+            - wear_time (float): Time the device was worn in seconds
+            - non_wear_time (float): Time the device wasn't worn in seconds
+
+    Notes:
+        - The wear time is calculated by summing the 'wear' column and dividing by the
+          sampling frequency to convert from samples to seconds
+        - The total time is calculated as the difference between the first and last
+          timestamp in the index
+        - The non-wear time is calculated as the difference between total time and wear time
     """
     _data = data.copy()
 

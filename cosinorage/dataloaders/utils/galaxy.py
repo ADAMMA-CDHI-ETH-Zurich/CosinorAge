@@ -11,6 +11,17 @@ from .filtering import filter_incomplete_days, filter_consecutive_days
 
 
 def read_galaxy_data(gw_file_dir: str, meta_dict: dict, verbose: bool = False):
+    """
+    Read accelerometer data from Galaxy Watch binary files.
+
+    Args:
+        gw_file_dir (str): Directory containing Galaxy Watch data files
+        meta_dict (dict): Dictionary to store metadata about the loaded data
+        verbose (bool): Whether to print progress information
+
+    Returns:
+        pd.DataFrame: DataFrame containing accelerometer data with columns ['X', 'Y', 'Z']
+    """
 
     data = pd.DataFrame()
 
@@ -50,6 +61,17 @@ def read_galaxy_data(gw_file_dir: str, meta_dict: dict, verbose: bool = False):
 
 
 def filter_galaxy_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+    """
+    Filter Galaxy Watch accelerometer data by removing incomplete days and selecting longest consecutive sequence.
+
+    Args:
+        data (pd.DataFrame): Raw accelerometer data
+        meta_dict (dict): Dictionary to store metadata about the filtering process
+        verbose (bool): Whether to print progress information
+
+    Returns:
+        pd.DataFrame: Filtered accelerometer data
+    """
     _data = data.copy()
 
     # filter out first and last day
@@ -74,6 +96,17 @@ def filter_galaxy_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool =
 
 
 def resample_galaxy_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+    """
+    Resample Galaxy Watch accelerometer data to a regular 40ms interval (25Hz).
+
+    Args:
+        data (pd.DataFrame): Filtered accelerometer data
+        meta_dict (dict): Dictionary to store metadata about the resampling process
+        verbose (bool): Whether to print progress information
+
+    Returns:
+        pd.DataFrame: Resampled accelerometer data at 25Hz
+    """
     _data = data.copy()
 
     n_old = _data.shape[0]
@@ -93,6 +126,18 @@ def resample_galaxy_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool
 
 
 def preprocess_galaxy_data(data: pd.DataFrame, preprocess_args: dict = {}, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+    """
+    Preprocess Galaxy Watch accelerometer data including rescaling, calibration, noise removal, and wear detection.
+
+    Args:
+        data (pd.DataFrame): Resampled accelerometer data
+        preprocess_args (dict): Dictionary containing preprocessing parameters
+        meta_dict (dict): Dictionary to store metadata about the preprocessing
+        verbose (bool): Whether to print progress information
+
+    Returns:
+        pd.DataFrame: Preprocessed accelerometer data with additional columns for raw values and wear detection
+    """
     _data = data.copy()
     _data[['X_raw', 'Y_raw', 'Z_raw']] = _data[['X', 'Y', 'Z']]
 
@@ -127,6 +172,15 @@ def preprocess_galaxy_data(data: pd.DataFrame, preprocess_args: dict = {}, meta_
 
 
 def acceleration_data_to_dataframe(data):
+    """
+    Convert binary acceleration data to pandas DataFrame.
+
+    Args:
+        data: Binary acceleration data object
+
+    Returns:
+        pd.DataFrame: DataFrame containing accelerometer data with timestamps and sensor information
+    """
     rows = []
     for sample in data.samples:
         rows.append({
@@ -142,6 +196,20 @@ def acceleration_data_to_dataframe(data):
 
 
 def calibrate(data: pd.DataFrame, sf: float, sphere_crit: float, sd_criteria: float, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+    """
+    Calibrate accelerometer data using sphere fitting method.
+
+    Args:
+        data (pd.DataFrame): Raw accelerometer data
+        sf (float): Sampling frequency in Hz
+        sphere_crit (float): Sphere fitting criterion threshold
+        sd_criteria (float): Standard deviation criterion threshold
+        meta_dict (dict): Dictionary to store calibration parameters
+        verbose (bool): Whether to print progress information
+
+    Returns:
+        pd.DataFrame: Calibrated accelerometer data
+    """
 
     _data = data.copy()
 
@@ -210,7 +278,23 @@ def remove_noise(data: pd.DataFrame, sf: float, filter_type: str = 'lowpass', fi
     return _data[['X', 'Y', 'Z']]
 
 
-def detect_wear(data: pd.DataFrame, sf: float, sd_crit:float, range_crit:float, window_length:int, window_skip:int, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+def detect_wear(data: pd.DataFrame, sf: float, sd_crit: float, range_crit: float, window_length: int, window_skip: int, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+    """
+    Detect periods of device wear using acceleration thresholds.
+
+    Args:
+        data (pd.DataFrame): Preprocessed accelerometer data
+        sf (float): Sampling frequency in Hz
+        sd_crit (float): Standard deviation criterion for wear detection
+        range_crit (float): Range criterion for wear detection
+        window_length (int): Length of sliding window in seconds
+        window_skip (int): Number of seconds to skip between windows
+        meta_dict (dict): Dictionary to store wear detection metadata
+        verbose (bool): Whether to print progress information
+
+    Returns:
+        pd.DataFrame: DataFrame with binary wear detection column
+    """
     _data = data.copy()
 
     time = np.array(_data.index.astype('int64') // 10 ** 9)
@@ -237,11 +321,16 @@ def calc_weartime(data: pd.DataFrame, sf: float, meta_dict: dict, verbose: bool)
     Calculate total, wear, and non-wear time from accelerometer data.
 
     Args:
-        df (pd.DataFrame): DataFrame containing accelerometer data with a 'wear' column.
-        sf (float): Sampling frequency of the accelerometer data in Hz.
+        data (pd.DataFrame): DataFrame containing accelerometer data with a 'wear' column
+        sf (float): Sampling frequency of the accelerometer data in Hz
+        meta_dict (dict): Dictionary to store wear time metadata
+        verbose (bool): Whether to print progress information
 
     Returns:
-        Tuple[float, float, float]: A tuple containing total time, wear time, and non-wear time in seconds.
+        None: Updates meta_dict with the following keys:
+            - resampled_total_time: Total recording time in seconds
+            - resampled_wear_time: Time device was worn in seconds
+            - resampled_non-wear_time: Time device was not worn in seconds
     """
     _data = data.copy()
 

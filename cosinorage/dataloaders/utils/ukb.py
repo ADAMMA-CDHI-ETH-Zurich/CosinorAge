@@ -9,15 +9,23 @@ from .filtering import filter_incomplete_days, filter_consecutive_days
 
 def read_ukb_data(qc_file_path: str, enmo_file_dir: str, eid: int, meta_dict: dict = {}, verbose: bool = False) -> Union[pd.DataFrame, tuple[Any, Union[float, Any]]]:
     """
-    Read UK Biobank data from a CSV file and process it.
+    Read and process UK Biobank accelerometer data for a specific participant.
 
     Args:
-        file_path (str): The path to the CSV file containing the data.
-        source (str): The source of the data, should be 'uk-biobank'.
+        qc_file_path (str): Path to the quality control CSV file containing participant metadata.
+        enmo_file_dir (str): Directory containing the ENMO data files.
+        eid (int): Participant ID to process.
+        meta_dict (dict, optional): Additional metadata dictionary. Defaults to {}.
+        verbose (bool, optional): Whether to print processing information. Defaults to False.
 
     Returns:
-        Union[pd.DataFrame, tuple[Any, Union[float, Any]]]: A DataFrame containing the processed data,
-        or an empty DataFrame in case of an error.
+        pd.DataFrame: DataFrame containing processed ENMO data with timestamps as index.
+            Columns:
+            - ENMO: Euclidean Norm Minus One values in milligravity units
+
+    Raises:
+        FileNotFoundError: If QC file or ENMO directory doesn't exist
+        ValueError: If participant data is invalid or fails quality control checks
     """
     # check if qa_file_path and acc_file_path exist
     if not os.path.exists(qc_file_path):
@@ -129,6 +137,18 @@ def read_ukb_data(qc_file_path: str, enmo_file_dir: str, eid: int, meta_dict: di
 
 
 def filter_ukb_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+    """
+    Filter UK Biobank accelerometer data to ensure data quality.
+
+    Args:
+        data (pd.DataFrame): Input DataFrame containing ENMO data with timestamps as index.
+        meta_dict (dict, optional): Additional metadata dictionary. Defaults to {}.
+        verbose (bool, optional): Whether to print filtering information. Defaults to False.
+
+    Returns:
+        pd.DataFrame: Filtered DataFrame containing only complete and consecutive days of data.
+            Maintains same structure as input DataFrame.
+    """
     _data = data.copy()
 
     _data = filter_incomplete_days(_data, data_freq=1/60, expected_points_per_day=1440)
@@ -143,6 +163,19 @@ def filter_ukb_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = Fa
 
 
 def resample_ukb_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+    """
+    Resample UK Biobank accelerometer data to ensure consistent 1-minute intervals.
+
+    Args:
+        data (pd.DataFrame): Input DataFrame containing ENMO data with timestamps as index.
+        meta_dict (dict, optional): Additional metadata dictionary. Defaults to {}.
+        verbose (bool, optional): Whether to print resampling information. Defaults to False.
+
+    Returns:
+        pd.DataFrame: Resampled DataFrame with consistent 1-minute intervals.
+            Missing values are interpolated linearly and any remaining gaps are
+            filled using backward fill.
+    """
     _data = data.copy()
 
     _data = _data.resample('1min').interpolate(method='linear').bfill()
