@@ -15,11 +15,11 @@ def plot_sleep_predictions(feature_obj, simple=True, start_date=None, end_date=N
         end_date = feature_obj.ml_data.index[-1]
     selected_data = feature_obj.ml_data[(feature_obj.ml_data.index >= start_date) & (feature_obj.ml_data.index <= end_date)]
     if simple:
-        plt.figure(figsize=(20, 0.5))
+        plt.figure(figsize=(30, 0.5))
         plt.plot(selected_data["sleep"] == 0, 'g.', label='Wake')
         plt.plot(selected_data["sleep"] == 1, 'b.', label='Sleep')
         if 'wear' in selected_data.columns:
-            plt.plot(selected_data["wear"] != 1, 'r.', label='Non-wear')
+            plt.plot(selected_data["wear"] == 0, 'r.', label='Non-wear')
         plt.ylim(0.9, 1.1)
         plt.yticks([])
         plt.legend()

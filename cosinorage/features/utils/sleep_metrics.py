@@ -34,7 +34,7 @@ def apply_sleep_wake_predictions(data: pd.DataFrame) -> pd.DataFrame:
     
     data_ = data.copy()
     # make sf higher
-    result = compute_sleep_predictions(data_["ENMO"], sf=5)
+    result = compute_sleep_predictions(data_["ENMO"], sf=0.075)
     data_['sleep'] = pd.DataFrame(result, columns=['sleep']).set_index(data_.index)['sleep']
 
     return data_['sleep']
