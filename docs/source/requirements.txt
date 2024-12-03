@@ -11,5 +11,6 @@ scipy
 scikit-learn
 statsmodels
 scikit-digital-health
+claid
 
 git+https://github.com/readthedocs/sphinx-build-compatibility#egg=sphinx-build-compatibility
