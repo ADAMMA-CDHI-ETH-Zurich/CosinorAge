@@ -24,30 +24,16 @@ pip install .
 
 ### Data Loading
 
-`DataLoader` object can be used to load raw smartwatch accelerometer data from a directory containing hourly csv
-files.
-
 ```python
-smartwatch_loader = DataLoader(datasource='smartwatch', input_path='../data/62164/', preprocess=True)
+galaxy_loader = GalaxyDataLoader(gw_file_dir='../data/smartwatch/GalaxyWatch_Case1/', preprocess=True, preprocess_args=preprocess_args, verbose=True)
 ```
 
-Moreover you can load minute-level ENMO data provided by the UK-Biobank from a csv file.
-
 ```python
-biobank_loader = DataLoader(datasource='uk-biobank', input_path='../data/62164_ENMO.csv', preprocess=True)
+nhanes_loader = NHANESDataLoader(nhanes_file_dir='../data/nhanes/', person_id=62164, verbose=True)
 ```
 
-The `load_data()` method reads the data from the input directory/file and calculates minute-level ENMO values (if not
-already available) and stores it in a pandas DataFrame.
-
 ```python
-smartwatch_loader.load_data()
-```
-
-The `save_data()` method saves the minute-level data to a csv file.
-
-```python
-smartwatch_loader.save_data(output_file_path='../data/62164_ENMO.csv')
+ukb_loader = UKBDataLoader(qa_file_path=qa_file_path, ukb_file_dir=enmo_file_dir, eid=eid, verbose=True)
 ```
 
 ### Wearable Feature Computation
