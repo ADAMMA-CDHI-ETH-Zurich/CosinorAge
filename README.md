@@ -45,14 +45,6 @@ features = WearableFeatures(smartwatch_loader)
 features.run()
 ```
 
-### CosinorAge Computation
-
-```python
-cosinor_age = CosinorAge(features)
-cosinor_age.fit()
-cosinor_age.predict()
-```
-
 ## Execute Tests
 
 Go to the root directory of the repository and execute the following command to run the tests:
