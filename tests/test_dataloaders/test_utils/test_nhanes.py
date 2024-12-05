@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-from cosinorage.dataloaders.utils.nhanes import (
+from cosinorage.datahandlers.utils.nhanes import (
     read_nhanes_data,
     filter_nhanes_data,
     resample_nhanes_data,

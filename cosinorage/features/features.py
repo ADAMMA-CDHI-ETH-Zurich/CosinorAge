@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
-from ..dataloaders import DataLoader
+from ..datahandlers import DataHandler
 from .utils.nonparam_analysis import *
 from .utils.physical_activity_metrics import *
 from .utils.sleep_metrics import *
@@ -22,11 +22,11 @@ class WearableFeatures:
         feature_dict (dict): Additional feature storage (if needed)
     """
 
-    def __init__(self, loader: DataLoader, upper_quantile=0.999):
-        """Initialize WearableFeatures with data from a DataLoader.
+    def __init__(self, loader: DataHandler, upper_quantile=0.999):
+        """Initialize WearableFeatures with data from a DataHandler.
 
         Args:
-            loader (DataLoader): DataLoader instance containing ENMO data
+            loader (DataHandler): DataHandler instance containing ENMO data
         """
         self.ml_data = loader.get_ml_data().copy()
         self.ml_data['ENMO'] = min_max_scaling_exclude_outliers(self.ml_data['ENMO'], upper_quantile=upper_quantile)

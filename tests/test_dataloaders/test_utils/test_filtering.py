@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 from datetime import datetime, timedelta
-from cosinorage.dataloaders.utils.filtering import filter_incomplete_days
+from cosinorage.datahandlers.utils.filtering import filter_incomplete_days
 
 @pytest.fixture
 def sample_data():
