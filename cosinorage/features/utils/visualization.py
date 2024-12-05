@@ -2,7 +2,7 @@
 # Copyright (C) 2024 ETH Zurich
 # CosinorAge: Prediction of biological age based on accelerometer data
 # using the CosinorAge method proposed by Shim, Fleisch and Barata
-#(https://www.nature.com/articles/s41746-024-01111-x)
+# (https://www.nature.com/articles/s41746-024-01111-x)
 # 
 # Authors: Jacob Leo Oskar Hunecke
 # 
