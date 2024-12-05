@@ -25,5 +25,8 @@ minute-level ENMO data from CSV files and process this data to obtain a
 dataframe containing minute-level ENMO data.
 '''
 
-from .datahandlers import *
+from .datahandler import *
+from .nhanesdatahandler import *
+from .galaxydatahandler import *
+from .ukbdatahandler import *
 from .utils import *
