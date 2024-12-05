@@ -71,4 +71,4 @@ twine upload dist/*
 
 ## Package Data Scheme 
 
-![Package Data Scheme](figs/schema.jpg)
+![Package Data Scheme](docs/figs/schema.jpg)
