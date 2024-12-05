@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import pytest
 from datetime import datetime, timedelta
-from cosinorage.dataloaders.utils.calc_enmo import calculate_enmo, calculate_minute_level_enmo
+from cosinorage.datahandlers.utils.calc_enmo import calculate_enmo, calculate_minute_level_enmo
 
 def test_calculate_enmo_normal_case():
     # Test with realistic accelerometer data at 1Hz frequency

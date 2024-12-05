@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-from cosinorage.dataloaders.utils.galaxy import (
+from cosinorage.datahandlers.utils.galaxy import (
     read_galaxy_data,
     filter_galaxy_data,
     resample_galaxy_data,

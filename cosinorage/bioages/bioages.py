@@ -1,4 +1,4 @@
-from ..dataloaders import DataLoader
+from ..datahandlers import DataHandler
 from ..features.features import WearableFeatures
 
 class CosinorAge:

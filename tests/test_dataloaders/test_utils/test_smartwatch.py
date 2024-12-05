@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from cosinorage.dataloaders.utils.smartwatch import (
+from cosinorage.datahandlers.utils.smartwatch import (
     read_smartwatch_data,
     preprocess_smartwatch_data,
     remove_noise,

@@ -25,15 +25,15 @@ pip install .
 ### Data Loading
 
 ```python
-galaxy_loader = GalaxyDataLoader(gw_file_dir='../data/smartwatch/GalaxyWatch_Case1/', preprocess=True, preprocess_args=preprocess_args, verbose=True)
+galaxy_loader = GalaxyDataHandler(gw_file_dir='../data/smartwatch/GalaxyWatch_Case1/', preprocess=True, preprocess_args=preprocess_args, verbose=True)
 ```
 
 ```python
-nhanes_loader = NHANESDataLoader(nhanes_file_dir='../data/nhanes/', person_id=62164, verbose=True)
+nhanes_loader = NHANESDataHandler(nhanes_file_dir='../data/nhanes/', person_id=62164, verbose=True)
 ```
 
 ```python
-ukb_loader = UKBDataLoader(qa_file_path=qa_file_path, ukb_file_dir=enmo_file_dir, eid=eid, verbose=True)
+ukb_loader = UKBDataHandler(qa_file_path=qa_file_path, ukb_file_dir=enmo_file_dir, eid=eid, verbose=True)
 ```
 
 ### Wearable Feature Computation

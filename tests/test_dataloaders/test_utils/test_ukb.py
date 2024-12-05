@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-from cosinorage.dataloaders.utils.ukb import read_ukb_data, filter_ukb_data, resample_ukb_data
+from cosinorage.datahandlers.utils.ukb import read_ukb_data, filter_ukb_data, resample_ukb_data
 
 @pytest.fixture
 def sample_qc_data():

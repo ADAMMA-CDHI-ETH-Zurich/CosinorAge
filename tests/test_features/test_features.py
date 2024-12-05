@@ -4,10 +4,10 @@ import numpy as np
 from datetime import datetime, timedelta
 
 from cosinorage.features.features import WearableFeatures
-from cosinorage.dataloaders import DataLoader
+from cosinorage.datahandlers import DataHandler
 
 @pytest.fixture
-def mock_dataloader():
+def mock_DataHandler():
     # Create mock data with exactly 3 full days of measurements (3 * 1440 minutes)
     dates = pd.date_range(
         start='2024-01-01 00:00:00', 
@@ -32,21 +32,21 @@ def mock_dataloader():
     # Verify we have exactly 3 days of data
     assert len(data) == 4320  # 3 days * 1440 minutes
     
-    class MockDataLoader(DataLoader):
+    class MockDataHandler(DataHandler):
         def get_ml_data(self):
             return data
             
-    return MockDataLoader()
+    return MockDataHandler()
 
-def test_initialization(mock_dataloader):
-    features = WearableFeatures(mock_dataloader)
+def test_initialization(mock_DataHandler):
+    features = WearableFeatures(mock_DataHandler)
     assert isinstance(features.ml_data, pd.DataFrame)
     assert isinstance(features.feature_df, pd.DataFrame)
     assert isinstance(features.feature_dict, dict)
     assert 'ENMO' in features.ml_data.columns
 
-def test_cosinor_features(mock_dataloader):
-    features = WearableFeatures(mock_dataloader)
+def test_cosinor_features(mock_DataHandler):
+    features = WearableFeatures(mock_DataHandler)
     daily_features, multiday_features = features.get_cosinor_features()
     
     # Check daily features
@@ -59,8 +59,8 @@ def test_cosinor_features(mock_dataloader):
     assert all(key in multiday_features for key in 
               ['MESOR', 'amplitude', 'acrophase', 'acrophase_time'])
 
-def test_nonparametric_features(mock_dataloader):
-    features = WearableFeatures(mock_dataloader)
+def test_nonparametric_features(mock_DataHandler):
+    features = WearableFeatures(mock_DataHandler)
     
     # Test IV
     iv_data = features.get_IV()
@@ -77,8 +77,8 @@ def test_nonparametric_features(mock_dataloader):
     assert isinstance(ra_data, pd.DataFrame)
     assert 'RA' in ra_data.columns
 
-def test_activity_metrics(mock_dataloader):
-    features = WearableFeatures(mock_dataloader)
+def test_activity_metrics(mock_DataHandler):
+    features = WearableFeatures(mock_DataHandler)
     
     # Test M10 and L5
     m10_data = features.get_M10()
@@ -100,8 +100,8 @@ def test_activity_metrics(mock_dataloader):
     assert isinstance(lipa_data, pd.DataFrame)
     assert isinstance(mvpa_data, pd.DataFrame)
 
-def test_sleep_metrics(mock_dataloader):
-    features = WearableFeatures(mock_dataloader)
+def test_sleep_metrics(mock_DataHandler):
+    features = WearableFeatures(mock_DataHandler)
     
     # Test sleep predictions
     sleep_pred = features.get_sleep_predictions()
@@ -123,8 +123,8 @@ def test_sleep_metrics(mock_dataloader):
     sri_data = features.get_SRI()
     assert isinstance(sri_data, pd.DataFrame)
 
-def test_run_all_features(mock_dataloader):
-    features = WearableFeatures(mock_dataloader)
+def test_run_all_features(mock_DataHandler):
+    features = WearableFeatures(mock_DataHandler)
     features.run()
     
     feature_df, feature_dict = features.get_all()
