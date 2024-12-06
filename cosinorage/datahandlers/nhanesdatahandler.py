@@ -19,23 +19,9 @@
 # limitations under the License.
 ##########################################################################
 
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import time
 import os
-import numpy as np
-from tqdm import tqdm
-from scipy.signal import welch
 
-
-from .utils.calc_enmo import calculate_enmo, calculate_minute_level_enmo
-from .utils.filtering import filter_incomplete_days, filter_consecutive_days
-from .utils.smartwatch import read_smartwatch_data, preprocess_smartwatch_data
-from .utils.ukb import read_ukb_data, filter_ukb_data, resample_ukb_data
 from .utils.nhanes import read_nhanes_data, filter_nhanes_data, resample_nhanes_data
-from .utils.galaxy import read_galaxy_data, filter_galaxy_data, resample_galaxy_data, preprocess_galaxy_data
-
 from .datahandler import DataHandler, clock
 
     
@@ -47,22 +33,22 @@ class NHANESDataHandler(DataHandler):
 
     Args:
         nhanes_file_dir (str): Directory path containing NHANES data files.
-        person_id (str, optional): Specific person ID to load. Defaults to None.
+        seqn (str, optional): Specific person ID to load. Defaults to None.
         verbose (bool, optional): Whether to print processing information. Defaults to False.
 
     Attributes:
         nhanes_file_dir (str): Directory containing NHANES data files.
-        person_id (str): ID of the person whose data is being loaded.
+        seqn (str): ID of the person whose data is being loaded.
     """
 
-    def __init__(self, nhanes_file_dir: str, person_id: str = None, verbose: bool = False):
+    def __init__(self, nhanes_file_dir: str, seqn: int = None, verbose: bool = False):
         super().__init__()
 
         if not os.path.isdir(nhanes_file_dir):
             raise ValueError("The input path should be a directory path")
 
         self.nhanes_file_dir = nhanes_file_dir
-        self.person_id = person_id
+        self.seqn = seqn
 
         self.meta_dict['datasource'] = 'nhanes'
 
@@ -77,7 +63,7 @@ class NHANESDataHandler(DataHandler):
             verbose (bool, optional): Whether to print processing information. Defaults to False.
         """
 
-        self.raw_data = read_nhanes_data(self.nhanes_file_dir, person_id=self.person_id, meta_dict=self.meta_dict, verbose=verbose)
+        self.raw_data = read_nhanes_data(self.nhanes_file_dir, seqn=self.seqn, meta_dict=self.meta_dict, verbose=verbose)
         self.sf_data = filter_nhanes_data(self.raw_data, meta_dict=self.meta_dict, verbose=verbose)
         self.sf_data = resample_nhanes_data(self.sf_data, meta_dict=self.meta_dict, verbose=verbose)
         self.ml_data = self.sf_data

@@ -29,13 +29,13 @@ from .calc_enmo import calculate_enmo
 from .filtering import filter_incomplete_days, filter_consecutive_days
 
 
-def read_nhanes_data(file_dir: str, person_id: str = None, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+def read_nhanes_data(file_dir: str, seqn: str = None, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
     """
     Read and process NHANES accelerometer data files for a specific person.
 
     Args:
         file_dir (str): Directory containing NHANES data files (PAXDAY, PAXHD, PAXMIN)
-        person_id (str, optional): Unique identifier for the participant. Required.
+        seqn (str, optional): Unique identifier for the participant. Required.
         meta_dict (dict, optional): Dictionary to store metadata. Defaults to {}.
         verbose (bool, optional): Whether to print processing status. Defaults to False.
 
@@ -44,11 +44,11 @@ def read_nhanes_data(file_dir: str, person_id: str = None, meta_dict: dict = {},
                      indexed by timestamp.
 
     Raises:
-        ValueError: If person_id is None or if no valid NHANES data is found.
+        ValueError: If seqn is None or if no valid NHANES data is found.
     """
 
-    if person_id is None:
-        raise ValueError("The person_id is required for nhanes data")
+    if seqn is None:
+        raise ValueError("The seqn is required for nhanes data")
 
     # list all files in directory starting with PAX
     pax_files = [f for f in os.listdir(file_dir) if f.startswith('PAX')]
@@ -58,7 +58,7 @@ def read_nhanes_data(file_dir: str, person_id: str = None, meta_dict: dict = {},
         if file.startswith('PAXDAY'):
             version = file.split("_")[1].strip('.xpt')
             if f'PAXHD_{version}.xpt' in pax_files and f'PAXMIN_{version}.xpt' in pax_files:
-                if person_id in pd.read_sas(f"{file_dir}/PAXDAY_{version}.xpt")['SEQN'].unique():
+                if seqn in pd.read_sas(f"{file_dir}/PAXDAY_{version}.xpt")['SEQN'].unique():
                     versions.append(version)
 
     if verbose:
@@ -71,18 +71,18 @@ def read_nhanes_data(file_dir: str, person_id: str = None, meta_dict: dict = {},
     day_x = pd.DataFrame()
     for version in tqdm(versions, desc="Reading day-level files"):
         curr = pd.read_sas(f"{file_dir}/PAXDAY_{version}.xpt")
-        curr = curr[curr['SEQN'] == person_id]
+        curr = curr[curr['SEQN'] == seqn]
         day_x = pd.concat([day_x, curr], ignore_index=True)
 
     if day_x.empty:
-        raise ValueError(f"No day-level data found for person {person_id}")
+        raise ValueError(f"No day-level data found for person {seqn}")
 
     # rename columns
     day_x = day_x.rename(columns=str.lower)
     day_x = remove_bytes(day_x)
 
     if verbose:
-        print(f"Read {day_x.shape[0]} day-level records for person {person_id}")
+        print(f"Read {day_x.shape[0]} day-level records for person {seqn}")
 
     # check data quality flags
     day_x = day_x[day_x['paxqfd'] < 1]
@@ -100,20 +100,20 @@ def read_nhanes_data(file_dir: str, person_id: str = None, meta_dict: dict = {},
         itr_x = pd.read_sas(f"{file_dir}/PAXMIN_{version}.xpt", chunksize=100000)
         for chunk in tqdm(itr_x, desc=f"Processing chunks for version {version}"):
             curr = clean_data(chunk, day_x)
-            curr = curr[curr['SEQN'] == person_id]
+            curr = curr[curr['SEQN'] == seqn]
             min_x = pd.concat([min_x, curr], ignore_index=True)
 
     min_x = min_x.rename(columns=str.lower)
     min_x = remove_bytes(min_x)
 
     if verbose:
-        print(f"Read {min_x.shape[0]} minute-level records for person {person_id}")
+        print(f"Read {min_x.shape[0]} minute-level records for person {seqn}")
 
     # add header data
     head_x = pd.DataFrame()
     for version in tqdm(versions, desc="Reading header files"):
         curr = pd.read_sas(f"{file_dir}/PAXHD_{version}.xpt")
-        curr = curr[curr['SEQN'] == person_id]
+        curr = curr[curr['SEQN'] == seqn]
         head_x = pd.concat([head_x, curr], ignore_index=True)
 
     head_x = head_x.rename(columns=str.lower)
@@ -125,7 +125,7 @@ def read_nhanes_data(file_dir: str, person_id: str = None, meta_dict: dict = {},
     min_x = remove_bytes(min_x)
 
     if verbose:
-        print(f"Merged day- and minute-level data for person {person_id}")
+        print(f"Merged header and minute-level data for person {seqn}")
 
     # calculate measure time
     min_x['measure_time'] = min_x.apply(calculate_measure_time, axis=1)
@@ -157,7 +157,7 @@ def read_nhanes_data(file_dir: str, person_id: str = None, meta_dict: dict = {},
     })
 
     if verbose:
-        print(f"Renamed columns and set timestamp index for person {person_id}")
+        print(f"Renamed columns and set timestamp index for person {seqn}")
 
     # set wear and sleep columns
     min_x['wear'] = min_x['paxpredm'].astype(int).isin([1, 2]).astype(int)
@@ -165,14 +165,16 @@ def read_nhanes_data(file_dir: str, person_id: str = None, meta_dict: dict = {},
 
     min_x.set_index('TIMESTAMP', inplace=True)
     min_x = min_x[['X', 'Y', 'Z', 'wear', 'sleep', 'paxpredm']]
+    min_x[['X_raw', 'Y_raw', 'Z_raw']] = min_x[['X', 'Y', 'Z']]
+    min_x[['X', 'Y', 'Z']] = min_x[['X', 'Y', 'Z']] / 9.81
     min_x['ENMO'] = calculate_enmo(min_x)
 
     if verbose:
-        print(f"Calculated ENMO for person {person_id}")
+        print(f"Calculated ENMO for person {seqn}")
 
     meta_dict['raw_data_frequency'] = 1 / (min_x.index[1] - min_x.index[0]).total_seconds()
     meta_dict['raw_data_type'] = 'accelerometer'
-    meta_dict['raw_data_unit'] = 'm/s^2'
+    meta_dict['raw_data_unit'] = 'g'
 
     if verbose:
         print(f"Loaded {min_x.shape[0]} minute-level ENMO records from {file_dir}")
