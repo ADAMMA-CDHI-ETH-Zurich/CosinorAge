@@ -31,12 +31,12 @@ from .smartwatch import preprocess_smartwatch_data
 from .filtering import filter_incomplete_days, filter_consecutive_days
 
 
-def read_galaxy_data(gw_file_dir: str, meta_dict: dict, verbose: bool = False):
+def read_galaxy_data(galaxy_file_dir: str, meta_dict: dict, verbose: bool = False):
     """
     Read accelerometer data from Galaxy Watch binary files.
 
     Args:
-        gw_file_dir (str): Directory containing Galaxy Watch data files
+        galaxy_file_dir (str): Directory containing Galaxy Watch data files
         meta_dict (dict): Dictionary to store metadata about the loaded data
         verbose (bool): Whether to print progress information
 
@@ -47,17 +47,17 @@ def read_galaxy_data(gw_file_dir: str, meta_dict: dict, verbose: bool = False):
     data = pd.DataFrame()
 
     n_files = 0
-    for day_dir in os.listdir(gw_file_dir):
-        if os.path.isdir(gw_file_dir + day_dir):
-            for file in os.listdir(gw_file_dir + day_dir):
+    for day_dir in os.listdir(galaxy_file_dir):
+        if os.path.isdir(galaxy_file_dir + day_dir):
+            for file in os.listdir(galaxy_file_dir + day_dir):
                 # only consider binary files
                 if file.endswith(".binary") and file.startswith("acceleration_data"):
-                    _temp = acceleration_data_to_dataframe(load_acceleration_data(gw_file_dir + day_dir + "/" + file))
+                    _temp = acceleration_data_to_dataframe(load_acceleration_data(galaxy_file_dir + day_dir + "/" + file))
                     data = pd.concat([data, _temp])
                     n_files += 1
 
     if verbose:
-        print(f"Read {n_files} files from {gw_file_dir}")
+        print(f"Read {n_files} files from {galaxy_file_dir}")
 
     data = data.rename(columns={'unix_timestamp_in_ms': 'TIMESTAMP', 'acceleration_x': 'X', 'acceleration_y': 'Y', 'acceleration_z': 'Z'})
     data['TIMESTAMP'] = pd.to_datetime(data['TIMESTAMP'], unit='ms')
@@ -68,7 +68,7 @@ def read_galaxy_data(gw_file_dir: str, meta_dict: dict, verbose: bool = False):
     data.sort_index(inplace=True)
 
     if verbose:
-        print(f"Loaded {data.shape[0]} accelerometer data records from {gw_file_dir}")
+        print(f"Loaded {data.shape[0]} accelerometer data records from {galaxy_file_dir}")
 
     meta_dict['raw_n_timesteps'] = data.shape[0]
     meta_dict['raw_n_days'] = len(np.unique(data.index.date))
@@ -162,9 +162,8 @@ def preprocess_galaxy_data(data: pd.DataFrame, preprocess_args: dict = {}, meta_
     _data = data.copy()
     _data[['X_raw', 'Y_raw', 'Z_raw']] = _data[['X', 'Y', 'Z']]
 
-    # TODO  scale it down to proper range
-    rescale_factor = preprocess_args.get('rescale_factor', 1)
-    _data[['X', 'Y', 'Z']] = _data[['X', 'Y', 'Z']] * rescale_factor
+    # recaling of accelerometer data
+    _data[['X', 'Y', 'Z']] = _data[['X', 'Y', 'Z']] / 4096
 
     # calibration
     sphere_crit = preprocess_args.get('autocalib_sphere_crit', 1)

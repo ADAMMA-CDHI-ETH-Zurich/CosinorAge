@@ -43,14 +43,14 @@ class WearableFeatures:
         feature_dict (dict): Additional feature storage (if needed)
     """
 
-    def __init__(self, loader: DataHandler, upper_quantile=0.999):
+    def __init__(self, loader: DataHandler, upper_quantile=1.0):
         """Initialize WearableFeatures with data from a DataHandler.
 
         Args:
             loader (DataHandler): DataHandler instance containing ENMO data
         """
         self.ml_data = loader.get_ml_data().copy()
-        self.ml_data['ENMO'] = min_max_scaling_exclude_outliers(self.ml_data['ENMO'], upper_quantile=upper_quantile)
+        #self.ml_data['ENMO'] = min_max_scaling_exclude_outliers(self.ml_data['ENMO'], upper_quantile=upper_quantile)
 
         self.feature_df = pd.DataFrame(index=pd.unique(self.ml_data.index.date))
         self.feature_dict = {}   
