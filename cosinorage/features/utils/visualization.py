@@ -21,7 +21,6 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 
 def plot_sleep_predictions(feature_obj, simple=True, start_date=None, end_date=None):
     """Plot sleep predictions over time.
@@ -47,7 +46,7 @@ def plot_sleep_predictions(feature_obj, simple=True, start_date=None, end_date=N
     if simple:
         plt.figure(figsize=(30, 0.5))
         plt.plot(selected_data["sleep"] == 0, 'g.', label='Wake')
-        plt.plot(selected_data["sleep"] == 1, 'b.', label='Sleep')
+        plt.plot(selected_data["sleep"] != 0, 'b.', label='Sleep')
         if 'wear' in selected_data.columns:
             plt.plot(selected_data["wear"] == 0, 'r.', label='Non-wear')
         plt.ylim(0.9, 1.1)

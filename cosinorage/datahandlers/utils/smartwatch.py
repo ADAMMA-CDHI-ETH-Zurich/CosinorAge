@@ -23,9 +23,8 @@ import os
 import numpy as np
 import pandas as pd
 from scipy.signal import butter, filtfilt
-from sklearn.linear_model import LinearRegression
 from tqdm import tqdm
-from typing import Tuple, Optional, Dict, Union
+from typing import Tuple, Optional, Dict
 from glob import glob
 from skdh.preprocessing import CountWearDetection, CalibrateAccelerometer
 

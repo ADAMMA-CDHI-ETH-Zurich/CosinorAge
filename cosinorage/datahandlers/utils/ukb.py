@@ -154,6 +154,13 @@ def read_ukb_data(qc_file_path: str, enmo_file_dir: str, eid: int, meta_dict: di
     # rescale ENMO to g - should be /1000 however value range suggests that /100 is better to make it comparable with other sources
     data['ENMO'] = data['ENMO'] / 100 
 
+    meta_dict['raw_n_datapoints'] = data.shape[0]
+    meta_dict['raw_start_datetime'] = data.index.min()
+    meta_dict['raw_end_datetime'] = data.index.max()
+    meta_dict['raw_data_frequency'] = 'minute-level'
+    meta_dict['raw_data_type'] = 'ENMO'
+    meta_dict['raw_data_unit'] = 'mg'
+
     if verbose:
         print(f"Loaded {data.shape[0]} minute-level ENMO records from {enmo_file_dir}")
 

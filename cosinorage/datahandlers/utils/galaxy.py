@@ -23,12 +23,12 @@ import pandas as pd
 import os
 import numpy as np
 from typing import Tuple
-from skdh.preprocessing import CountWearDetection, CalibrateAccelerometer, AccelThresholdWearDetection
+from skdh.preprocessing import CalibrateAccelerometer, AccelThresholdWearDetection
 from scipy.signal import butter, filtfilt
 from claid.data_collection.load.load_sensor_data import *
 
-from .smartwatch import preprocess_smartwatch_data
 from .filtering import filter_incomplete_days, filter_consecutive_days
+from .calc_enmo import calculate_enmo
 
 
 def read_galaxy_data(galaxy_file_dir: str, meta_dict: dict, verbose: bool = False):
@@ -73,8 +73,9 @@ def read_galaxy_data(galaxy_file_dir: str, meta_dict: dict, verbose: bool = Fals
     meta_dict['raw_n_datapoints'] = data.shape[0]
     meta_dict['raw_start_datetime'] = data.index.min()
     meta_dict['raw_end_datetime'] = data.index.max()
-    meta_dict['raw_frequency'] = 'irregular (~25Hz)'
-    meta_dict['raw_datatype'] = 'accelerometer'
+    meta_dict['raw_data_frequency'] = '25Hz'
+    meta_dict['raw_data_type'] = 'accelerometer'
+    meta_dict['raw_data_unit'] = 'custom'
 
     return data
 
@@ -174,6 +175,8 @@ def preprocess_galaxy_data(data: pd.DataFrame, preprocess_args: dict = {}, meta_
 
     # calculate total, wear, and non-wear time
     calc_weartime(_data, sf=25, meta_dict=meta_dict, verbose=verbose)
+
+    _data['ENMO'] = calculate_enmo(_data, verbose=verbose)
 
     if verbose:
         print(f"Preprocessed accelerometer data")

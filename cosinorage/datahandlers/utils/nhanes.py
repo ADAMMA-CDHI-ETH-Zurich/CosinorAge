@@ -172,8 +172,12 @@ def read_nhanes_data(file_dir: str, seqn: str = None, meta_dict: dict = {}, verb
     if verbose:
         print(f"Calculated ENMO for person {seqn}")
 
-    meta_dict['raw_data_frequency'] = 1 / (min_x.index[1] - min_x.index[0]).total_seconds()
+    meta_dict['raw_n_datapoints'] = min_x.shape[0]
+    meta_dict['raw_start_datetime'] = min_x.index.min()
+    meta_dict['raw_end_datetime'] = min_x.index.max()
+    meta_dict['raw_data_frequency'] = 'minute-level'
     meta_dict['raw_data_type'] = 'accelerometer'
+    meta_dict['raw_data_unit'] = 'm/s^2'
 
     if verbose:
         print(f"Loaded {min_x.shape[0]} minute-level ENMO records from {file_dir}")
@@ -195,7 +199,7 @@ def filter_nhanes_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool =
     _data = data.copy()
     
     old_n = _data.shape[0]
-    _data = filter_incomplete_days(_data, data_freq=meta_dict['raw_data_frequency'])
+    _data = filter_incomplete_days(_data, data_freq=1/60)
     if verbose:
         print(f"Filtered out {old_n - data.shape[0]} minute-level ENMO records due to incomplete daily coverage")
 
