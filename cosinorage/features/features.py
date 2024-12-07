@@ -91,10 +91,14 @@ class WearableFeatures:
         nonparam_dict = {}
 
         nonparam_dict["IS"] = IS(self.ml_data)
-        nonparam_dict["IV"] = IV(self.ml_data)
+        if nonparam_dict["IS"] > 1 or nonparam_dict["IS"] < 0:
+            nonparam_dict["IS_flag"] = "invalid IS value - must be between 0 and 1"
 
+        nonparam_dict["IV"] = IV(self.ml_data) # 
         if nonparam_dict["IV"] > 2:
-            nonparam_dict["IV_flag"] = "ultradian rhythm or small sample size"
+            nonparam_dict["IV_flag"] = "ultradian rhythm or small sample size (due to IV > 2)"
+        if nonparam_dict["IV"] < 0:
+            nonparam_dict["IV_flag"] = "invalid IV value - must be greater than 0"
         
         res = M10(self.ml_data)
         nonparam_dict["M10"] = res[0]
@@ -104,8 +108,13 @@ class WearableFeatures:
         nonparam_dict["L5"] = res[0]
         nonparam_dict["L5_start"] = res[1]
 
+        if nonparam_dict["M10"] < nonparam_dict["L5"]:
+            nonparam_dict["M10_L5_flag"] = "M10 is less than L5 - check for errors in non-parametric analysis"
+            
         if "M10" in nonparam_dict.keys() and "L5" in nonparam_dict.keys():
             nonparam_dict["RA"] = RA(nonparam_dict["M10"], nonparam_dict["L5"])
+            if nonparam_dict["RA"] < 0 or nonparam_dict["RA"] > 1:
+                nonparam_dict["RA_flag"] = "invalid RA value - must be between 0 and 1"
         
         self.feature_dict["nonparam"] = nonparam_dict   
         
