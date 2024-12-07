@@ -262,7 +262,7 @@ dataframe containing minute-level ENMO data.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="cosinorage.DataHandlers.AccelerometerDataHandler">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cosinorage.DataHandlers.</span></span><span class="sig-name descname"><span class="pre">AccelerometerDataHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_dir_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/DataHandlers/DataHandlers.html#AccelerometerDataHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.DataHandlers.AccelerometerDataHandler" title="Link to this definition">¶</a></dt>
-<dd><p>A data loader for processing accelerometer data. This class loads,
+<dd><p>A data handler for processing accelerometer data. This class loads,
 processes, and saves accelerometer data, calculating ENMO
 (Euclidean Norm Minus One) values at the minute level.</p>
 <dl class="py attribute">
@@ -364,7 +364,7 @@ values at the minute level and stores the result in <cite>self.enmo_df</cite>.</
 <dl class="py class">
 <dt class="sig sig-object py" id="cosinorage.DataHandlers.ENMODataHandler">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cosinorage.DataHandlers.</span></span><span class="sig-name descname"><span class="pre">ENMODataHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/DataHandlers/DataHandlers.html#ENMODataHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.DataHandlers.ENMODataHandler" title="Link to this definition">¶</a></dt>
-<dd><p>A data loader for processing ENMO data from a single CSV file. This class
+<dd><p>A data handler for processing ENMO data from a single CSV file. This class
 loads, processes, and saves ENMO (Euclidean Norm Minus One) values at the
 minute level.</p>
 <dl class="py attribute">
@@ -450,9 +450,9 @@ data in <cite>self.enmo_df</cite>.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="cosinorage.DataHandlers.DataHandler">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cosinorage.DataHandlers.</span></span><span class="sig-name descname"><span class="pre">DataHandler</span></span><a class="reference internal" href="_modules/cosinorage/DataHandlers/DataHandlers.html#DataHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.DataHandlers.DataHandler" title="Link to this definition">¶</a></dt>
-<dd><p>A base class for data loaders that process and store ENMO data at the
+<dd><p>A base class for data handlers that process and store ENMO data at the
 minute level.</p>
-<p>This class provides a common interface for data loaders with methods to load
+<p>This class provides a common interface for data handlers with methods to load
 data, retrieve processed ENMO values, and save data. The <cite>load_data</cite> and
 <cite>save_data</cite> methods are intended to be overridden by subclasses.</p>
 <dl class="py attribute">

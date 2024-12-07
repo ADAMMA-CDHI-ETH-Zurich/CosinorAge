@@ -41,7 +41,7 @@ from .datahandler import DataHandler, clock
 
 class UKBDataHandler(DataHandler):
     """
-    Data loader for UK Biobank accelerometer data.
+    Data handler for UK Biobank accelerometer data.
 
     This class handles loading, filtering, and processing of UK Biobank accelerometer data.
 

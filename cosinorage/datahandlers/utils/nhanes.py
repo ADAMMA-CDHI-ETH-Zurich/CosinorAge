@@ -174,7 +174,6 @@ def read_nhanes_data(file_dir: str, seqn: str = None, meta_dict: dict = {}, verb
 
     meta_dict['raw_data_frequency'] = 1 / (min_x.index[1] - min_x.index[0]).total_seconds()
     meta_dict['raw_data_type'] = 'accelerometer'
-    meta_dict['raw_data_unit'] = 'g'
 
     if verbose:
         print(f"Loaded {min_x.shape[0]} minute-level ENMO records from {file_dir}")

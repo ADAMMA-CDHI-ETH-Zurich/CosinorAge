@@ -27,7 +27,7 @@ from .datahandler import DataHandler, clock
     
 class NHANESDataHandler(DataHandler):
     """
-    Data loader for NHANES accelerometer data.
+    Data handler for NHANES accelerometer data.
 
     This class handles loading, filtering, and processing of NHANES accelerometer data.
 

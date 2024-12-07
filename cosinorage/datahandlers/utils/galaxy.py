@@ -70,13 +70,11 @@ def read_galaxy_data(galaxy_file_dir: str, meta_dict: dict, verbose: bool = Fals
     if verbose:
         print(f"Loaded {data.shape[0]} accelerometer data records from {galaxy_file_dir}")
 
-    meta_dict['raw_n_timesteps'] = data.shape[0]
-    meta_dict['raw_n_days'] = len(np.unique(data.index.date))
+    meta_dict['raw_n_datapoints'] = data.shape[0]
     meta_dict['raw_start_datetime'] = data.index.min()
     meta_dict['raw_end_datetime'] = data.index.max()
     meta_dict['raw_frequency'] = 'irregular (~25Hz)'
     meta_dict['raw_datatype'] = 'accelerometer'
-    meta_dict['raw_unit'] = ''
 
     return data
 
@@ -134,14 +132,6 @@ def resample_galaxy_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool
     _data = _data.resample('40ms').interpolate(method='linear').bfill()
     if verbose:
         print(f"Resampled {n_old} to {_data.shape[0]} timestamps")
-
-    meta_dict['resampled_n_timestamps'] = _data.shape[0]
-    meta_dict['resampled_n_days'] = len(np.unique(_data.index.date))
-    meta_dict['resampled_start_datetime'] = _data.index.min()
-    meta_dict['resampled_end_datetime'] = _data.index.max()
-    meta_dict['resampled_frequency'] = '25Hz'
-    meta_dict['resampled_datatype'] = 'accelerometer'
-    meta_dict['resampled_unit'] = ''
 
     return _data
 
@@ -358,6 +348,6 @@ def calc_weartime(data: pd.DataFrame, sf: float, meta_dict: dict, verbose: bool)
     wear = float((_data['wear'].sum()) * (1 / sf))
     nonwear = float((total - wear))
 
-    meta_dict.update({'resampled_total_time': total, 'resampled_wear_time': wear, 'resampled_non-wear_time': nonwear})
+    meta_dict.update({'total_time': total, 'wear_time': wear, 'non-wear_time': nonwear})
     if verbose:
         print('Wear time calculated')

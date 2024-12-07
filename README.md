@@ -25,15 +25,15 @@ pip install .
 ### Data Loading
 
 ```python
-galaxy_loader = GalaxyDataHandler(gw_file_dir='../data/smartwatch/GalaxyWatch_Case1/', preprocess=True, preprocess_args=preprocess_args, verbose=True)
+galaxy_handler = GalaxyDataHandler(gw_file_dir='../data/smartwatch/GalaxyWatch_Case1/', preprocess=True, preprocess_args=preprocess_args, verbose=True)
 ```
 
 ```python
-nhanes_loader = NHANESDataHandler(nhanes_file_dir='../data/nhanes/', person_id=62164, verbose=True)
+nhanes_handler = NHANESDataHandler(nhanes_file_dir='../data/nhanes/', person_id=62164, verbose=True)
 ```
 
 ```python
-ukb_loader = UKBDataHandler(qa_file_path=qa_file_path, ukb_file_dir=enmo_file_dir, eid=eid, verbose=True)
+ukb_handler = UKBDataHandler(qa_file_path=qa_file_path, ukb_file_dir=enmo_file_dir, eid=eid, verbose=True)
 ```
 
 ### Wearable Feature Computation
@@ -41,7 +41,7 @@ ukb_loader = UKBDataHandler(qa_file_path=qa_file_path, ukb_file_dir=enmo_file_di
 The `WearableFeatures` object can be used to compute various features from the minute-level ENMO data.
 
 ```python
-features = WearableFeatures(smartwatch_loader)
+features = WearableFeatures(smartwatch_handler)
 features.run()
 ```
 
