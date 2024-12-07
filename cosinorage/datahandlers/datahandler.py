@@ -45,10 +45,10 @@ def clock(func):
 
 class DataHandler:
     """
-    A base class for data loaders that process and store ENMO data at the
+    A base class for data handlers that process and store ENMO data at the
     minute level.
 
-    This class provides a common interface for data loaders with methods to load
+    This class provides a common interface for data handlers with methods to load
     data, retrieve processed ENMO values, and save data. The `load_data` and
     `save_data` methods are intended to be overridden by subclasses.
 
@@ -78,7 +78,7 @@ class DataHandler:
 
         self.meta_dict = {}
 
-    def load_data(self, verbose: bool = False):
+    def __load_data(self, verbose: bool = False):
         raise NotImplementedError("The load_data method should be implemented by subclasses")
 
     def save_data(self, output_path: str):

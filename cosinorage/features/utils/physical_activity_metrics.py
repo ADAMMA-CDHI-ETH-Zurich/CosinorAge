@@ -22,13 +22,13 @@
 import pandas as pd
 
 cutpoints = {
-    "SB": 0.00001,
-    "LIPA": 0.01
+    "sl": 0.030,
+    "lm": 0.100, 
+    "mv": 0.400,
 }
 
 
-
-def activity_metrics(data: pd.Series) -> pd.DataFrame:
+def activity_metrics(data: pd.Series, pa_params: dict = cutpoints) -> pd.DataFrame:
     r"""Calculate Sedentary Behavior (SB), Light Physical Activity (LIPA), and 
     Moderate-to-Vigorous Physical Activity (MVPA) durations in hours for each day.
 
@@ -69,26 +69,36 @@ def activity_metrics(data: pd.Series) -> pd.DataFrame:
     """
 
     if data.empty:
-        return pd.DataFrame(columns=['SB', 'LIPA', 'MVPA'])
+        return [], [], [], []
 
     data_ = data.copy()[['ENMO']]
+
+    if "sl" not in cutpoints and "pa_cutpoint_sl" not in cutpoints:
+        raise ValueError("Sedentary cutpoint not found in cutpoints dictionary")
+    if "lm" not in cutpoints and "pa_cutpoint_lm" not in cutpoints:
+        raise ValueError("Light cutpoint not found in cutpoints dictionary")
+    if "mv" not in cutpoints and "pa_cutpoint_mv" not in cutpoints:
+        raise ValueError("Moderate-to-Vigorous cutpoint not found in cutpoints dictionary")
 
     # Group data by day
     daily_groups = data_.groupby(data_.index.date)
 
     # Initialize list to store results
-    daily_metrics = []
+    sedentary_minutes = []
+    light_minutes = []
+    moderate_minutes = []
+    vigorous_minutes = []
 
+    # if not in dict, take "sl"
+    sl = pa_params.get("pa_cutpoint_sl", cutpoints.get("sl"))
+    lm = pa_params.get("pa_cutpoint_lm", cutpoints.get("lm"))
+    mv = pa_params.get("pa_cutpoint_mv", cutpoints.get("mv"))
+    
     for date, day_data in daily_groups:
-        # Calculate time spent in each activity category
-        sb_hours = (day_data['ENMO'] <= cutpoints["SB"]).sum() / 60  # Assuming data is minute-level
-        lipa_hours = ((day_data['ENMO'] > cutpoints["SB"]) & (day_data['ENMO'] <= cutpoints["LIPA"])).sum() / 60
-        mvpa_hours = (day_data['ENMO'] > cutpoints["LIPA"]).sum() / 60
+        sedentary_minutes.append(int((day_data['ENMO'] <= sl).sum()))
+        light_minutes.append(int(((day_data['ENMO'] > sl) & (day_data['ENMO'] <= lm)).sum()))
+        moderate_minutes.append(int(((day_data['ENMO'] > lm) & (day_data['ENMO'] <= mv)).sum()))
+        vigorous_minutes.append(int((day_data['ENMO'] > mv).sum()))
+    
 
-        daily_metrics.append({'date': date, 'SB': sb_hours, 'LIPA': lipa_hours, 'MVPA': mvpa_hours})
-
-    # Create DataFrame with results
-    metrics_df = pd.DataFrame(daily_metrics)
-    metrics_df.set_index('date', inplace=True)
-
-    return metrics_df
+    return sedentary_minutes, light_minutes, moderate_minutes, vigorous_minutes

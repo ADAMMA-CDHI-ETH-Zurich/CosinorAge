@@ -28,7 +28,7 @@ from .datahandler import DataHandler, clock
 
 class GalaxyDataHandler(DataHandler):
     """
-    Data loader for Samsung Galaxy Watch accelerometer data.
+    Data handler for Samsung Galaxy Watch accelerometer data.
 
     This class handles loading, filtering, and processing of Galaxy Watch accelerometer data.
 
@@ -44,22 +44,26 @@ class GalaxyDataHandler(DataHandler):
         preprocess_args (dict): Arguments for preprocessing.
     """
 
-    def __init__(self, galaxy_file_dir: str, preprocess: bool = True, preprocess_args: dict = {}, verbose: bool = False):
+    def __init__(self, 
+                 galaxy_file_dir: str, 
+                 preprocess_args: dict = {}, 
+                 verbose: bool = False):
+
         super().__init__()
 
         if not os.path.isdir(galaxy_file_dir):
             raise ValueError("The Galaxy Watch file directory should be a directory path")
 
         self.galaxy_file_dir = galaxy_file_dir
-        self.preprocess = preprocess
         self.preprocess_args = preprocess_args
 
-        self.meta_dict['datasource'] = 'samsung galaxy watch'
+        self.meta_dict['datasource'] = 'samsung galaxy smartwatch'
 
         self.__load_data(verbose=verbose)
     
     @clock
-    def __load_data(self, verbose: bool = False):
+    def __load_data(self, 
+                    verbose: bool = False):
         """
         Internal method to load and process Galaxy Watch data.
 
@@ -70,9 +74,7 @@ class GalaxyDataHandler(DataHandler):
         self.raw_data = read_galaxy_data(self.galaxy_file_dir, meta_dict=self.meta_dict, verbose=verbose)
         self.sf_data = filter_galaxy_data(self.raw_data, meta_dict=self.meta_dict, verbose=verbose)
         self.sf_data = resample_galaxy_data(self.sf_data, meta_dict=self.meta_dict, verbose=verbose)
-
-        if self.preprocess:
-            self.sf_data = preprocess_galaxy_data(self.sf_data, preprocess_args=self.preprocess_args, meta_dict=self.meta_dict, verbose=verbose)
+        self.sf_data = preprocess_galaxy_data(self.sf_data, preprocess_args=self.preprocess_args, meta_dict=self.meta_dict, verbose=verbose)
 
         self.sf_data['ENMO'] = calculate_enmo(self.sf_data, verbose=verbose)
         self.ml_data = calculate_minute_level_enmo(self.sf_data, sf=25, verbose=verbose)

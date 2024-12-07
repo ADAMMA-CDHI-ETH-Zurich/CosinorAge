@@ -24,12 +24,12 @@ import pandas as pd
 from tqdm import tqdm
 from scipy.signal import welch
 
-def plot_orig_enmo(acc_loader, resample: str = '15min', wear: bool = True):
+def plot_orig_enmo(acc_handler, resample: str = '15min', wear: bool = True):
     """
     Plot the original ENMO values resampled at a specified interval.
 
     Args:
-        acc_loader: Accelerometer data loader object containing the raw data
+        acc_handler: Accelerometer data handler object containing the raw data
         resample (str): The resampling interval (default is '15min')
         wear (bool): Whether to add color bands for wear and non-wear periods (default is True)
 
@@ -37,7 +37,7 @@ def plot_orig_enmo(acc_loader, resample: str = '15min', wear: bool = True):
         None: Displays a matplotlib plot
     """
     #_data = self.acc_df.resample('5min').mean().reset_index(inplace=False)
-    _data = acc_loader.get_sf_data().resample(f'{resample}').mean().reset_index(inplace=False)
+    _data = acc_handler.get_sf_data().resample(f'{resample}').mean().reset_index(inplace=False)
     
 
     plt.figure(figsize=(12, 6))
@@ -56,18 +56,18 @@ def plot_orig_enmo(acc_loader, resample: str = '15min', wear: bool = True):
 
     plt.show()
 
-def plot_enmo(loader):
+def plot_enmo(handler):
     """
     Plot minute-level ENMO values with optional wear/non-wear period highlighting.
 
     Args:
-        loader: Data loader object containing the minute-level ENMO data
+        handler: Data handler object containing the minute-level ENMO data
 
     Returns:
         None: Displays a matplotlib plot showing ENMO values over time with optional
             wear/non-wear period highlighting in green/red
     """
-    _data = loader.get_ml_data().reset_index(inplace=False)
+    _data = handler.get_ml_data().reset_index(inplace=False)
 
     plt.figure(figsize=(12, 6))
     plt.plot(_data['TIMESTAMP'], _data['ENMO'], label='ENMO', color='black')
@@ -80,19 +80,19 @@ def plot_enmo(loader):
     plt.ylim(0, max(_data['ENMO'])*1.25)
     plt.show()
 
-def plot_orig_enmo_freq(acc_loader):
+def plot_orig_enmo_freq(acc_handler):
     """
     Plot the frequency domain representation of the original ENMO signal using Welch's method.
 
     Args:
-        acc_loader: Accelerometer data loader object containing the raw ENMO data
+        acc_handler: Accelerometer data handler object containing the raw ENMO data
 
     Returns:
         None: Displays a matplotlib plot showing the power spectral density of the ENMO signal
             computed using Welch's method with a sampling frequency of 80Hz and segment length of 1024
     """
     # convert to frequency domain
-    f, Pxx = welch(acc_loader.get_sf_data()['ENMO'], fs=80, nperseg=1024)
+    f, Pxx = welch(acc_handler.get_sf_data()['ENMO'], fs=80, nperseg=1024)
 
     plt.figure(figsize=(20, 5))
     plt.plot(f, Pxx)

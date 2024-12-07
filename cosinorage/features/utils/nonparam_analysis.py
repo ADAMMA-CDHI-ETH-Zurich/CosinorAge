@@ -22,55 +22,9 @@
 import pandas as pd
 import numpy as np
 
-def IV(data: pd.Series) -> pd.DataFrame:
-    r"""Calculate the intradaily variability for each day separately.
+from typing import List
 
-    Intradaily variability quantifies the fragmentation of rest-activity patterns
-    within each 24-hour period. It is calculated as the ratio of the mean squared
-    first derivative to the variance.
-
-    Parameters
-    ----------
-    data : pd.Series
-        Time series data containing activity measurements with datetime index
-        and 'ENMO' column
-
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame with date index and 'IV' column containing intradaily
-        variability values for each day
-    """
-    if len(data) == 0:
-        return pd.DataFrame(columns=['IV'])
-
-    data_ = data.copy()[['ENMO']]
-
-    daily_groups = data_.groupby(data_.index.date)
-    
-    # Calculate IV for each day
-    daily_ivs = []
-    for date, day_data in daily_groups:
-        if len(day_data) <= 1:
-            iv = np.nan
-        else:
-            c_1h = day_data.diff(1).pow(2).mean().values[0]
-            d_1h = day_data.var().values[0]
-            if d_1h == 0:
-                iv = np.nan
-            else:
-                iv = (c_1h / d_1h)
-        daily_ivs.append({'date': date, 'IV': iv})
-    
-    # Create DataFrame with results
-    iv_df = pd.DataFrame(daily_ivs)
-    if not iv_df.empty:
-        iv_df.set_index('date', inplace=True)
-    
-    return iv_df
-
-
-def IS(data: pd.Series) -> pd.DataFrame:
+def IS(data: pd.Series) -> float:
     r"""Calculate the interdaily stability (IS) for each day separately.
 
     Interdaily stability quantifies the strength of coupling between the
@@ -90,44 +44,40 @@ def IS(data: pd.Series) -> pd.DataFrame:
         stability values for each day
     """
     if len(data) == 0:
-        return pd.DataFrame(columns=['IS'])
+        return np.nan
 
     data_ = data.copy()[['ENMO']]
+    data_ = data_.resample('h').mean()
     data_['hour'] = data_.index.hour
-    data_['minute'] = data_.index.minute
 
-    # Calculate the mean 24-hour profile
-    mean_profile = data_.groupby(['hour', 'minute'])['ENMO'].mean()
-
-    # Calculate IS for each day
-    daily_groups = data_.groupby(data_.index.date)
-    daily_iss = []
-    for date, day_data in daily_groups:
-        # Match the day's data with the 24-hour mean profile
-        day_data['hour_minute'] = list(zip(day_data['hour'], day_data['minute']))
-        day_profile = day_data['hour_minute'].map(mean_profile)
-
-        # Compute IS
-        mean_daily_value = day_data['ENMO'].mean()
-        numerator = ((day_profile - mean_daily_value) ** 2).sum()
-        denominator = ((day_data['ENMO'] - mean_daily_value) ** 2).sum()
-        is_value = numerator / denominator if denominator != 0 else 0
-
-        daily_iss.append({'date': date, 'IS': is_value})
-
-    # Create DataFrame with results
-    is_df = pd.DataFrame(daily_iss)
-    is_df.set_index('date', inplace=True)
-
-    return is_df
+    # Calculate key values
+    H = 24  # Hours per day
+    D = len(pd.unique(data_.index.date))  # Number of days
+    z_mean = data_['ENMO'].mean()  # Overall mean
+    
+    # Calculate hourly means across days 
+    hourly_means = data_.groupby('hour')['ENMO'].mean()
+    
+    # Calculate numerator
+    numerator = D * np.sum(np.power(hourly_means - z_mean, 2), axis=0)
+    
+    # Calculate denominator
+    denominator = np.sum(np.power(data_['ENMO'] - z_mean, 2), axis=0)
+    
+    if denominator == 0:
+        return np.nan
+        
+    IS = float(numerator / denominator)
+    
+    return IS
 
 
-def RA(data: pd.Series) -> pd.DataFrame:
-    r"""Calculate the relative amplitude (RA) for each day separately.
+def IV(data: pd.Series) -> float:
+    r"""Calculate the intradaily variability for each day separately.
 
-    Relative amplitude is calculated as the difference between the most active
-    10-hour period and least active 5-hour period, divided by their sum.
-    This provides a normalized measure of the daily activity rhythm strength.
+    Intradaily variability quantifies the fragmentation of rest-activity patterns
+    within each 24-hour period. It is calculated as the ratio of the mean squared
+    first derivative to the variance.
 
     Parameters
     ----------
@@ -138,41 +88,35 @@ def RA(data: pd.Series) -> pd.DataFrame:
     Returns
     -------
     pd.DataFrame
-        DataFrame with date index and 'RA' column containing relative
-        amplitude values for each day
+        DataFrame with date index and 'IV' column containing intradaily
+        variability values for each day
     """
     if len(data) == 0:
-        return pd.DataFrame(columns=['RA'])
+        return np.nan
 
     data_ = data.copy()[['ENMO']]
-    data_['hour'] = data_.index.hour
+    P = len(data_)
 
-    # Group data by day
-    daily_groups = data_.groupby(data_.index.date)
-
-    # Calculate RA for each day
-    daily_ras = []
-    for date, day_data in daily_groups:
-        # Group data by hour within the day
-        hourly_means = day_data.groupby('hour')['ENMO'].mean()
-
-        # Find most active 10 hours and least active 5 hours
-        top_10h = hourly_means.nlargest(10).mean()  # Mean activity of the most active 10 hours
-        bottom_5h = hourly_means.nsmallest(5).mean()  # Mean activity of the least active 5 hours
-
-        # Compute RA
-        ra_value = (top_10h - bottom_5h) / (top_10h + bottom_5h) if (top_10h + bottom_5h) != 0 else 0
-
-        daily_ras.append({'date': date, 'RA': ra_value})
-
-    # Create DataFrame with results
-    ra_df = pd.DataFrame(daily_ras)
-    ra_df.set_index('date', inplace=True)
-
-    return ra_df
+    # resample to hourly data
+    data_ = data_.resample('h').mean()
+    
+    # Calculate numerator: P * sum((z_p - z_{p-1})^2)
+    first_derivative_squared = np.sum(np.power(data_[1:].reset_index(drop=True) - data_[:-1].reset_index(drop=True), 2), axis=0)
+    numerator = float(P * first_derivative_squared.iloc[0])
+    
+    # Calculate denominator: (P-1) * sum((z_p - z_mean)^2)
+    deviations_squared = np.sum(np.power(data_ - data_.mean(), 2), axis=0)
+    denominator = float((P - 1) * deviations_squared.iloc[0])
+    
+    if denominator == 0:
+        return np.nan
+        
+    IV = numerator / denominator
+    
+    return IV
 
 
-def M10(data: pd.Series) -> pd.DataFrame:
+def M10(data: pd.Series) -> List[float]:
     r"""Calculate the M10 (mean activity during the 10 most active hours) 
     and the start time of the 10 most active hours (M10_start) for each day.
 
@@ -193,35 +137,33 @@ def M10(data: pd.Series) -> pd.DataFrame:
         - 'M10_start': Hour (0-23) when the most active period starts
     """
     if len(data) == 0:
-        return pd.DataFrame(columns=['M10', 'M10_start'])
+        return [], []
 
     data_ = data.copy()[['ENMO']]
-    data_['hour'] = data_.index.hour
-
-    # Group data by day
     daily_groups = data_.groupby(data_.index.date)
 
-    # Calculate M10 and M10_start for each day
-    daily_m10 = []
+    m10 = []
+    m10_start = []
     for date, day_data in daily_groups:
-        # Group data by hour within the day
-        hourly_means = day_data.groupby('hour')['ENMO'].mean()
+        # calculate the rolling mean over 10-hour windows
+        window_size = 600  # 10 hours * 60 minutes
+        rolling_means = day_data[::-1].rolling(window=window_size, center=False).mean()[::-1].dropna()
+        
+        # Find the window with maximum activity
+        max_mean = float(rolling_means.max().iloc[0])
+        max_start_idx = rolling_means.idxmax().iloc[0]
 
-        # Find most active 10 hours
-        top_10h = hourly_means.nlargest(10)
-        top_10h_mean = top_10h.mean()
-        m10_start_hour = top_10h.idxmax()  # The hour with the highest activity in the top 10
+        if pd.isna(max_mean):
+            m10.append(np.nan)
+            m10_start.append(np.nan)
+        else:
+            m10.append(max_mean)
+            m10_start.append(max_start_idx)
 
-        daily_m10.append({'date': date, 'M10': top_10h_mean, 'M10_start': m10_start_hour})
-
-    # Create DataFrame with results
-    m10_df = pd.DataFrame(daily_m10)
-    m10_df.set_index('date', inplace=True)
-
-    return m10_df
+    return m10, m10_start
 
 
-def L5(data: pd.Series) -> pd.DataFrame:
+def L5(data: pd.Series) -> List[float]:
     r"""Calculate the L5 (mean activity during the 5 least active hours) 
     and the start time of the 5 least active hours (L5_start) for each day.
 
@@ -242,29 +184,59 @@ def L5(data: pd.Series) -> pd.DataFrame:
         - 'L5_start': Hour (0-23) when the least active period starts
     """
     if len(data) == 0:
-        return pd.DataFrame(columns=['L5', 'L5_start'])
+        return [], []
 
     data_ = data.copy()[['ENMO']]
-    data_['hour'] = data_.index.hour
-
-    # Group data by day
     daily_groups = data_.groupby(data_.index.date)
 
-    # Calculate L5 and L5_start for each day
-    daily_l5 = []
+    l5 = []
+    l5_start = []
     for date, day_data in daily_groups:
-        # Group data by hour within the day
-        hourly_means = day_data.groupby('hour')['ENMO'].mean()
+        # calculate the rolling mean over 5-hour windows
+        window_size = 300  # 5 hours * 60 minutes
+        rolling_means = day_data[::-1].rolling(window=window_size, center=False).mean()[::-1].dropna()
+        
+        # Find the window with minimum activity
+        min_mean = float(rolling_means.min().iloc[0])
+        min_start_idx = rolling_means.idxmin().iloc[0]
+    
+        if pd.isna(min_mean):
+            l5.append(np.nan)
+            l5_start.append(np.nan)
+        else:
+            l5.append(min_mean)
+            l5_start.append(min_start_idx)
 
-        # Find least active 5 hours
-        bottom_5h = hourly_means.nsmallest(5)
-        bottom_5h_mean = bottom_5h.mean()
-        l5_start_hour = bottom_5h.idxmin()  # The hour with the lowest activity in the bottom 5
+    return l5, l5_start
 
-        daily_l5.append({'date': date, 'L5': bottom_5h_mean, 'L5_start': l5_start_hour})
 
-    # Create DataFrame with results
-    l5_df = pd.DataFrame(daily_l5)
-    l5_df.set_index('date', inplace=True)
-    return l5_df
+def RA(m10: List[float], l5: List[float]) -> List[float]:
+    r"""Calculate the relative amplitude (RA) for each day separately.
+
+    Relative amplitude is calculated as the difference between the most active
+    10-hour period and least active 5-hour period, divided by their sum.
+    This provides a normalized measure of the daily activity rhythm strength.
+
+    Parameters
+    ----------
+    data : pd.Series
+        Time series data containing activity measurements with datetime index
+        and 'ENMO' column
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with date index and 'RA' column containing relative
+        amplitude values for each day
+    """
+    if len(m10) == 0 or len(l5) == 0:
+        return []
+
+    if len(m10) != len(l5):
+        raise ValueError("m10 and l5 must have the same length")
+    
+    ra = [(m10[i] - l5[i]) / (m10[i] + l5[i]) for i in range(len(m10))]
+    
+    return ra
+
 

@@ -22,9 +22,13 @@
 import pandas as pd
 import numpy as np
 from skdh.sleep.sleep_classification import compute_sleep_predictions
+from skdh.sleep.endpoints import WakeAfterSleepOnset, TotalSleepTime, PercentTimeAsleep, NumberWakeBouts, SleepOnsetLatency
+
+from typing import List
+from itertools import tee
 
 
-def apply_sleep_wake_predictions(data: pd.DataFrame) -> pd.DataFrame:
+def apply_sleep_wake_predictions(data: pd.DataFrame, sleep_params: dict) -> pd.DataFrame:
     """
     Apply sleep-wake prediction to a DataFrame with ENMO values.
 
@@ -50,12 +54,15 @@ def apply_sleep_wake_predictions(data: pd.DataFrame) -> pd.DataFrame:
     
     data_ = data.copy()
     # make sf higher
-    result = compute_sleep_predictions(data_["ENMO"], sf=0.075)
+    sf = sleep_params.get("sleep_ck_sf", 0.0025)
+    rescore = sleep_params.get("sleep_rescore", True)
+
+    result = compute_sleep_predictions(data_["ENMO"], sf=sf, rescore=rescore)
     data_['sleep'] = pd.DataFrame(result, columns=['sleep']).set_index(data_.index)['sleep']
 
     return data_['sleep']
 
-def waso(df: pd.DataFrame) -> pd.DataFrame:
+def WASO(data: pd.DataFrame) -> List[int]:
     """
     Calculate Wake After Sleep Onset (WASO) for each 24-hour cycle.
 
@@ -64,7 +71,7 @@ def waso(df: pd.DataFrame) -> pd.DataFrame:
 
     Parameters
     ----------
-    df : pd.DataFrame
+    data : pd.DataFrame
         DataFrame with:
         - datetime index
         - 'sleep' column (0=sleep, 1=wake)
@@ -79,41 +86,22 @@ def waso(df: pd.DataFrame) -> pd.DataFrame:
     The function processes data in 24-hour cycles starting at midnight.
     Zero is returned for days where no sleep is detected.
     """
-    df_ = df.copy()
+    data_ = data.copy()
 
-    # Ensure the index is in datetime format
-    df_.index = pd.to_datetime(df_.index)
-    
-    # Assign each record to a 24-hour cycle starting at 12 PM
-    df_['day'] = df_.index.date  # Extract date
-
-    waso_results = []
+    daily_groups = data_.groupby(data_.index.date)
+    waso = []
+    w = WakeAfterSleepOnset()
 
     # Group by 24-hour cycle
-    for date, group in df_.groupby('day'):
+    for date, day_data in daily_groups:
         # Sort by timestamp within the group
-        group = group.sort_index()
-        
-        # Identify sleep onset (first transition from wake to sleep)
-        try:
-            first_sleep_idx = group[group["sleep"] == 0].index[0]  # First occurrence of sleep
-        except IndexError:
-            # No sleep detected in this cycle
-            waso_results.append({"day": date, "waso_minutes": 0})
-            continue
-        
-        # Calculate WASO: sum wake states (1) after first sleep onset
-        waso = group.loc[first_sleep_idx:, "sleep"].sum()
-        time_interval_minutes = (group.index[1] - group.index[0]).seconds / 60.0
-        
-        waso_results.append({
-            "day": date,
-            "waso_minutes": float(waso * time_interval_minutes)
-        })
-    
-    return pd.DataFrame(waso_results).set_index("day")["waso_minutes"]
+        day_data = day_data.sort_index()
 
-def tst(df: pd.DataFrame) -> pd.DataFrame:
+        waso.append(int(w.predict(np.array(day_data["sleep"]))))
+
+    return waso
+
+def TST(data: pd.DataFrame) -> List[int]:
     """
     Calculate Total Sleep Time (TST) for each 24-hour cycle.
 
@@ -121,7 +109,7 @@ def tst(df: pd.DataFrame) -> pd.DataFrame:
 
     Parameters
     ----------
-    df : pd.DataFrame
+    data : pd.DataFrame
         DataFrame with:
         - datetime index
         - 'sleep' column (0=sleep, 1=wake)
@@ -137,27 +125,20 @@ def tst(df: pd.DataFrame) -> pd.DataFrame:
     Sleep time is calculated by counting all epochs marked as sleep (0).
     """
 
-    df_ = df.copy()
+    data_ = data.copy()
 
-    df_.index = pd.to_datetime(df_.index)
-    df_['day'] = df_.index.date  # Extract date
+    daily_groups = data_.groupby(data_.index.date)
+    tst = []
+    t = TotalSleepTime()
 
-    sleep_results = []
+    for date, day_data in daily_groups:
+        day_data = day_data.sort_index()
 
-    for date, group in df_.groupby('day'):
-        # Sort by timestamp within the group
-        group = group.sort_index()
-
-        # Calculate total sleep time: sum sleep states (0)
-        total_sleep = group[group["sleep"] == 0].shape[0]
-        sleep_results.append({
-            "day": date,
-            "total_sleep_minutes": total_sleep
-        })
+        tst.append(int(t.predict(np.array(day_data["sleep"]))))
     
-    return pd.DataFrame(sleep_results).set_index("day")["total_sleep_minutes"]
+    return tst
 
-def pta(df: pd.DataFrame) -> pd.DataFrame:
+def PTA(data: pd.DataFrame) -> List[float]:
     """
     Calculate Percent Time Asleep (PTA) for each 24-hour cycle.
 
@@ -165,7 +146,7 @@ def pta(df: pd.DataFrame) -> pd.DataFrame:
 
     Parameters
     ----------
-    df : pd.DataFrame
+    data : pd.DataFrame
         DataFrame with:
         - datetime index
         - 'sleep' column (0=sleep, 1=wake)
@@ -180,26 +161,56 @@ def pta(df: pd.DataFrame) -> pd.DataFrame:
     The function processes data in 24-hour cycles starting at midnight.
     PTA is calculated as: (number of sleep epochs) / (total number of epochs).
     """
-    df_ = df.copy()
-    df_.index = pd.to_datetime(df_.index)
-    df_['day'] = df_.index.date  # Extract date
+    data_ = data.copy()
 
-    sleep_results = []
+    daily_groups = data_.groupby(data_.index.date)
+    pta = []
+    p = PercentTimeAsleep()
 
-    for date, group in df_.groupby('day'):
+    for date, day_data in daily_groups:
         # Sort by timestamp within the group
-        group = group.sort_index()
+        day_data = day_data.sort_index()
 
-        # Calculate percent time asleep: sum sleep states (0) / total states
-        percent_time_asleep = group[group["sleep"] == 0].shape[0] / group.shape[0]
-        sleep_results.append({
-            "day": date,
-            "percent_time_asleep": percent_time_asleep
-        })
+        pta.append(float(p.predict(np.array(day_data["sleep"]))))
     
-    return pd.DataFrame(sleep_results).set_index("day")["percent_time_asleep"]
+    return pta
 
-def sri(df: pd.DataFrame) -> pd.DataFrame:
+def NWB(data: pd.DataFrame) -> List[int]:
+    """
+    Calculate Number of Wake Bouts (NWB) for each 24-hour cycle.
+    """
+
+    data_ = data.copy()
+
+    daily_groups = data_.groupby(data_.index.date)
+    nwb = []
+    n = NumberWakeBouts()
+
+    for date, day_data in daily_groups:
+        day_data = day_data.sort_index()
+
+        nwb.append(int(n.predict(np.array(day_data["sleep"]))))
+    
+    return nwb
+
+def SOL(data: pd.DataFrame) -> List[int]:
+    """
+    Calculate Sleep Onset Latency (SOL) for each 24-hour cycle.
+    """
+    data_ = data.copy()
+
+    daily_groups = data_.groupby(data_.index.date)
+    sol = []
+    s = SleepOnsetLatency()
+
+    for date, day_data in daily_groups:
+        day_data = day_data.sort_index()
+
+        sol.append(int(s.predict(np.array(day_data["sleep"]))))
+    
+    return sol
+
+def SRI(data: pd.DataFrame) -> float:
     """
     Calculate Sleep Regularity Index (SRI) for each 24-hour cycle.
 
@@ -208,7 +219,7 @@ def sri(df: pd.DataFrame) -> pd.DataFrame:
 
     Parameters
     ----------
-    df : pd.DataFrame
+    data : pd.DataFrame
         DataFrame with:
         - datetime index
         - 'sleep' column (0=sleep, 1=wake)
@@ -233,35 +244,31 @@ def sri(df: pd.DataFrame) -> pd.DataFrame:
     - Formula: SRI = (2 * concordance_rate - 1) * 100
     """
 
-    sleep_states = df["sleep"].values
-    epochs_per_day = 24 * 60 
-    epochs_per_window = epochs_per_day * 2
+    if data.empty:
+        return np.nan
+    
+    data_ = data.copy()
+    data_ = data_.sort_index()
 
-    if len(sleep_states) < 2 * epochs_per_day:
-        raise ValueError("Insufficient data. At least two complete days are required.")
-    # Remove extra epochs to ensure an integer number of days
+    N = 1440  # minutes per day
+    M = len(pd.unique(data_.index.date))
 
-    total_epochs = len(sleep_states)
-    extra_epochs = total_epochs % epochs_per_day
-    if extra_epochs > 0:
-        sleep_states = sleep_states[:-extra_epochs]
+    if M < 2:  # Need at least 2 days for SRI
+        return np.nan
+    
+    daily_groups = data_.groupby(data_.index.date)
+    sri = 0
 
-    sri_results = []
-    for start in range(epochs_per_day, len(sleep_states), epochs_per_day):
-        # Extract current and previous day's data
-        prev_day = sleep_states[start - epochs_per_day : start]
-        curr_day = sleep_states[start : start + epochs_per_day]
+    def overlapping_pairs(iterable):
+        a, b = tee(iterable)
+        next(b, None)
+        return zip(a, b)
 
-        # Compare sleep states between the two days
-        concordance = prev_day == curr_day
-        concordance_rate = np.mean(concordance)
+    for (date_prev, day_data_prev), (date_next, day_data_next) in overlapping_pairs(daily_groups):
+        # check for concordance of sleep states between consecutive days
+        concordance = (day_data_prev["sleep"].reset_index(drop=True) == day_data_next["sleep"].reset_index(drop=True)).sum()
+        sri += concordance 
 
-        # Calculate SRI
-        sri = float(200 * concordance_rate - 100)
-        sri_results.append(sri)
-
-    # Build the output DataFrame
-    dates = df.index[epochs_per_day::epochs_per_day]  # Start at second day's date
-    sri_df = pd.DataFrame({"date": dates, "SRI": sri_results}).set_index("date") # NaN for the first day
-
-    return sri_df
+    sri = float(-100 + 200/(M*(N-1)) * sri)
+    
+    return sri
