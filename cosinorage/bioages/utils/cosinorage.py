@@ -18,3 +18,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
+
+from typing import List
+from datahandlers.datahandler import DataHandler
+
+# TODO:
+# - do we need the chronoAges (read them as a list)?
+# - do we need the model params
+
+class CosinorAge():
+    def __init__(self,
+        handlers: List[DataHandler],
+        model_params: dict):
+
+        self.handlers = handlers
+        self.model_params = model_params
+        
+        self.cosinorAges = []
+
+        self.__predict()
+
+    def __predict(self):
+        pass

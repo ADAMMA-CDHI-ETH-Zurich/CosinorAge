@@ -20,7 +20,6 @@
 ##########################################################################
 
 import matplotlib.pyplot as plt
-import pandas as pd
 from tqdm import tqdm
 from scipy.signal import welch
 

@@ -19,10 +19,6 @@
 # limitations under the License.
 ##########################################################################
 
-import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-
 from ..datahandlers import DataHandler
 from .utils.nonparam_analysis import *
 from .utils.physical_activity_metrics import *
@@ -113,7 +109,7 @@ class WearableFeatures:
             
         if "M10" in nonparam_dict.keys() and "L5" in nonparam_dict.keys():
             nonparam_dict["RA"] = RA(nonparam_dict["M10"], nonparam_dict["L5"])
-            if nonparam_dict["RA"] < 0 or nonparam_dict["RA"] > 1:
+            if not all(0 <= ra <= 1 for ra in nonparam_dict["RA"]):
                 nonparam_dict["RA_flag"] = "invalid RA value - must be between 0 and 1"
         
         self.feature_dict["nonparam"] = nonparam_dict   

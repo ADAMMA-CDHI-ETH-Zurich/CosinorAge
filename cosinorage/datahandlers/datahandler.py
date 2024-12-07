@@ -42,6 +42,12 @@ def clock(func):
 
     return inner
 
+################################## !!!! ##################################
+# whenever you implement a new datahandler for a new datasource, check
+# the documentation of the source, e.g., the smartwatch, to make sure 
+# what units the data is in and scale accordingly.
+################################## !!!! ##################################
+
 
 class DataHandler:
     """

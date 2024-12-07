@@ -21,7 +21,7 @@
 
 import os
 
-from .utils.calc_enmo import calculate_enmo, calculate_minute_level_enmo
+from .utils.calc_enmo import calculate_minute_level_enmo
 from .utils.galaxy import read_galaxy_data, filter_galaxy_data, resample_galaxy_data, preprocess_galaxy_data
 from .datahandler import DataHandler, clock
 
@@ -75,6 +75,4 @@ class GalaxyDataHandler(DataHandler):
         self.sf_data = filter_galaxy_data(self.raw_data, meta_dict=self.meta_dict, verbose=verbose)
         self.sf_data = resample_galaxy_data(self.sf_data, meta_dict=self.meta_dict, verbose=verbose)
         self.sf_data = preprocess_galaxy_data(self.sf_data, preprocess_args=self.preprocess_args, meta_dict=self.meta_dict, verbose=verbose)
-
-        self.sf_data['ENMO'] = calculate_enmo(self.sf_data, verbose=verbose)
         self.ml_data = calculate_minute_level_enmo(self.sf_data, sf=25, verbose=verbose)
