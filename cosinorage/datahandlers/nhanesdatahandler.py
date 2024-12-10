@@ -21,7 +21,7 @@
 
 import os
 
-from .utils.nhanes import read_nhanes_data, filter_nhanes_data, resample_nhanes_data
+from .utils.nhanes import read_nhanes_data, filter_and_preprocess_nhanes_data, resample_nhanes_data
 from .datahandler import DataHandler, clock
 
     
@@ -64,7 +64,7 @@ class NHANESDataHandler(DataHandler):
         """
 
         self.raw_data = read_nhanes_data(self.nhanes_file_dir, seqn=self.seqn, meta_dict=self.meta_dict, verbose=verbose)
-        self.sf_data = filter_nhanes_data(self.raw_data, meta_dict=self.meta_dict, verbose=verbose)
+        self.sf_data = filter_and_preprocess_nhanes_data(self.raw_data, meta_dict=self.meta_dict, verbose=verbose)
         self.sf_data = resample_nhanes_data(self.sf_data, meta_dict=self.meta_dict, verbose=verbose)
         self.ml_data = self.sf_data
 
