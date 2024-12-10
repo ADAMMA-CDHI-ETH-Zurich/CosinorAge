@@ -52,12 +52,12 @@ def test_cosinor_features(mock_DataHandler):
     # Check daily features
     assert isinstance(daily_features, pd.DataFrame)
     assert all(col in daily_features.columns for col in 
-              ['MESOR', 'amplitude', 'acrophase', 'acrophase_time'])
+              ['mesor', 'amplitude', 'acrophase', 'acrophase_time'])
     
     # Check multiday features
     assert isinstance(multiday_features, dict)
     assert all(key in multiday_features for key in 
-              ['MESOR', 'amplitude', 'acrophase', 'acrophase_time'])
+              ['mesor', 'amplitude', 'acrophase', 'acrophase_time'])
 
 def test_nonparametric_features(mock_DataHandler):
     features = WearableFeatures(mock_DataHandler)
@@ -131,10 +131,10 @@ def test_run_all_features(mock_DataHandler):
     
     # Check if all features are computed
     expected_columns = [
-        'MESOR', 'amplitude', 'acrophase', 'acrophase_time',
+        'mesor', 'amplitude', 'acrophase', 'acrophase_time',
         'IV', 'IS', 'RA', 'M10', 'L5', 'M10_start', 'L5_start',
         'SB', 'LIPA', 'MVPA', 'TST', 'WASO', 'PTA', 'SRI'
     ]
     
     assert all(col in feature_df.columns for col in expected_columns)
-    assert all(key in feature_dict for key in ['MESOR', 'amplitude', 'acrophase', 'acrophase_time'])
+    assert all(key in feature_dict for key in ['mesor', 'amplitude', 'acrophase', 'acrophase_time'])

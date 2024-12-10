@@ -172,7 +172,7 @@ def read_nhanes_data(file_dir: str, seqn: str = None, meta_dict: dict = {}, verb
     meta_dict['raw_end_datetime'] = min_x.index.max()
     meta_dict['raw_data_frequency'] = 'minute-level'
     meta_dict['raw_data_type'] = 'accelerometer'
-    meta_dict['raw_data_unit'] = 'm/s^2'
+    meta_dict['raw_data_unit'] = 'MIMS'
 
     if verbose:
         print(f"Loaded {min_x.shape[0]} minute-level Accelerometer records from {file_dir}")
@@ -208,8 +208,8 @@ def filter_and_preprocess_nhanes_data(data: pd.DataFrame, meta_dict: dict = {}, 
     meta_dict['n_days'] = len(np.unique(_data.index.date))
 
     _data[['X_raw', 'Y_raw', 'Z_raw']] = _data[['X', 'Y', 'Z']]
-    _data[['X', 'Y', 'Z']] = _data[['X', 'Y', 'Z']] / 9.81 # convert from m/s^2 to gravitational units
-    _data['ENMO'] = calculate_enmo(_data)
+    _data[['X', 'Y', 'Z']] = _data[['X', 'Y', 'Z']] / 9.81 # convert from MIMS to aprrox. mg 
+    _data['ENMO'] = calculate_enmo(_data) * 170
 
     if verbose:
         print(f"Calculated ENMO data")

@@ -136,8 +136,8 @@ def plot_cosinor(feature_obj):
     plt.plot(timestamps, feature_obj.ml_data["ENMO"], 'r-')
     plt.plot(timestamps, feature_obj.ml_data["cosinor_fitted"], 'b-')
     plt.ylim(0, max(feature_obj.ml_data["ENMO"])*1.5)
-    cosinor_keys = ["MESOR", "amplitude", "acrophase", "acrophase_time"]
+    cosinor_keys = ["mesor", "amplitude", "acrophase", "acrophase_time"]
     if all(key in feature_obj.feature_dict['cosinor'].keys() for key in cosinor_keys):
         # x ticks should be daytime hours
-        plt.axhline(feature_obj.feature_dict['cosinor']["MESOR"], color='green', linestyle='--', label='MESOR')
+        plt.axhline(feature_obj.feature_dict['cosinor']["mesor"], color='green', linestyle='--', label='MESOR')
     plt.show()
