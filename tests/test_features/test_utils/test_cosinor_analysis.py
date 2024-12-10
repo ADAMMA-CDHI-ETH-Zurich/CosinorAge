@@ -37,7 +37,7 @@ def test_cosinor_by_day_basic_functionality(sample_data):
     assert isinstance(fitted_vals, pd.DataFrame)
     
     # Check expected columns
-    expected_columns = ['MESOR', 'amplitude', 'acrophase', 'acrophase_time']
+    expected_columns = ['mesor', 'amplitude', 'acrophase', 'acrophase_time']
     assert all(col in params_df.columns for col in expected_columns)
     
     # Check number of days
@@ -51,7 +51,7 @@ def test_cosinor_multiday_basic_functionality(sample_data):
     assert isinstance(fitted_vals, pd.Series)
     
     # Check expected keys
-    expected_keys = ['MESOR', 'amplitude', 'acrophase', 'acrophase_time']
+    expected_keys = ['mesor', 'amplitude', 'acrophase', 'acrophase_time']
     assert all(key in params for key in expected_keys)
 
 def test_invalid_input_missing_column():

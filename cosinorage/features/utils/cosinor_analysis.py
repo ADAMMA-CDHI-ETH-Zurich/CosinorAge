@@ -91,4 +91,4 @@ def cosinor_multiday(df: pd.DataFrame) -> pd.DataFrame:
     acrophase_time *= 60
 
     # Convert the results into a DataFrame
-    return {'MESOR': mesor, 'amplitude': amplitude, 'acrophase': acrophase, 'acrophase_time': acrophase_time}, fitted_vals_df
+    return {'mesor': mesor, 'amplitude': amplitude, 'acrophase': acrophase, 'acrophase_time': acrophase_time}, fitted_vals_df

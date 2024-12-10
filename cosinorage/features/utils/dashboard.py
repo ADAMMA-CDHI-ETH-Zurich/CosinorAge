@@ -31,7 +31,7 @@ from datetime import timedelta
 def dashboard(features):
     data = features.get_ml_data()
 
-    mesor = features.feature_dict['cosinor']['MESOR']
+    mesor = features.feature_dict['cosinor']['mesor']
     amplitude = features.feature_dict['cosinor']['amplitude']
     acrophase = features.feature_dict['cosinor']['acrophase']
     acrophase_time = features.feature_dict['cosinor']['acrophase_time']
@@ -264,3 +264,6 @@ def dashboard(features):
     plt.tight_layout()
 
     plt.show()
+
+
+

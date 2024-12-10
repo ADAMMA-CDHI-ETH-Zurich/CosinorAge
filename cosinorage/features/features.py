@@ -47,7 +47,6 @@ class WearableFeatures:
             handler (DataHandler): DataHandler instance containing ENMO data
         """
         self.ml_data = handler.get_ml_data().copy() 
-        self.ml_data["ENMO"] = self.ml_data["ENMO"] * 1000 #to convert to mg
         self.features_args = features_args
 
         self.feature_dict = {}
@@ -73,7 +72,7 @@ class WearableFeatures:
         """
 
         cosinor_dict = {}
-        cosinor_columns = ["MESOR", "amplitude", "acrophase", "acrophase_time"]
+        cosinor_columns = ["mesor", "amplitude", "acrophase", "acrophase_time"]
 
         params, fitted = cosinor_multiday(self.ml_data)
     
