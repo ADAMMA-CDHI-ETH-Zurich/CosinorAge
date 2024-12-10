@@ -20,80 +20,89 @@
 ##########################################################################
 
 from ..datahandlers import DataHandler
-from ..features.features import WearableFeatures
+from ..features.utils.cosinor_analysis import cosinor_multiday
+
+import numpy as np
+from typing import List
+
+# model parameters
+model_params_generic = {
+    "shape": 0.01462774,
+    "rate": -13.36715309,
+    "mesor": -0.03204933,
+    "amp1": -0.01971357,
+    "phi1": -0.01664718,
+    "age": 0.10033692
+}
+
+model_params_female = {
+    "shape": 0.01294402,
+    "rate": -13.28530410,
+    "mesor": -0.02569062,
+    "amp1": -0.02170987,
+    "phi1": -0.13191562,
+    "age": 0.08840283
+}
+
+model_params_male = {
+    "shape": 0.013878454,
+    "rate": -13.016951633,
+    "mesor": -0.023988922,
+    "amp1": -0.030620390,
+    "phi1": 0.008960155,
+    "age": 0.101726103
+}
+
+m_n = -1.405276
+m_d = 0.01462774
+BA_n = -0.01447851
+BA_d = 0.112165
+BA_i = 133.5989
+
 
 class CosinorAge:
-    """
-    A class for calculating biological age using the CosinorAge model, which 
-    integrates wearable-derived features such as MESOR, amplitude, and acrophase.
+    def __init__(self, records: List[dict]):
+        self.records = records
+        
+        self.model_params_generic = model_params_generic
+        self.model_params_female = model_params_female
+        self.model_params_male = model_params_male
 
-    Attributes:
-        mesor (float): The MESOR (Midline Estimating Statistic of Rhythm) feature value.
-        amplitude (float): The amplitude of the rhythm.
-        acrophase (float): The timing of the peak in the rhythm.
-        chronological_age (float, optional): The actual age of the individual. Default is None.
-        fit (bool): Indicates whether the model has been fitted. Default is False.
-        model (object, optional): A pre-trained model object, if available. Default is None.
-        beta_1 (float): Coefficient for MESOR in the adjustment equation.
-        beta_2 (float): Coefficient for amplitude in the adjustment equation.
-        beta_3 (float): Coefficient for acrophase in the adjustment equation.
-        alpha (float): Scaling factor for the adjustment equation.
+        self.__compute_cosinor_ages()
 
-    Methods:
-        fit(): Placeholder method for model fitting. To be implemented.
-        predict(): Calculates the CosinorAge adjustment and returns the estimated biological age.
-    """
+    def __compute_cosinor_ages(self):
+        for record in self.records:
+            result = cosinor_multiday(record["handler"].get_ml_data())[0]
+            record["amplitude"] = result["amplitude"]*1000
+            record["acrophase"] = result["acrophase_time"]
+            record["mesor"] = result["MESOR"]*1000
+            
+            gender = record.get("gender", "unknown")
+            if gender == "female":
+                coef = self.model_params_female
+            elif gender == "male":
+                coef = self.model_params_male
+            else:
+                coef = self.model_params_generic
 
-    def __init__(self, features: WearableFeatures, model=None):
-        """
-        Initializes the CosinorAge class with wearable features and an optional pre-trained model.
+            m = coef["mesor"] * record["mesor"]
+            a = coef["amp1"] * record["amplitude"]
+            p = coef["phi1"] * record["acrophase"]
+            b = coef["age"] * record["age"]
+            n1 = m + a + p + b
+            xb = n1 + coef["shape"]
 
-        Args:
-            features (WearableFeatures): Object containing wearable-derived features.
-            model (object, optional): Pre-trained model to use for predictions. Default is None.
-        """
-        # Patient data
-        self.mesor = features.feature_df.loc["MESOR"]
-        self.amplitude = features.feature_df.loc["amplitude"]
-        self.acrophase = features.feature_df.loc["acrophase"]
-        self.chronological_age = None
+            m_val = 1 - np.exp((m_n * np.exp(xb)) / m_d)
 
-        # Model parameters
-        self.fit = False
-        self.model = None
-        self.beta_1 = None
-        self.beta_2 = None
-        self.beta_3 = None
-        self.alpha = None
+            # Calculate cosinor age
+            record["cosinoage"] = float(((np.log(BA_n * np.log(1 - m_val))) / BA_d) + BA_i)
 
-        if model is not None:
-            self.fit = True
-            self.model = model
+            # Calculate cosinor age advance
+            record["cosinoage_advance"] = float(record["cosinoage"] - record["age"])
 
-    def fit(self):
-        """
-        Placeholder method for fitting the CosinorAge model.
-        To be implemented with the appropriate fitting logic.
-        """
-        pass
+    def get_predictions(self):
+        return self.records
 
-    def predict(self):
-        """
-        Calculates the estimated biological age (CosinorAge) using the adjustment equation.
 
-        Returns:
-            float: The estimated CosinorAge, calculated as chronological_age - adjustment.
 
-        Raises:
-            ValueError: If any of the beta coefficients or alpha is None.
-        """
-        if None in [self.beta_1, self.beta_2, self.beta_3, self.alpha]:
-            raise ValueError("Model parameters (beta_1, beta_2, beta_3, alpha) must be set before prediction.")
 
-        adjustment = (
-            (self.beta_1 * self.mesor) +
-            (self.beta_2 * self.amplitude) +
-            (self.beta_3 * self.acrophase)
-        ) / self.alpha
-        cosinor_age = self.chronological_age - adjustment
-        return cosinor_age

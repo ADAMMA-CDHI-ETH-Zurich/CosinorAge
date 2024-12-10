@@ -165,12 +165,7 @@ def read_nhanes_data(file_dir: str, seqn: str = None, meta_dict: dict = {}, verb
 
     min_x.set_index('TIMESTAMP', inplace=True)
     min_x = min_x[['X', 'Y', 'Z', 'wear', 'sleep', 'paxpredm']]
-    min_x[['X_raw', 'Y_raw', 'Z_raw']] = min_x[['X', 'Y', 'Z']]
-    min_x[['X', 'Y', 'Z']] = min_x[['X', 'Y', 'Z']] / 9.81
-    min_x['ENMO'] = calculate_enmo(min_x)
 
-    if verbose:
-        print(f"Calculated ENMO for person {seqn}")
 
     meta_dict['raw_n_datapoints'] = min_x.shape[0]
     meta_dict['raw_start_datetime'] = min_x.index.min()
@@ -180,11 +175,11 @@ def read_nhanes_data(file_dir: str, seqn: str = None, meta_dict: dict = {}, verb
     meta_dict['raw_data_unit'] = 'm/s^2'
 
     if verbose:
-        print(f"Loaded {min_x.shape[0]} minute-level ENMO records from {file_dir}")
+        print(f"Loaded {min_x.shape[0]} minute-level Accelerometer records from {file_dir}")
 
     return min_x
 
-def filter_nhanes_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+def filter_and_preprocess_nhanes_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
     """
     Filter NHANES accelerometer data for incomplete days and non-consecutive sequences.
 
@@ -211,6 +206,14 @@ def filter_nhanes_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool =
         print(f"Filtered out {old_n - _data.shape[0]} minute-level ENMO records due to filtering for longest consecutive sequence of days")
 
     meta_dict['n_days'] = len(np.unique(_data.index.date))
+
+    _data[['X_raw', 'Y_raw', 'Z_raw']] = _data[['X', 'Y', 'Z']]
+    _data[['X', 'Y', 'Z']] = _data[['X', 'Y', 'Z']] / 9.81 # convert from m/s^2 to gravitational units
+    _data['ENMO'] = calculate_enmo(_data)
+
+    if verbose:
+        print(f"Calculated ENMO data")
+
 
     return _data
 
