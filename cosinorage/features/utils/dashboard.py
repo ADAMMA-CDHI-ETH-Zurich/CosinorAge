@@ -26,19 +26,34 @@ import matplotlib.dates as mdates
 from matplotlib import colormaps
 import numpy as np
 import pandas as pd
+from datetime import timedelta
 
 def dashboard(features):
     data = features.get_ml_data()
 
     mesor = features.feature_dict['cosinor']['MESOR']
+    amplitude = features.feature_dict['cosinor']['amplitude']
+    acrophase = features.feature_dict['cosinor']['acrophase']
+    acrophase_time = features.feature_dict['cosinor']['acrophase_time']
 
     timestamps = data.index
-    plt.figure(figsize=(18, 5))
-    plt.plot(timestamps, data["ENMO"], 'r-')
-    plt.plot(timestamps, data["cosinor_fitted"], 'b-')
+    plt.figure(figsize=(22.5, 5))
+    plt.plot(timestamps, data["ENMO"], '-', color='grey', alpha=0.8, label="ENMO")
+    plt.plot(timestamps, data["cosinor_fitted"], 'b-', label="Cosinor Fit")
     plt.ylim(0, max(data["ENMO"])*1.05)
     plt.axhline(mesor, color='green', linestyle='--', label='MESOR')
-    plt.show()      
+    plt.axvline(timestamps.min() + timedelta(minutes=acrophase_time), color='purple', linestyle=':', label='Acrophase Time')
+    plt.text(timestamps.min() + timedelta(minutes=acrophase_time), 0.95*max(data["ENMO"]), f'{acrophase_time:.1f} minutes ({acrophase:.1f}°)', color='purple', horizontalalignment='center', fontsize=10, bbox=dict(facecolor='white', edgecolor='none', boxstyle='round,pad=0.2'))
+    plt.text(timestamps.min()-timedelta(minutes=120), mesor, f'{mesor:.1f} mg', color='green', horizontalalignment='right', verticalalignment='center', fontsize=10, bbox=dict(facecolor='white', edgecolor='none', boxstyle='round,pad=0.2'))
+    plt.vlines(timestamps.max()+timedelta(minutes=20), mesor, mesor+amplitude, color='red', linestyle='-', label='Amplitude')
+    plt.text(timestamps.max()+timedelta(minutes=120), mesor+(amplitude/2), f'{amplitude:.1f} mg', color='red', horizontalalignment='left', verticalalignment='center', fontsize=10, bbox=dict(facecolor='white', edgecolor='none', boxstyle='round,pad=0.2'))
+
+
+    plt.title(f"Cosinor Fit")
+    plt.xlabel("Timestamp")
+    plt.ylabel("ENMO (mg)")
+    plt.legend(ncol=5)
+    plt.tight_layout()
 
     # Extract data and group by date
     days = data.groupby(data.index.date)
@@ -65,7 +80,7 @@ def dashboard(features):
         axes[i, 0].axvspan(l5_start[i], l5_start[i] + pd.Timedelta(hours=5), color="green", alpha=0.3, label="L5 Period")
         
         axes[i, 0].set_title(f"ENMO Time Series - {day}")
-        axes[i, 0].set_ylabel("ENMO")
+        axes[i, 0].set_ylabel("ENMO (mg)")
         axes[i, 0].set_xlabel("Timestamp")
         axes[i, 0].set_ylim(enmo_y_range)
         
@@ -87,7 +102,7 @@ def dashboard(features):
             legend=False
         )
         axes[i, 1].set_title("M10 & L5 Values")
-        axes[i, 1].set_ylabel("Mean ENMO")
+        axes[i, 1].set_ylabel("Mean ENMO (mg)")
         axes[i, 1].set_ylim(0, max(max(m10_values), max(l5_values))*1.4)
 
         # Annotate bar plot with values
@@ -102,7 +117,7 @@ def dashboard(features):
     plt.tight_layout()
 
 
-    fig, axes = plt.subplots(1, 2, figsize=(22.5, 0.3))
+    fig, axes = plt.subplots(1, 2, figsize=(22.5, 0.4))
     # IS plot
     axes[0].hlines(y=0, xmin=0, xmax=feature_data['nonparam']['IS'], color="blue", alpha=0.8, linewidth=2)
     axes[0].hlines(y=0, xmin=feature_data['nonparam']['IS'], xmax=1, color="grey", alpha=0.8, linewidth=2, zorder=1)
@@ -128,8 +143,8 @@ def dashboard(features):
     else:
         axes[1].set_xlim(0, feature_data['nonparam']['IV'])
     axes[1].set_yticks([])
-    axes[1].set_title("IV Value")
-    plt.tight_layout()
+    axes[1].set_title("Intradaily Variability (IV)")
+    #plt.tight_layout()
 
     fig, ax = plt.subplots(1, 1, figsize=(18, 0.6*num_days), sharex=True)
 
@@ -144,8 +159,8 @@ def dashboard(features):
     # Setting y-ticks as the dates
     ax.set_yticks(positions, dates)
     ax.set_xlim(0, 1)  # Adjust this limit based on your data
-    ax.set_title("RA Values")
-    ax.set_xlabel("Value")
+    ax.set_title("Relative Amplitude (RA)")
+    ax.set_xlabel("RA")
     ax.set_ylabel("Day")
     plt.tight_layout()
 
@@ -158,8 +173,8 @@ def dashboard(features):
         # highlight sleep predictions
         axes[i].fill_between(day_data.index, day_data['sleep']*enmo_y_range[1], color='blue', alpha=0.5, label='Sleep')
         
-        axes[i].set_title(f"ENMO Time Series - {day}")
-        axes[i].set_ylabel("ENMO")
+        axes[i].set_title(f"Sleep Predictions - {day}")
+        axes[i].set_ylabel("ENMO (mg)")
         axes[i].set_xlabel("Timestamp")
         axes[i].set_ylim(enmo_y_range)
         
@@ -187,40 +202,40 @@ def dashboard(features):
         ax[0].hlines(y=positions[i], xmin=tst[i], xmax=1, color="grey", alpha=0.8, linewidth=2, zorder=1)
         ax[0].scatter(tst[i], positions[i], color="orange", s=100, marker="o", label="TST" if i == 0 else "")
     ax[0].set_yticks(positions, dates)
-    ax[0].set_title("TST")
+    ax[0].set_title("Total Sleep Time (TST)")
     ax[0].set_ylabel("Day")
-    ax[0].set_xlabel("Minutes")
+    ax[0].set_xlabel("TST (in minutes)")
 
     for i, date in enumerate(dates):
         ax[1].hlines(y=positions[i], xmin=0, xmax=waso[i], color="orange", alpha=0.8, linewidth=2)
         ax[1].hlines(y=positions[i], xmin=waso[i], xmax=1, color="grey", alpha=0.8, linewidth=2, zorder=1)
         ax[1].scatter(waso[i], positions[i], color="orange", s=100, marker="o", label="WASO" if i == 0 else "")
     ax[1].set_yticks(positions, dates)
-    ax[1].set_title("WASO")
-    ax[1].set_xlabel("Minutes")
+    ax[1].set_title("Wake After Sleep Onset (WASO)")
+    ax[1].set_xlabel("WASO (in minutes)")
     
     for i, date in enumerate(dates):
         ax[2].hlines(y=positions[i], xmin=0, xmax=pta[i], color="orange", alpha=0.8, linewidth=2)
         ax[2].hlines(y=positions[i], xmin=pta[i], xmax=1, color="grey", alpha=0.8, linewidth=2, zorder=1)
         ax[2].scatter(pta[i], positions[i], color="orange", s=100, marker="o", label="PTA" if i == 0 else "")
     ax[2].set_yticks(positions, dates)
-    ax[2].set_title("PTA")
-    ax[2].set_xlabel("in %")
+    ax[2].set_title("Percent Time Asleep (PTA)")
+    ax[2].set_xlabel("PTA (in %)")
     for i, date in enumerate(dates):
         ax[3].hlines(y=positions[i], xmin=0, xmax=nwb[i], color="orange", alpha=0.8, linewidth=2)
         ax[3].hlines(y=positions[i], xmin=nwb[i], xmax=1, color="grey", alpha=0.8, linewidth=2, zorder=1)
         ax[3].scatter(nwb[i], positions[i], color="orange", s=100, marker="o", label="NWB" if i == 0 else "")
     ax[3].set_yticks(positions, dates)
-    ax[3].set_title("NWB")
-    ax[3].set_xlabel("Number of waking bouts")
+    ax[3].set_title("Number of Waking Bouts (NWB)")
+    ax[3].set_xlabel("NWB")
 
     for i, date in enumerate(dates):
         ax[4].hlines(y=positions[i], xmin=0, xmax=sol[i], color="orange", alpha=0.8, linewidth=2)
         ax[4].hlines(y=positions[i], xmin=sol[i], xmax=1, color="grey", alpha=0.8, linewidth=2, zorder=1)
         ax[4].scatter(sol[i], positions[i], color="orange", s=100, marker="o", label="SOL" if i == 0 else "")
     ax[4].set_yticks(positions, dates)
-    ax[4].set_title("SOL")
-    ax[4].set_xlabel("Minutes")
+    ax[4].set_title("Sleep Onset Latency (SOL)")
+    ax[4].set_xlabel("SOL (in minutes)")
     plt.tight_layout()
 
     sedentary = feature_data['physical_activity']['sedentary']
@@ -233,7 +248,7 @@ def dashboard(features):
     colors = [viridis(0.2), viridis(0.4), viridis(0.6), viridis(0.8)]  # Manually picking shades
     positions = np.arange(len(dates))[::-1]
 
-    plt.figure(figsize=(18, 3))
+    plt.figure(figsize=(18, 3.5))
     plt.barh(positions, sedentary, height=0.8, label='Sedentary', color=colors[0])
     plt.barh(positions, light, height=0.8, left=sedentary, label='Light', color=colors[1])
     plt.barh(positions, moderate, height=0.8, left=np.array(sedentary) + np.array(light), label='Moderate', color=colors[2])
