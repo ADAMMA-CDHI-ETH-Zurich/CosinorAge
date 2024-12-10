@@ -46,7 +46,8 @@ class WearableFeatures:
         Args:
             handler (DataHandler): DataHandler instance containing ENMO data
         """
-        self.ml_data = handler.get_ml_data().copy() * 1000 #to convert to mg
+        self.ml_data = handler.get_ml_data().copy() 
+        self.ml_data["ENMO"] = self.ml_data["ENMO"] * 1000 #to convert to mg
         self.features_args = features_args
 
         self.feature_dict = {}

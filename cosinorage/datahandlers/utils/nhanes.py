@@ -232,6 +232,9 @@ def resample_nhanes_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool
     _data = data.copy()
 
     _data = _data.resample('1min').interpolate(method='linear').bfill()
+    _data['sleep'] = _data['sleep'].round(0)
+    _data['wear'] = _data['wear'].round(0)
+
     if verbose:
         print(f"Resampled {data.shape[0]} to {_data.shape[0]} timestamps")
 
