@@ -41,8 +41,8 @@ def apply_sleep_wake_predictions(data: pd.DataFrame, sleep_params: dict) -> pd.D
     -------
     pd.Series
         Series containing sleep predictions where:
-        0 = sleep
-        1 = wake
+        1 = sleep
+        0 = wake
 
     Raises
     ------
@@ -112,7 +112,7 @@ def TST(data: pd.DataFrame) -> List[int]:
     data : pd.DataFrame
         DataFrame with:
         - datetime index
-        - 'sleep' column (0=sleep, 1=wake)
+        - 'sleep' column (1=sleep, 0=wake)
 
     Returns
     -------
@@ -149,7 +149,7 @@ def PTA(data: pd.DataFrame) -> List[float]:
     data : pd.DataFrame
         DataFrame with:
         - datetime index
-        - 'sleep' column (0=sleep, 1=wake)
+        - 'sleep' column (1=sleep, 0=wake)
 
     Returns
     -------
@@ -222,7 +222,7 @@ def SRI(data: pd.DataFrame) -> float:
     data : pd.DataFrame
         DataFrame with:
         - datetime index
-        - 'sleep' column (0=sleep, 1=wake)
+        - 'sleep' column (1=sleep, 0=wake)
         Must contain at least 2 complete days of data.
 
     Returns

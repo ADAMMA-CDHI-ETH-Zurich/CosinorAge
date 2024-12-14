@@ -284,4 +284,3 @@ def calculate_measure_time(row):
     base_time = datetime.strptime(row['day1_start_time'], "%H:%M:%S")
     measure_time = base_time + timedelta(seconds=row['paxssnmp'] / 80)
     return measure_time
-

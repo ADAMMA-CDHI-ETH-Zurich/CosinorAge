@@ -176,7 +176,7 @@ def preprocess_galaxy_data(data: pd.DataFrame, preprocess_args: dict = {}, meta_
     # calculate total, wear, and non-wear time
     calc_weartime(_data, sf=25, meta_dict=meta_dict, verbose=verbose)
 
-    _data['ENMO'] = calculate_enmo(_data, verbose=verbose)
+    _data['ENMO'] = calculate_enmo(_data, verbose=verbose) * 500
 
     if verbose:
         print(f"Preprocessed accelerometer data")

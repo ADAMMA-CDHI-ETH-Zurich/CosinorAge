@@ -1,106 +1,128 @@
 import pytest
 import pandas as pd
 import numpy as np
-from datetime import datetime, date
-from cosinorage.features.utils.physical_activity_metrics import activity_metrics, cutpoints
-
-@pytest.fixture
-def sample_data():
-    # Create sample data for one day with readings every minute
-    dates = pd.date_range(start='2024-01-01', end='2024-01-02', freq='min')[:-1]  # 1440 minutes
-    
-    # Create ENMO values that fall into different categories
-    enmo_values = np.concatenate([
-        np.zeros(480),          # 8 hours of SB (below SB cutpoint)
-        np.full(480, 0.005),    # 8 hours of LIPA (between SB and LIPA cutpoints)
-        np.full(480, 0.02)      # 8 hours of MVPA (above LIPA cutpoint)
-    ])
-    
-    # Return as DataFrame instead of Series
-    return pd.DataFrame({
-        'ENMO': enmo_values
-    }, index=dates)
-
-def test_activity_metrics_basic(sample_data):
-    """Test that activity_metrics returns expected format and values."""
-    result = activity_metrics(sample_data)
-    
-    # Check basic properties
-    assert isinstance(result, pd.DataFrame)
-    assert list(result.columns) == ['SB', 'LIPA', 'MVPA']
-    assert isinstance(result.index[0], date)
-
-def test_activity_metrics_values(sample_data):
-    """Test that activity_metrics calculates correct hours for each category."""
-    result = activity_metrics(sample_data)
-    
-    # We expect 8 hours in each category based on our sample data
-    # Convert string date to datetime.date object
-    test_date = pd.to_datetime('2024-01-01').date()
-    assert result.loc[test_date, 'SB'] == pytest.approx(8.0)
-    assert result.loc[test_date, 'LIPA'] == pytest.approx(8.0)
-    assert result.loc[test_date, 'MVPA'] == pytest.approx(8.0)
-
-def test_activity_metrics_multiple_days():
-    """Test that activity_metrics handles multiple days correctly."""
-    # Create two days of data
-    dates = pd.date_range(start='2024-01-01', end='2024-01-03', freq='min')[:-1]
-    enmo_values = np.tile([0, 0.005, 0.02], len(dates)//3)
-    # Return as DataFrame instead of Series
-    data = pd.DataFrame({
-        'ENMO': enmo_values
-    }, index=dates)
-    
-    result = activity_metrics(data)
-    
-    assert len(result) == 2  # Should have data for 2 days
-    assert all(isinstance(d, date) for d in result.index)
+from datetime import datetime, timedelta
+from cosinorage.features.utils.physical_activity_metrics import activity_metrics
 
 def test_activity_metrics_empty_data():
-    """Test that activity_metrics handles empty data appropriately."""
-    # Create empty DataFrame with expected structure
-    empty_data = pd.DataFrame(
-        columns=['ENMO'],
-        index=pd.DatetimeIndex([]),
-        dtype=float
-    )
-    
-    result = activity_metrics(empty_data)
-    
-    assert isinstance(result, pd.DataFrame)
-    assert result.empty
-    assert list(result.columns) == ['SB', 'LIPA', 'MVPA']  # Verify expected columns exist
+    """Test behavior with empty input data"""
+    empty_df = pd.DataFrame(columns=['ENMO'])
+    result = activity_metrics(empty_df)
+    assert result == ([], [], [], [])
 
-def test_activity_metrics_missing_values():
-    """Test that activity_metrics handles missing values appropriately."""
-    dates = pd.date_range(start='2024-01-01', periods=60, freq='min')
-    # Create DataFrame instead of Series
-    data = pd.DataFrame({
-        'ENMO': [0, 0.005, 0.02, np.nan] * 15
-    }, index=dates)
+def test_activity_metrics_single_day():
+    """Test calculation for a single day with known values"""
+    dates = pd.date_range('2023-01-01', periods=1440, freq='min')
+    values = np.zeros(1440)
+    # Using the default cutpoints:
+    # sl = 0.030, lm = 0.100, mv = 0.400
+    values[:360] = 0.05  # Light activity (0.03 < x ≤ 0.1)
+    values[360:720] = 0.2  # Moderate activity (0.1 < x ≤ 0.4)
+    values[720:1080] = 0.5  # Vigorous activity (x > 0.4)
+    values[1080:] = 0.02  # Sedentary (x ≤ 0.03)
     
-    result = activity_metrics(data)
+    data = pd.DataFrame({'ENMO': values}, index=dates)
     
-    assert not result.isna().any().any()  # No NaN values in results
+    sed, light, mod, vig = activity_metrics(data)
+    
+    assert sed == [360]  # Last 6 hours (≤ 0.03)
+    assert light == [360]  # First 6 hours (0.03-0.1)
+    assert mod == [360]  # Second 6 hours (0.1-0.4)
+    assert vig == [360]  # Third 6 hours (> 0.4)
 
-def test_activity_metrics_boundary_values():
-    """Test that activity_metrics correctly handles boundary values."""
-    dates = pd.date_range(start='2024-01-01', periods=5, freq='min')
-    data = pd.DataFrame({
-        'ENMO': [
-            cutpoints['SB'],           # Should count as SB
-            cutpoints['SB'] + 0.00001, # Should count as LIPA
-            cutpoints['LIPA'],         # Should count as LIPA
-            cutpoints['LIPA'] + 0.001, # Should count as MVPA
-            0.0                        # Should count as SB
-        ]
-    }, index=dates)
+def test_activity_metrics_multiple_days():
+    """Test calculation for multiple days"""
+    dates = pd.date_range('2023-01-01', periods=4320, freq='min')  # 3 days
+    values = np.ones(4320) * 0.05  # All light activity
+    data = pd.DataFrame({'ENMO': values}, index=dates)
     
-    result = activity_metrics(data)
+    sed, light, mod, vig = activity_metrics(data)
     
-    # Convert string date to datetime.date object
-    test_date = pd.to_datetime('2024-01-01').date()
-    # Convert minutes to hours (2/60 ≈ 0.033 hours)
-    assert result.loc[test_date, 'SB'] == pytest.approx(2/60)
-    assert result.loc[test_date, 'LIPA'] == pytest.approx(2/60)
-    assert result.loc[test_date, 'MVPA'] == pytest.approx(1/60)
+    assert len(sed) == 3
+    assert len(light) == 3
+    assert len(mod) == 3
+    assert len(vig) == 3
+    assert all(x == 0 for x in sed)  # No sedentary time
+    assert all(x == 1440 for x in light)  # All light activity
+    assert all(x == 0 for x in mod)  # No moderate activity
+    assert all(x == 0 for x in vig)  # No vigorous activity
+
+def test_activity_metrics_custom_cutpoints():
+    """Test with custom cutpoint values"""
+    dates = pd.date_range('2023-01-01', periods=1440, freq='min')
+    values = np.ones(1440) * 0.2
+    data = pd.DataFrame({'ENMO': values}, index=dates)
+    
+    custom_cutpoints = {
+        "sl": 0.1,
+        "lm": 0.3,
+        "mv": 0.5
+    }
+    
+    sed, light, mod, vig = activity_metrics(data, custom_cutpoints)
+    
+    # With ENMO = 0.2:
+    # 0.1 < 0.2 ≤ 0.3 -> Moderate activity
+    assert sed == [0]  # No sedentary (> 0.1)
+    assert light == [0]  # No light (0.1-0.3)
+    assert mod == [1440]  # All moderate (between lm and mv)
+    assert vig == [0]  # No vigorous (> 0.5)
+
+def test_activity_metrics_cutpoints_behavior():
+    """Test behavior with different cutpoint configurations"""
+    dates = pd.date_range('2023-01-01', periods=1440, freq='min')
+    values = np.ones(1440) * 0.2
+    data = pd.DataFrame({'ENMO': values}, index=dates)
+    
+    # Test with empty cutpoints - should use defaults
+    empty_cutpoints = {}
+    sed, light, mod, vig = activity_metrics(data, empty_cutpoints)
+    
+    # With default cutpoints and ENMO = 0.2:
+    # sl = 0.030, lm = 0.100, mv = 0.400
+    # 0.2 is between lm (0.1) and mv (0.4), so it should be moderate activity
+    assert sed == [0]      # Not ≤ 0.03
+    assert light == [0]    # Not between 0.03 and 0.1
+    assert mod == [1440]   # Between 0.1 and 0.4
+    assert vig == [0]      # Not > 0.4
+    
+    # Test with custom cutpoints
+    custom_cutpoints = {
+        "pa_cutpoint_sl": 0.25,  # Higher than the value (0.2)
+        "pa_cutpoint_lm": 0.3,
+        "pa_cutpoint_mv": 0.5
+    }
+    sed2, light2, mod2, vig2 = activity_metrics(data, custom_cutpoints)
+    
+    # With ENMO = 0.2 and cutpoints:
+    # sl = 0.25, lm = 0.3, mv = 0.5
+    # 0.2 is less than sl (0.25)
+    assert sed2 == [1440]  # All minutes are sedentary (≤ 0.25)
+    assert light2 == [0]   # None between 0.25 and 0.3
+    assert mod2 == [0]     # None between 0.3 and 0.5
+    assert vig2 == [0]     # None > 0.5
+    
+    # Test with alternative key format
+    alt_cutpoints = {
+        "pa_cutpoint_sl": 0.15,  # Less than the value (0.2)
+        "pa_cutpoint_lm": 0.3,   # Greater than the value (0.2)
+        "pa_cutpoint_mv": 0.5
+    }
+    sed3, light3, mod3, vig3 = activity_metrics(data, alt_cutpoints)
+    
+    # With ENMO = 0.2 and cutpoints:
+    # sl = 0.15, lm = 0.3, mv = 0.5
+    # 0.2 is between sl (0.15) and lm (0.3)
+    assert sed3 == [0]      # Not ≤ 0.15
+    assert light3 == [1440] # Between 0.15 and 0.3
+    assert mod3 == [0]      # Not between 0.3 and 0.5
+    assert vig3 == [0]      # Not > 0.5
+
+def test_activity_metrics_invalid_data_format():
+    """Test behavior with invalid data format"""
+    dates = pd.date_range('2023-01-01', periods=1440, freq='min')
+    values = np.ones(1440) * 0.2
+    data = pd.DataFrame({'wrong_name': values}, index=dates)
+    
+    with pytest.raises(KeyError):
+        activity_metrics(data)

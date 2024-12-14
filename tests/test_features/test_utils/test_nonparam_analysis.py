@@ -2,159 +2,125 @@ import pytest
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-from cosinorage.features.utils.nonparam_analysis import IV, IS, RA, M10, L5
+
+from cosinorage.features.utils.nonparam_analysis import IS, IV, M10, L5, RA
 
 @pytest.fixture
 def sample_data():
-    # Create 48 hours of sample data at 1-minute intervals
+    # Create sample data for 48 hours (2 days) with 1-minute resolution
     dates = pd.date_range(
         start='2024-01-01', 
         end='2024-01-02 23:59:00', 
         freq='1min'
     )
-    
-    # Create synthetic activity data with known patterns
-    activity = np.zeros(len(dates))
-    
-    # Add higher activity during daytime (8AM-6PM)
-    for i, dt in enumerate(dates):
-        if 8 <= dt.hour < 18:  # daytime
-            activity[i] = 10 + np.random.normal(0, 1)
-        else:  # nighttime
-            activity[i] = 2 + np.random.normal(0, 0.5)
-    
-    df = pd.DataFrame({
-        'ENMO': activity
-    }, index=dates)
-    
-    return df
+    # Create synthetic activity data with known pattern
+    # Higher values during day (8:00-18:00), lower at night
+    activity = []
+    for dt in dates:
+        if 8 <= dt.hour < 18:
+            activity.append(10 + np.random.normal(0, 1))  # Active hours
+        else:
+            activity.append(1 + np.random.normal(0, 0.1))  # Rest hours
 
-def test_IV(sample_data):
-    result = IV(sample_data)
-    
-    assert isinstance(result, pd.DataFrame)
-    assert len(result) == 2  # Two days of data
-    assert 'IV' in result.columns
-    assert all(result['IV'] >= 0)  # IV should be non-negative
+    return pd.DataFrame({'ENMO': activity}, index=dates)
 
-def test_IS(sample_data):
-    result = IS(sample_data)
-    
-    assert isinstance(result, pd.DataFrame)
-    assert len(result) == 2  # Two days of data
-    assert 'IS' in result.columns
-    assert all(result['IS'] >= 0)  # IS should be non-negative
-    assert all(result['IS'] <= 1)  # IS should be <= 1
+def test_IS_empty_data():
+    empty_data = pd.DataFrame({'ENMO': []})
+    assert np.isnan(IS(empty_data))
 
-def test_RA(sample_data):
-    result = RA(sample_data)
-    
-    assert isinstance(result, pd.DataFrame)
-    assert len(result) == 2  # Two days of data
-    assert 'RA' in result.columns
-    assert all(result['RA'] >= 0)  # RA should be non-negative
-    assert all(result['RA'] <= 1)  # RA should be <= 1
+def test_IS_normal_data(sample_data):
+    is_value = IS(sample_data)
+    assert isinstance(is_value, float)
+    assert 0 <= is_value <= 1  # IS should be between 0 and 1
 
-def test_M10(sample_data):
-    result = M10(sample_data)
-    
-    assert isinstance(result, pd.DataFrame)
-    assert len(result) == 2  # Two days of data
-    assert 'M10' in result.columns
-    assert 'M10_start' in result.columns
-    assert all(result['M10'] >= 0)  # M10 should be non-negative
-    assert all(result['M10_start'].between(0, 23))  # Hour should be between 0-23
+def test_IV_empty_data():
+    empty_data = pd.DataFrame({'ENMO': []})
+    assert np.isnan(IV(empty_data))
 
-def test_L5(sample_data):
-    result = L5(sample_data)
-    
-    assert isinstance(result, pd.DataFrame)
-    assert len(result) == 2  # Two days of data
-    assert 'L5' in result.columns
-    assert 'L5_start' in result.columns
-    assert all(result['L5'] >= 0)  # L5 should be non-negative
-    assert all(result['L5_start'].between(0, 23))  # Hour should be between 0-23
+def test_IV_normal_data(sample_data):
+    iv_value = IV(sample_data)
+    assert isinstance(iv_value, float)
+    assert iv_value >= 0  # IV should be non-negative
 
-def test_single_day_data():
-    # Create one day of data
-    dates = pd.date_range(
-        start='2024-01-01', 
-        end='2024-01-01 23:59:00', 
-        freq='1min'
-    )
-    activity = np.random.normal(5, 2, size=len(dates))
-    data = pd.DataFrame({'ENMO': activity}, index=dates)
-    
-    # Test all functions with single day data
-    for func in [IV, IS, RA, M10, L5]:
-        result = func(data)
-        assert isinstance(result, pd.DataFrame)
-        assert len(result) == 1
+def test_M10_empty_data():
+    empty_data = pd.DataFrame({'ENMO': []})
+    m10_values, m10_starts = M10(empty_data)
+    assert len(m10_values) == 0
+    assert len(m10_starts) == 0
 
-def test_empty_data():
-    empty_data = pd.DataFrame({'ENMO': []}, index=pd.DatetimeIndex([]))
-    
-    # Test IV with empty data
-    iv_result = IV(empty_data)
-    assert isinstance(iv_result, pd.DataFrame)
-    assert len(iv_result) == 0
+def test_M10_normal_data(sample_data):
+    m10_values, m10_starts = M10(sample_data)
+    assert len(m10_values) == 2  # Should have values for 2 days
+    assert all(isinstance(x, float) for x in m10_values)
+    assert all(isinstance(x, pd.Timestamp) for x in m10_starts)
 
-    # Test IS with empty data
-    is_result = IS(empty_data)
-    assert isinstance(is_result, pd.DataFrame)
-    assert len(is_result) == 0
+def test_L5_empty_data():
+    empty_data = pd.DataFrame({'ENMO': []})
+    l5_values, l5_starts = L5(empty_data)
+    assert len(l5_values) == 0
+    assert len(l5_starts) == 0
 
-    # Test RA with empty data
-    ra_result = RA(empty_data)
-    assert isinstance(ra_result, pd.DataFrame)
-    assert len(ra_result) == 0
+def test_L5_normal_data(sample_data):
+    l5_values, l5_starts = L5(sample_data)
+    assert len(l5_values) == 2  # Should have values for 2 days
+    assert all(isinstance(x, float) for x in l5_values)
+    assert all(isinstance(x, pd.Timestamp) for x in l5_starts)
 
-    # Test M10 with empty data
-    m10_result = M10(empty_data)
-    assert isinstance(m10_result, pd.DataFrame)
-    assert len(m10_result) == 0
+def test_RA_empty_data():
+    assert len(RA([], [])) == 0
 
-    # Test L5 with empty data
-    l5_result = L5(empty_data)
-    assert isinstance(l5_result, pd.DataFrame)
-    assert len(l5_result) == 0
+def test_RA_normal_data():
+    m10_values = [10, 12]
+    l5_values = [2, 3]
+    ra_values = RA(m10_values, l5_values)
+    assert len(ra_values) == 2
+    assert all(isinstance(x, float) for x in ra_values)
+    assert all(0 <= x <= 1 for x in ra_values)  # RA should be between 0 and 1
+
+def test_RA_mismatched_lengths():
+    with pytest.raises(ValueError):
+        RA([1, 2], [1])
 
 def test_constant_data():
-    # Create data with constant values
-    dates = pd.date_range(
-        start='2024-01-01',
-        end='2024-01-02 23:59:00',
-        freq='1min'
-    )
-    activity = np.ones(len(dates))
-    data = pd.DataFrame({'ENMO': activity}, index=dates)
-
-    # Test IV with constant data
-    iv_result = IV(data)
-    assert isinstance(iv_result, pd.DataFrame)
-    assert 'IV' in iv_result.columns
-    assert all(iv_result['IV'].isna())  # IV should be NaN for constant data
-
+    # Create constant data to test edge cases
+    dates = pd.date_range(start='2024-01-01', end='2024-01-02', freq='1min')
+    constant_data = pd.DataFrame({'ENMO': [1] * len(dates)}, index=dates)
+    
     # Test IS with constant data
-    is_result = IS(data)
-    assert isinstance(is_result, pd.DataFrame)
-    assert 'IS' in is_result.columns
-    assert all(is_result['IS'] == 0)  # IS should be 0 for constant data
+    assert np.isnan(IS(constant_data))  # Should return nan for constant data
+    
+    # Test IV with constant data
+    assert np.isnan(IV(constant_data))  # Should return nan for constant data
 
-    # Test RA with constant data
-    ra_result = RA(data)
-    assert isinstance(ra_result, pd.DataFrame)
-    assert 'RA' in ra_result.columns
-    assert all(ra_result['RA'] == 0)  # RA should be 0 for constant data
+def test_data_validation():
+    # Test with invalid data types
+    with pytest.raises(TypeError):
+        IS([1, 2, 3])  # List instead of DataFrame
+    
+    with pytest.raises(TypeError):
+        IV([1, 2, 3])  # List instead of DataFrame
 
-    # Test M10 with constant data
-    m10_result = M10(data)
-    assert isinstance(m10_result, pd.DataFrame)
-    assert 'M10' in m10_result.columns
-    assert all(m10_result['M10'] == 1)  # M10 should equal the constant value
+    # Test with DataFrame but missing required column
+    invalid_df = pd.DataFrame({'Wrong_Column': [1, 2, 3]})
+    with pytest.raises(KeyError):
+        IS(invalid_df)
+    
+    with pytest.raises(KeyError):
+        IV(invalid_df)
 
-    # Test L5 with constant data
-    l5_result = L5(data)
-    assert isinstance(l5_result, pd.DataFrame)
-    assert 'L5' in l5_result.columns
-    assert all(l5_result['L5'] == 1)  # L5 should equal the constant value
+    # Test with DataFrame but no datetime index
+    invalid_df = pd.DataFrame({'ENMO': [1, 2, 3]})
+    with pytest.raises(TypeError, match="Only valid with DatetimeIndex, TimedeltaIndex or PeriodIndex"):
+        IS(invalid_df)
+    
+    with pytest.raises(TypeError, match="Only valid with DatetimeIndex, TimedeltaIndex or PeriodIndex"):
+        IV(invalid_df)
+
+    # Test with proper datetime index but invalid data
+    dates = pd.date_range(start='2024-01-01', periods=3, freq='1h')  # Changed from '1H' to '1h'
+    invalid_df = pd.DataFrame({'ENMO': ['a', 'b', 'c']}, index=dates)
+    with pytest.raises(TypeError):
+        IS(invalid_df)
+    
+    with pytest.raises(TypeError):
+        IV(invalid_df)
