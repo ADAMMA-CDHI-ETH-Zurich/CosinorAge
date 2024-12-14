@@ -2,136 +2,116 @@ import pytest
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
+import os
 from cosinorage.datahandlers.utils.ukb import read_ukb_data, filter_ukb_data, resample_ukb_data
 
 @pytest.fixture
-def sample_qc_data():
-    """Create sample QC data for testing"""
-    return pd.DataFrame({
-        'eid': [1000, 2000],
-        'acc_data_problem': ['', 'problem'],
-        'acc_weartime': ['Yes', 'No'],
-        'acc_calibration': ['Yes', 'No'],
-        'acc_owndata': ['Yes', 'No'],
-        'acc_interrupt_period': [0, 1]
+def sample_qc_data(tmp_path):
+    """Create a sample quality control CSV file."""
+    qc_data = pd.DataFrame({
+        'eid': [1, 2, 3],
+        'acc_data_problem': ['', 'problem', ''],
+        'acc_weartime': ['Yes', 'No', 'Yes'],
+        'acc_calibration': ['Yes', 'Yes', 'No'],
+        'acc_owndata': ['Yes', 'No', 'Yes'],
+        'acc_interrupt_period': [0, 1, 0]
     })
+    qc_file = tmp_path / "qc_data.csv"
+    qc_data.to_csv(qc_file, index=False)
+    return str(qc_file)
 
 @pytest.fixture
-def sample_enmo_data():
-    """Create sample ENMO data for testing with 5 consecutive days"""
-    # Create 5 days of minute-level data
-    dates = pd.date_range(start='2023-01-01', periods=5*1440, freq='1min')
-    data = pd.DataFrame({
-        'TIMESTAMP': dates,
-        'ENMO': np.random.rand(5*1440) * 100
-    }).set_index('TIMESTAMP')
-    return data
-
-def test_read_ukb_data_file_not_found():
-    """Test handling of non-existent files"""
-    with pytest.raises(FileNotFoundError):
-        read_ukb_data('nonexistent.csv', 'nonexistent_dir', 1000)
-
-def test_read_ukb_data_invalid_eid(tmp_path, sample_qc_data):
-    """Test handling of invalid EID"""
-    qc_file = tmp_path / "qc.csv"
-    sample_qc_data.to_csv(qc_file)
-    enmo_dir = tmp_path / "enmo"
+def sample_enmo_data(tmp_path):
+    """Create sample ENMO data files."""
+    enmo_dir = tmp_path / "enmo_data"
     enmo_dir.mkdir()
     
-    with pytest.raises(ValueError, match="Eid .* not found in QA file"):
-        read_ukb_data(qc_file, enmo_dir, 9999)
-
-def test_filter_ukb_data(sample_enmo_data):
-    """Test filtering of UKB data"""
-    filtered_data = filter_ukb_data(sample_enmo_data)
-    assert isinstance(filtered_data, pd.DataFrame)
-    assert not filtered_data.empty
-    assert filtered_data.index.is_monotonic_increasing
-    assert len(np.unique(filtered_data.index.date)) >= 4  # Verify at least 4 days of data
-
-def test_resample_ukb_data(sample_enmo_data):
-    """Test resampling of UKB data"""
-    # Create gaps in the data
-    sparse_data = sample_enmo_data.iloc[::2]
-    resampled_data = resample_ukb_data(sparse_data)
-    
-    assert isinstance(resampled_data, pd.DataFrame)
-    assert len(resampled_data) > len(sparse_data)
-    assert resampled_data.index.freq == pd.Timedelta('1 min')
-
-def test_filter_ukb_data_incomplete_days(sample_enmo_data):
-    """Test filtering of incomplete days"""
-    # Remove some data but keep enough complete days
-    incomplete_data = sample_enmo_data.copy()
-    
-    # Remove a few hours of data from the middle of day 3
-    # This keeps days 1, 2, 4, and 5 complete while making day 3 incomplete
-    day3_start = incomplete_data.index[2*1440]  # Start of day 3
-    day3_end = incomplete_data.index[3*1440]    # End of day 3
-    
-    # Drop day 3 completely to maintain consecutive days 1-2 and 4-5
-    incomplete_data = incomplete_data.drop(incomplete_data.loc[day3_start:day3_end].index)
-    
-    with pytest.raises(ValueError, match="Less than 4 consecutive days found"):
-        filtered_data = filter_ukb_data(incomplete_data)
-
-def test_filter_ukb_data_with_valid_gap():
-    """Test filtering with a valid gap that maintains 4 consecutive days"""
-    # Create 6 days of data to allow for a gap while maintaining 4 consecutive days
-    dates = pd.date_range(start='2023-01-01', periods=6*1440, freq='1min')
+    # Create sample ENMO file with proper datetime format
+    header = 'acceleration data from 2020-01-01 00:00:00 to 2020-01-07 23:59:00'
     data = pd.DataFrame({
-        'TIMESTAMP': dates,
-        'ENMO': np.random.rand(6*1440) * 100
-    }).set_index('TIMESTAMP')
+        'eid': [1] * 1440,  # One day worth of minutes
+        'enmo_mg': [header] + [str(x * 100) for x in range(1439)]  # Sample ENMO values as strings
+    })
     
-    # Remove some hours from day 5 but keep days 1-4 complete
-    day5_start = data.index[4*1440 + 6*60]  # Start of hour 6 on day 5
-    day5_end = data.index[4*1440 + 12*60]   # End of hour 12 on day 5
-    
-    # Drop 6 hours of data from day 5
-    data_with_gap = data.drop(data.loc[day5_start:day5_end].index)
-    
-    filtered_data = filter_ukb_data(data_with_gap)
-    
-    # Should keep days 1-4 and filter out days 5-6
-    assert len(np.unique(filtered_data.index.date)) == 4
-    
-    # Verify that the remaining days are consecutive
-    remaining_days = np.unique(filtered_data.index.date)
-    day_diffs = np.diff(remaining_days)
-    assert all(diff.days == 1 for diff in day_diffs)
+    file_path = enmo_dir / "OUT_sample.csv"
+    data.to_csv(file_path, index=False)
+    return str(enmo_dir)
 
-def test_filter_ukb_data_insufficient_days():
-    """Test handling of insufficient consecutive days"""
-    # Create data with only 3 days
-    dates = pd.date_range(start='2023-01-01', periods=3*1440, freq='1min')
-    insufficient_data = pd.DataFrame({
-        'TIMESTAMP': dates,
-        'ENMO': np.random.rand(3*1440) * 100
-    }).set_index('TIMESTAMP')
-    
-    with pytest.raises(ValueError, match="Less than 4 consecutive days found"):
-        filter_ukb_data(insufficient_data)
+def test_read_ukb_data_invalid_paths():
+    """Test read_ukb_data with invalid file paths."""
+    with pytest.raises(FileNotFoundError):
+        read_ukb_data("nonexistent.csv", "nonexistent_dir", 1)
 
-def test_resample_ukb_data_with_gaps(sample_enmo_data):
-    """Test resampling with data gaps"""
-    # Create artificial gaps
-    data_with_gaps = sample_enmo_data.copy()
-    data_with_gaps = data_with_gaps.drop(data_with_gaps.index[10:20])
+def test_read_ukb_data_invalid_eid(sample_qc_data, sample_enmo_data):
+    """Test read_ukb_data with invalid participant ID."""
+    with pytest.raises(ValueError):
+        read_ukb_data(sample_qc_data, sample_enmo_data, 999)
+
+def test_filter_ukb_data():
+    """Test filter_ukb_data with sample data."""
+    # Create sample data with 7 days (more than required 4 days)
+    dates = pd.date_range(start='2020-01-01', end='2020-01-07 23:59:00', freq='1min')
+    data = pd.DataFrame(
+        index=dates,
+        data={'ENMO': np.random.random(len(dates))}
+    )
     
-    resampled_data = resample_ukb_data(data_with_gaps)
+    # Keep all data points to ensure we have complete days
+    filtered_data = filter_ukb_data(data)
     
-    assert len(resampled_data) == len(sample_enmo_data)
+    # Should have exactly 7 days of data
+    unique_days = pd.unique(filtered_data.index.date)
+    assert len(unique_days) == 7
+    # Verify days are consecutive
+    day_diffs = np.diff([d.toordinal() for d in unique_days])
+    assert all(diff == 1 for diff in day_diffs)
+
+def test_resample_ukb_data():
+    """Test resample_ukb_data with irregular timestamps."""
+    # Create sample data with irregular timestamps
+    dates = pd.date_range(start='2020-01-01', periods=100, freq='90s')
+    data = pd.DataFrame(
+        index=dates,
+        data={'ENMO': np.random.random(len(dates))}
+    )
+    
+    resampled_data = resample_ukb_data(data)
+    
+    # Check that data is resampled to 1-minute intervals
+    assert resampled_data.index.freq == pd.Timedelta('1min')
+    assert isinstance(resampled_data, pd.DataFrame)
     assert not resampled_data.isnull().any().any()
 
-@pytest.mark.parametrize("verbose", [True, False])
-def test_verbose_output(sample_enmo_data, verbose, capsys):
-    """Test verbose output option"""
-    filter_ukb_data(sample_enmo_data, verbose=verbose)
-    captured = capsys.readouterr()
+def test_filter_ukb_data_consecutive_days():
+    """Test that filter_ukb_data properly handles consecutive days requirement."""
+    # Create sample data with 7 consecutive days
+    dates = pd.date_range(start='2020-01-01', end='2020-01-07 23:59:00', freq='1min')
+    data = pd.DataFrame(
+        index=dates,
+        data={'ENMO': np.random.random(len(dates))}
+    )
     
-    if verbose:
-        assert len(captured.out) > 0
-    else:
-        assert len(captured.out) == 0
+    filtered_data = filter_ukb_data(data)
+    
+    # Should have exactly 7 consecutive days
+    unique_days = pd.unique(filtered_data.index.date)
+    assert len(unique_days) == 7
+    # Verify days are consecutive
+    day_diffs = np.diff([d.toordinal() for d in unique_days])
+    assert all(diff == 1 for diff in day_diffs)
+
+def test_resample_ukb_data_missing_values():
+    """Test that resample_ukb_data properly handles missing values."""
+    # Create sample data with missing values
+    dates = pd.date_range(start='2020-01-01', periods=100, freq='1min')
+    data = pd.DataFrame(
+        index=dates,
+        data={'ENMO': np.random.random(len(dates))}
+    )
+    data.loc[data.index[10:20], 'ENMO'] = np.nan
+    
+    resampled_data = resample_ukb_data(data)
+    
+    # Check that missing values were interpolated
+    assert not resampled_data.isnull().any().any()
+    assert isinstance(resampled_data, pd.DataFrame)

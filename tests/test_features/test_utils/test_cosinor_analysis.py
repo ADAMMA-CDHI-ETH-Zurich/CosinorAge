@@ -2,101 +2,106 @@ import pytest
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-from cosinorage.features.utils.cosinor_analysis import cosinor_by_day, cosinor_multiday
+from cosinorage.features.utils.cosinor_analysis import cosinor_multiday
 
-@pytest.fixture
-def sample_data():
-    # Create 2 days of synthetic data with known rhythmic pattern
-    dates = pd.date_range(
-        start='2024-01-01',
-        end='2024-01-02 23:59:00',
-        freq='1min'
-    )
+def create_test_data(days=1, amplitude=1, mesor=0, phase_shift=0):
+    """Helper function to create synthetic test data"""
+    minutes = 1440 * days
+    timestamps = [datetime(2024, 1, 1) + timedelta(minutes=i) for i in range(minutes)]
+    time = np.arange(minutes)
+    # Create perfect cosine wave with known parameters
+    enmo = mesor + amplitude * np.cos(2 * np.pi * time/1440 + phase_shift)
     
-    # Generate synthetic activity data with known parameters
-    time_minutes = np.arange(len(dates))
-    mesor = 0.15
-    amplitude = 0.1
-    acrophase = np.pi/2  # Peak at 6 hours
-    
-    enmo = mesor + amplitude * np.cos(2*np.pi*time_minutes/1440 - acrophase)
-    # Add some noise
-    enmo += np.random.normal(0, 0.02, len(dates))
-    
-    df = pd.DataFrame({
+    return pd.DataFrame({
         'ENMO': enmo
-    }, index=dates)
-    
-    return df
+    }, index=pd.DatetimeIndex(timestamps))
 
-def test_cosinor_by_day_basic_functionality(sample_data):
-    params_df, fitted_vals = cosinor_by_day(sample_data)
+def test_cosinor_multiday_basic_functionality():
+    """Test basic functionality with perfect cosine data"""
+    # Create test data with known parameters
+    test_df = create_test_data(days=1, amplitude=1, mesor=2, phase_shift=0)
     
-    # Check return types
-    assert isinstance(params_df, pd.DataFrame)
-    assert isinstance(fitted_vals, pd.DataFrame)
+    # Run cosinor analysis
+    params, fitted_vals = cosinor_multiday(test_df)
     
-    # Check expected columns
-    expected_columns = ['mesor', 'amplitude', 'acrophase', 'acrophase_time']
-    assert all(col in params_df.columns for col in expected_columns)
-    
-    # Check number of days
-    assert len(params_df) == 2  # Should have results for 2 days
-
-def test_cosinor_multiday_basic_functionality(sample_data):
-    params, fitted_vals = cosinor_multiday(sample_data)
-    
-    # Check return types
-    assert isinstance(params, dict)
+    # Check if parameters are close to expected values
+    assert np.isclose(params['mesor'], 2, atol=0.1)
+    assert np.isclose(params['amplitude'], 1, atol=0.1)
     assert isinstance(fitted_vals, pd.Series)
-    
-    # Check expected keys
-    expected_keys = ['mesor', 'amplitude', 'acrophase', 'acrophase_time']
-    assert all(key in params for key in expected_keys)
+    assert len(fitted_vals) == 1440
 
-def test_invalid_input_missing_column():
+def test_cosinor_multiday_multiple_days():
+    """Test with multiple days of data"""
+    test_df = create_test_data(days=3, amplitude=1, mesor=2)
+    
+    params, fitted_vals = cosinor_multiday(test_df)
+    
+    assert np.isclose(params['mesor'], 2, atol=0.1)
+    assert np.isclose(params['amplitude'], 1, atol=0.1)
+    assert len(fitted_vals) == 4320  # 3 days * 1440 minutes
+
+def test_cosinor_multiday_phase_shift():
+    """Test with phase-shifted data"""
+    phase_shift = np.pi/2  # 6-hour shift
+    test_df = create_test_data(days=1, amplitude=1, mesor=0, phase_shift=phase_shift)
+    
+    params, _ = cosinor_multiday(test_df)
+    
+    expected_acrophase_time = (24 - 6) * 60  # Should be 18:00 (1080 minutes)
+    assert np.isclose(params['acrophase_time'], expected_acrophase_time, atol=30)  # Allow 30 minutes tolerance
+
+def test_invalid_input_no_enmo():
+    """Test error handling for missing ENMO column"""
     df = pd.DataFrame({
-        'Wrong_Column': [1, 2, 3]
-    }, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+        'wrong_column': [1, 2, 3]
+    }, index=pd.date_range('2024-01-01', periods=3, freq='min'))  # Changed 'T' to 'min'
     
-    with pytest.raises(ValueError, match="must have a Timestamp index and an 'ENMO' column"):
-        cosinor_by_day(df)
+    with pytest.raises(ValueError, match="must have.*ENMO.*column"):
+        cosinor_multiday(df)
+
+def test_invalid_input_no_datetime_index():
+    """Test error handling for missing datetime index"""
+    df = pd.DataFrame({
+        'ENMO': [1, 2, 3]
+    })
     
-    with pytest.raises(ValueError, match="must have a Timestamp index and an 'ENMO' column"):
+    with pytest.raises(ValueError, match="must have a Timestamp index"):
         cosinor_multiday(df)
 
 def test_invalid_input_wrong_length():
-    # Create data that's not a multiple of 1440 minutes
+    """Test error handling for data not multiple of 1440"""
+    timestamps = [datetime(2024, 1, 1) + timedelta(minutes=i) for i in range(1000)]
     df = pd.DataFrame({
-        'ENMO': [1] * 1441  # One minute extra
-    }, index=pd.date_range('2024-01-01', periods=1441, freq='1min'))
-    
-    with pytest.raises(ValueError, match="Data length is not a multiple of a day"):
-        cosinor_by_day(df)
+        'ENMO': np.random.random(1000)
+    }, index=pd.DatetimeIndex(timestamps))
     
     with pytest.raises(ValueError, match="Data length is not a multiple of a day"):
         cosinor_multiday(df)
 
-def test_parameter_ranges(sample_data):
-    # Test by-day parameters
-    params_df, _ = cosinor_by_day(sample_data)
+def test_cosinor_multiday_output_types():
+    """Test output types and structure"""
+    test_df = create_test_data(days=1)
     
-    # Check parameter ranges
-    assert all(0 <= params_df['acrophase_time']) and all(params_df['acrophase_time'] <= 24)
-    assert all(params_df['amplitude'] >= 0)
-    assert all(0 <= params_df['acrophase']) and all(params_df['acrophase'] <= 2*np.pi)
+    params, fitted_vals = cosinor_multiday(test_df)
     
-    # Test multiday parameters
-    params, _ = cosinor_multiday(sample_data)
+    # Check parameter dictionary structure
+    assert isinstance(params, dict)
+    assert all(key in params for key in ['mesor', 'amplitude', 'acrophase', 'acrophase_time'])
+    assert all(isinstance(val, float) for val in params.values())
     
-    assert 0 <= params['acrophase_time'] <= 24
-    assert params['amplitude'] >= 0
-    assert 0 <= params['acrophase'] <= 2*np.pi
+    # Check fitted values
+    assert isinstance(fitted_vals, pd.Series)
+    assert len(fitted_vals) == len(test_df)
 
-def test_fitted_values_length(sample_data):
-    _, fitted_vals_by_day = cosinor_by_day(sample_data)
-    _, fitted_vals_multiday = cosinor_multiday(sample_data)
+def test_cosinor_multiday_noise_robustness():
+    """Test function's robustness to noisy data"""
+    # Create data with noise
+    test_df = create_test_data(days=1, amplitude=1, mesor=2)
+    noise = np.random.normal(0, 0.1, size=1440)
+    test_df['ENMO'] += noise
     
-    # Check that fitted values match input length
-    assert len(fitted_vals_by_day) == len(sample_data)
-    assert len(fitted_vals_multiday) == len(sample_data)
+    params, _ = cosinor_multiday(test_df)
+    
+    # Check if parameters are still reasonably close to expected values
+    assert np.isclose(params['mesor'], 2, atol=0.2)
+    assert np.isclose(params['amplitude'], 1, atol=0.2)

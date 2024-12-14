@@ -152,7 +152,7 @@ def read_ukb_data(qc_file_path: str, enmo_file_dir: str, eid: int, meta_dict: di
     data.sort_index(inplace=True)
 
     # rescale ENMO to g - should be /1000 however value range suggests that /100 is better to make it comparable with other sources
-    data['ENMO'] = data['ENMO'] / 100 
+    data['ENMO'] = data['ENMO'] / 10
 
     meta_dict['raw_n_datapoints'] = data.shape[0]
     meta_dict['raw_start_datetime'] = data.index.min()

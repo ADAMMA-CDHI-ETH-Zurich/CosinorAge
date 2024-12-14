@@ -130,6 +130,11 @@ class WearableFeatures:
     def __compute_sleep_metrics(self):
         if "sleep" not in self.ml_data.columns:
             self.ml_data["sleep"] = apply_sleep_wake_predictions(self.ml_data, sleep_params=self.features_args)
+            print("Sleep predictions computed")
+        else:
+            print("Sleep predictions already computed")
+
+        print(self.ml_data["sleep"].value_counts())
         
         sleep_dict = {}
 
