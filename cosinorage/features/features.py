@@ -128,6 +128,8 @@ class WearableFeatures:
         self.feature_dict["physical_activity"] = physical_activity_dict
 
     def __compute_sleep_metrics(self):
+        """Compute sleep metrics including TST, WASO, PTA, NWB, SOL, and SRI."""
+
         if "sleep" not in self.ml_data.columns:
             self.ml_data["sleep"] = apply_sleep_wake_predictions(self.ml_data, sleep_params=self.features_args)
         

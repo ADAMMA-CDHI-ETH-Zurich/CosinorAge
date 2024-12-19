@@ -62,6 +62,17 @@ BA_i = 133.5989
 
 
 class CosinorAge:
+    """A class to compute biological age predictions using the CosinorAge method.
+
+    This class implements the CosinorAge method proposed by Shim, Fleisch and Barata
+    for predicting biological age based on accelerometer data patterns.
+
+    Args:
+        records (List[dict]): A list of dictionaries containing accelerometer data records.
+            Each record must contain a 'handler' key with a DataHandler object and an 'age' key.
+            Optionally, records can include a 'gender' key with values 'male', 'female', or 'unknown'.
+    """
+
     def __init__(self, records: List[dict]):
         self.records = records
         
@@ -72,6 +83,16 @@ class CosinorAge:
         self.__compute_cosinor_ages()
 
     def __compute_cosinor_ages(self):
+        """Compute CosinorAge predictions for all records.
+
+        Processes each record to extract cosinor parameters and calculate biological age.
+        Updates each record dictionary with the following keys:
+            - mesor: The rhythm-adjusted mean
+            - amp1: The amplitude of the circadian rhythm
+            - phi1: The acrophase (timing) of the circadian rhythm
+            - cosinoage: Predicted biological age
+            - cosinoage_advance: Difference between predicted and chronological age
+        """
         for record in self.records:
             result = cosinor_multiday(record["handler"].get_ml_data())[0]
 
@@ -103,9 +124,21 @@ class CosinorAge:
             record["cosinoage_advance"] = float(record["cosinoage"] - record["age"])
 
     def get_predictions(self):
+        """Return the processed records with CosinorAge predictions.
+
+        Returns:
+            List[dict]: The records list containing the original data and predictions.
+        """
         return self.records
 
     def plot_predictions(self):
+        """Generate visualization plots comparing chronological age vs CosinorAge.
+
+        Creates a plot for each record showing:
+            - Chronological age and CosinorAge as points on a timeline
+            - Color-coded difference between ages (red for advanced, green for younger)
+            - Numerical values for both ages
+        """
         for record in self.records:
             plt.figure(figsize=(22.5, 2.5))
             plt.hlines(y=0, xmin=0, xmax=min(record["age"], record["cosinoage"]), color="grey", alpha=0.8, linewidth=2, zorder=1)
