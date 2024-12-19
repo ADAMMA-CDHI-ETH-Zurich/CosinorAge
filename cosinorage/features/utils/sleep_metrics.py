@@ -178,6 +178,27 @@ def PTA(data: pd.DataFrame) -> List[float]:
 def NWB(data: pd.DataFrame) -> List[int]:
     """
     Calculate Number of Wake Bouts (NWB) for each 24-hour cycle.
+
+    NWB represents the count of distinct wake episodes occurring between sleep periods
+    during the analysis period.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        DataFrame with:
+        - datetime index
+        - 'sleep' column (1=sleep, 0=wake)
+
+    Returns
+    -------
+    List[int]
+        List containing the number of wake bouts for each 24-hour cycle.
+
+    Notes
+    -----
+    The function processes data in 24-hour cycles starting at midnight.
+    A wake bout is defined as a continuous period of wake states between
+    two sleep states.
     """
 
     data_ = data.copy()
@@ -196,6 +217,27 @@ def NWB(data: pd.DataFrame) -> List[int]:
 def SOL(data: pd.DataFrame) -> List[int]:
     """
     Calculate Sleep Onset Latency (SOL) for each 24-hour cycle.
+
+    SOL represents the time taken to fall asleep, measured from the start of the
+    recording period until the first sleep onset.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        DataFrame with:
+        - datetime index
+        - 'sleep' column (1=sleep, 0=wake)
+
+    Returns
+    -------
+    List[int]
+        List containing sleep onset latency in minutes for each 24-hour cycle.
+
+    Notes
+    -----
+    The function processes data in 24-hour cycles starting at midnight.
+    SOL is calculated as the time from the start of the recording until
+    the first detected sleep episode.
     """
     data_ = data.copy()
 

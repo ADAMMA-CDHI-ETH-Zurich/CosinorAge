@@ -29,6 +29,33 @@ import pandas as pd
 from datetime import timedelta
 
 def dashboard(features):
+    """
+    Generate a comprehensive visualization dashboard for accelerometer data analysis.
+    
+    This function creates multiple plots to visualize various aspects of the accelerometer data:
+    1. Cosinor fit plot showing ENMO data with mesor, amplitude, and acrophase
+    2. Daily ENMO plots with M10 and L5 periods highlighted
+    3. IS (Inter-daily Stability) and IV (Intra-daily Variability) visualization
+    4. RA (Relative Amplitude) plots for each day
+    5. Sleep predictions visualization
+    6. Sleep metrics (TST, WASO, PTA, NWB, SOL) visualization
+    7. Physical activity breakdown by intensity levels
+
+    Parameters
+    ----------
+    features : Features
+        A Features object containing all extracted features and raw data.
+        Expected to have the following attributes:
+        - feature_dict: Dictionary containing cosinor, nonparam, sleep, and physical_activity features
+        - get_ml_data(): Method returning DataFrame with ENMO and cosinor_fitted data
+        - get_features(): Method returning all extracted features
+
+    Returns
+    -------
+    None
+        Displays multiple matplotlib figures using plt.show()
+    """
+    
     data = features.get_ml_data()
 
     mesor = features.feature_dict['cosinor']['mesor']
