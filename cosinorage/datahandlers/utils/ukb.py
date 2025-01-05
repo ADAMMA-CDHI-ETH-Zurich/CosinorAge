@@ -152,8 +152,11 @@ def read_ukb_data(qc_file_path: str, enmo_file_dir: str, eid: int, meta_dict: di
     data.sort_index(inplace=True)
 
     # rescale ENMO to g - should be /1000 however value range suggests that /100 is better to make it comparable with other sources
-    data['ENMO'] = data['ENMO'] / 10
+    data['ENMO'] = data['ENMO']
 
+    # only keep ENMO >= 0.1 else 0 
+    data['ENMO'] = data['ENMO'].apply(lambda x: x if x >= 0.1 else 0)
+    
     meta_dict['raw_n_datapoints'] = data.shape[0]
     meta_dict['raw_start_datetime'] = data.index.min()
     meta_dict['raw_end_datetime'] = data.index.max()
@@ -165,7 +168,6 @@ def read_ukb_data(qc_file_path: str, enmo_file_dir: str, eid: int, meta_dict: di
         print(f"Loaded {data.shape[0]} minute-level ENMO records from {enmo_file_dir}")
 
     return data[['ENMO']]
-
 
 def filter_ukb_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
     """
@@ -186,9 +188,10 @@ def filter_ukb_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = Fa
     if verbose:
         print(f"Filtered out {data.shape[0] - _data.shape[0]} minute-level ENMO records due to incomplete daily coverage")
 
+    n_old = _data.shape[0]
     _data = filter_consecutive_days(_data)
     if verbose:
-        print(f"Filtered out {_data.shape[0] - data.shape[0]} minute-level ENMO records due to non-consecutive days")
+        print(f"Filtered out {n_old - _data.shape[0]} minute-level ENMO records due to non-consecutive days")
 
     return _data
 
