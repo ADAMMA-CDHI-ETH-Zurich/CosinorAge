@@ -191,7 +191,7 @@ def dashboard(features):
     ax.set_ylabel("Day")
     plt.tight_layout()
 
-
+    # Sleep predictions
     fig, axes = plt.subplots(num_days, figsize=(18, 1.5 * num_days))
     for i, (day, day_data) in enumerate(days):
         # Lineplot of ENMO
@@ -199,6 +199,10 @@ def dashboard(features):
         
         # highlight sleep predictions
         axes[i].fill_between(day_data.index, day_data['sleep']*enmo_y_range[1], color='blue', alpha=0.5, label='Sleep')
+
+        # highlight non-wear periods
+        if 'wear' in day_data.columns:
+            axes[i].fill_between(day_data.index, (1-day_data['wear'])*enmo_y_range[1], color='red', alpha=0.5, label='Non-wear')
         
         axes[i].set_title(f"Sleep Predictions - {day}")
         axes[i].set_ylabel("ENMO (mg)")
@@ -214,7 +218,7 @@ def dashboard(features):
 
     plt.tight_layout()
 
-    # RA subplot
+    # Sleep metrics subplot
     tst = feature_data['sleep']['TST']
     waso = feature_data['sleep']['WASO']
     pta = feature_data['sleep']['PTA']
