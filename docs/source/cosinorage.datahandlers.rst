@@ -1,26 +1,26 @@
-cosinorage.DataHandlers module
+cosinorage.datahandlers module
 =============================
 
 module contents
 ---------------
 
-.. automodule:: cosinorage.DataHandlers
+.. automodule:: cosinorage.datahandlers
    :no-members:
 
 
 classes
 ----------------------------------------
 
-.. autoclass:: cosinorage.DataHandlers.DataHandler
+.. autoclass:: cosinorage.datahandlers.DataHandler
    :members:
 
-.. autoclass:: cosinorage.DataHandlers.NHANESDataHandler
+.. autoclass:: cosinorage.datahandlers.NHANESDataHandler
    :members:
 
-.. autoclass:: cosinorage.DataHandlers.GalaxyDataHandler
+.. autoclass:: cosinorage.datahandlers.GalaxyDataHandler
    :members:
 
-.. autoclass:: cosinorage.DataHandlers.UKBDataHandler
+.. autoclass:: cosinorage.datahandlers.UKBDataHandler
    :members:
 
 utility functions
@@ -29,70 +29,70 @@ utility functions
 galaxy smartwatch data functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: cosinorage.DataHandlers.read_galaxy_data()
+.. autofunction:: cosinorage.datahandlers.read_galaxy_data()
 
-.. autofunction:: cosinorage.DataHandlers.filter_galaxy_data()
+.. autofunction:: cosinorage.datahandlers.filter_galaxy_data()
 
-.. autofunction:: cosinorage.DataHandlers.resample_galaxy_data()
+.. autofunction:: cosinorage.datahandlers.resample_galaxy_data()
 
-.. autofunction:: cosinorage.DataHandlers.preprocess_galaxy_data()
+.. autofunction:: cosinorage.datahandlers.preprocess_galaxy_data()
 
-.. autofunction:: cosinorage.DataHandlers.acceleration_data_to_dataframe()
+.. autofunction:: cosinorage.datahandlers.acceleration_data_to_dataframe()
 
-.. autofunction:: cosinorage.DataHandlers.calibrate()
+.. autofunction:: cosinorage.datahandlers.calibrate()
 
-.. autofunction:: cosinorage.DataHandlers.remove_noise()
+.. autofunction:: cosinorage.datahandlers.remove_noise()
 
-.. autofunction:: cosinorage.DataHandlers.detect_wear()
+.. autofunction:: cosinorage.datahandlers.detect_wear()
 
-.. autofunction:: cosinorage.DataHandlers.calc_weartime()
+.. autofunction:: cosinorage.datahandlers.calc_weartime()
 
 uk biobank data functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: cosinorage.DataHandlers.read_ukb_data()
+.. autofunction:: cosinorage.datahandlers.read_ukb_data()
 
-.. autofunction:: cosinorage.DataHandlers.filter_ukb_data()
+.. autofunction:: cosinorage.datahandlers.filter_ukb_data()
 
-.. autofunction:: cosinorage.DataHandlers.resample_ukb_data()
+.. autofunction:: cosinorage.datahandlers.resample_ukb_data()
 
 
 nhanes data functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: cosinorage.DataHandlers.read_nhanes_data()
+.. autofunction:: cosinorage.datahandlers.read_nhanes_data()
 
-.. autofunction:: cosinorage.DataHandlers.filter_nhanes_data()
+.. autofunction:: cosinorage.datahandlers.filter_nhanes_data()
 
-.. autofunction:: cosinorage.DataHandlers.resample_nhanes_data()
+.. autofunction:: cosinorage.datahandlers.resample_nhanes_data()
 
-.. autofunction:: cosinorage.DataHandlers.remove_bytes()
+.. autofunction:: cosinorage.datahandlers.remove_bytes()
 
-.. autofunction:: cosinorage.DataHandlers.clean_data()
+.. autofunction:: cosinorage.datahandlers.clean_data()
 
-.. autofunction:: cosinorage.DataHandlers.calculate_measure_time()
+.. autofunction:: cosinorage.datahandlers.calculate_measure_time()
 
 
 general utility functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: cosinorage.DataHandlers.filter_incomplete_days()
+.. autofunction:: cosinorage.datahandlers.filter_incomplete_days()
 
-.. autofunction:: cosinorage.DataHandlers.filter_consecutive_days()
+.. autofunction:: cosinorage.datahandlers.filter_consecutive_days()
 
-.. autofunction:: cosinorage.DataHandlers.largest_consecutive_sequence()
+.. autofunction:: cosinorage.datahandlers.largest_consecutive_sequence()
 
-.. autofunction:: cosinorage.DataHandlers.calculate_enmo()
+.. autofunction:: cosinorage.datahandlers.calculate_enmo()
 
-.. autofunction:: cosinorage.DataHandlers.calculate_minute_level_enmo()
+.. autofunction:: cosinorage.datahandlers.calculate_minute_level_enmo()
 
 
 visualization functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: cosinorage.DataHandlers.plot_orig_enmo()
+.. autofunction:: cosinorage.datahandlers.plot_orig_enmo()
 
-.. autofunction:: cosinorage.DataHandlers.plot_enmo()
+.. autofunction:: cosinorage.datahandlers.plot_enmo()
 
-.. autofunction:: cosinorage.DataHandlers.plot_orig_enmo_freq()
+.. autofunction:: cosinorage.datahandlers.plot_orig_enmo_freq()
    
