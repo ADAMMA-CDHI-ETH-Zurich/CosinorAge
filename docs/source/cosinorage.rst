@@ -7,7 +7,7 @@ modules
 .. toctree::
    :maxdepth: 4
 
-   cosinorage.DataHandlers
+   cosinorage.datahandlers
    cosinorage.features
    cosinorage.bioages
 
