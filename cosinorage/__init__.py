@@ -23,4 +23,4 @@ from . import datahandlers
 from . import bioages
 from . import features
 
-__all__ = ['DataHandlers', 'bioages', 'features']
+__all__ = ['datahandlers', 'bioages', 'features']
