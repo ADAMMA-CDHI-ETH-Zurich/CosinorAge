@@ -3,6 +3,7 @@
 /.idea/
 /data/
 /examples/ukb_example.ipynb
+/examples/ukb_cosinorage.py
 /joss/
 
 *.pkl

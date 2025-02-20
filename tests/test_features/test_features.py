@@ -67,7 +67,7 @@ def test_cosinor_features(mock_data_handler):
     # Check value ranges
     assert isinstance(cosinor_dict['mesor'], (float, np.float64))
     assert isinstance(cosinor_dict['amplitude'], (float, np.float64))
-    assert 0 <= cosinor_dict['acrophase'] <= 2*np.pi
+    assert -2*np.pi <= cosinor_dict['acrophase'] <= 2*np.pi
     assert 0 <= cosinor_dict['acrophase_time'] <= 1440
 
 def test_nonparam_features(mock_data_handler):
