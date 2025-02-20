@@ -6,7 +6,7 @@
 [![Documentation Status](https://readthedocs.org/projects/cosinorage/badge/?version=latest)](https://cosinorage.readthedocs.io/en/latest/?badge=latest)
 [![PyPI version](https://img.shields.io/pypi/v/cosinorage.svg)](https://pypi.org/project/cosinorage/)
 
-A Python package that calculates **CosinorAge**.
+An open-source Python package for estimating biological age based on circadian rhythms derived from accelerometer data. The package offers a unified framework that integrates data preprocessing, feature extraction, and predictive modeling of biological age using the CosinorAge biomarker.
 
 ## Environment
 
@@ -22,6 +22,12 @@ pip install .
 
 ## Package Functionalities
 
+For a detailed example of how to use the package, please refer to the examples in the [examples](examples) folder.
+
+### Modular Scheme 
+
+![Package Data Scheme](docs/figs/schema.jpg)
+
 ### Data Loading
 
 ```python
@@ -33,7 +39,7 @@ nhanes_handler = NHANESDataHandler(nhanes_file_dir='../data/nhanes/', person_id=
 ```
 
 ```python
-ukb_handler = UKBDataHandler(qa_file_path=qa_file_path, ukb_file_dir=enmo_file_dir, eid=eid, verbose=True)
+ukb_handler = UKBDataHandler(qa_file_path='../data/ukb/UKB Acc Quality Control.csv', ukb_file_dir='../data/ukb/UKB Sample Data/1_raw5sec_long', eid=1000300, verbose=True)
 ```
 
 ### Wearable Feature Computation
@@ -43,6 +49,22 @@ The `WearableFeatures` object can be used to compute various features from the m
 ```python
 features = WearableFeatures(smartwatch_handler)
 features.run()
+```
+
+### CosinorAge Prediction
+
+The `CosinorAge` object can be used to compute CosinorAge. It is capable of processing multiple datahandlers at the same time.
+
+```python
+records = [
+    {'handler': data_handler, 
+     'age': 40, 
+     'gender': 'male'
+    }
+]
+
+cosinor_age = CosinorAge(records)
+cosinor_age.get_predictions()
 ```
 
 ## Execute Tests
@@ -68,7 +90,3 @@ pip install twine
 twine upload dist/*
 ```
 
-
-## Package Data Scheme 
-
-![Package Data Scheme](docs/figs/schema.jpg)
