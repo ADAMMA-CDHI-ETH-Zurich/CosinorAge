@@ -32,13 +32,13 @@ def test_cosinor_age_computation():
     cosinor_age = CosinorAge(records)
     predictions = cosinor_age.get_predictions()
     
-    assert 'cosinoage' in predictions[0]
-    assert 'cosinoage_advance' in predictions[0]
+    assert 'cosinorage' in predictions[0]
+    assert 'cosinorage_advance' in predictions[0]
     assert 'mesor' in predictions[0]
     assert 'amp1' in predictions[0]
     assert 'phi1' in predictions[0]
-    assert isinstance(predictions[0]['cosinoage'], float)
-    assert predictions[0]['cosinoage'] > 0
+    assert isinstance(predictions[0]['cosinorage'], float)
+    assert predictions[0]['cosinorage'] > 0
 
 def test_gender_specific_models():
     mock_handler = create_mock_handler()
@@ -54,17 +54,17 @@ def test_gender_specific_models():
     female_pred = next(r for r in predictions if r['gender'] == 'female')
     unknown_pred = next(r for r in predictions if r['gender'] == 'unknown')
     
-    assert male_pred['cosinoage'] != female_pred['cosinoage']
-    assert male_pred['cosinoage'] != unknown_pred['cosinoage']
+    assert male_pred['cosinorage'] != female_pred['cosinorage']
+    assert male_pred['cosinorage'] != unknown_pred['cosinorage']
 
-def test_cosinoage_advance_calculation():
+def test_cosinorage_advance_calculation():
     mock_handler = create_mock_handler()
     records = [{"handler": mock_handler, "age": 30, "gender": "male"}]
     cosinor_age = CosinorAge(records)
     predictions = cosinor_age.get_predictions()
     
-    expected_advance = predictions[0]['cosinoage'] - predictions[0]['age']
-    assert abs(predictions[0]['cosinoage_advance'] - expected_advance) < 1e-10
+    expected_advance = predictions[0]['cosinorage'] - predictions[0]['age']
+    assert abs(predictions[0]['cosinorage_advance'] - expected_advance) < 1e-10
 
 def test_plot_predictions():
     mock_handler = create_mock_handler()
@@ -101,8 +101,8 @@ def test_multiple_records():
     
     assert len(predictions) == 3
     for pred in predictions:
-        assert 'cosinoage' in pred
-        assert pred['cosinoage'] > 0
+        assert 'cosinorage' in pred
+        assert pred['cosinorage'] > 0
 
 def test_cosinor_parameters():
     mock_handler = create_mock_handler()

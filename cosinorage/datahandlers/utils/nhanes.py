@@ -209,7 +209,7 @@ def filter_and_preprocess_nhanes_data(data: pd.DataFrame, meta_dict: dict = {}, 
 
     _data[['X_raw', 'Y_raw', 'Z_raw']] = _data[['X', 'Y', 'Z']]
     _data[['X', 'Y', 'Z']] = _data[['X', 'Y', 'Z']] / 9.81 # convert from MIMS to aprrox. mg 
-    _data['ENMO'] = calculate_enmo(_data) * 170
+    _data['ENMO'] = calculate_enmo(_data) * 257 # factor of 257 as a result of parameter tuning for making cosinorage predictions match
 
     if verbose:
         print(f"Calculated ENMO data")

@@ -21,6 +21,7 @@
 
 import pandas as pd
 
+# cutpoint heavily depend on the accelerometer used, the position of the accelerometer and the user (gender, age, ...)
 cutpoints = {
     "sl": 0.030,
     "lm": 0.100, 

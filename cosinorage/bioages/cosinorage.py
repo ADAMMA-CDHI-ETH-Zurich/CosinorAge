@@ -90,8 +90,8 @@ class CosinorAge:
             - mesor: The rhythm-adjusted mean
             - amp1: The amplitude of the circadian rhythm
             - phi1: The acrophase (timing) of the circadian rhythm
-            - cosinoage: Predicted biological age
-            - cosinoage_advance: Difference between predicted and chronological age
+            - cosinorage: Predicted biological age
+            - cosinorage_advance: Difference between predicted and chronological age
         """
         for record in self.records:
             result = cosinor_multiday(record["handler"].get_ml_data())[0]
@@ -120,8 +120,8 @@ class CosinorAge:
             m_val = 1 - np.exp((m_n * np.exp(xb)) / m_d)
             cosinorage = float(((np.log(BA_n * np.log(1 - m_val))) / BA_d) + BA_i)
 
-            record["cosinoage"] = float(cosinorage)
-            record["cosinoage_advance"] = float(record["cosinoage"] - record["age"])
+            record["cosinorage"] = float(cosinorage)
+            record["cosinorage_advance"] = float(record["cosinorage"] - record["age"])
 
     def get_predictions(self):
         """Return the processed records with CosinorAge predictions.
@@ -141,25 +141,25 @@ class CosinorAge:
         """
         for record in self.records:
             plt.figure(figsize=(22.5, 2.5))
-            plt.hlines(y=0, xmin=0, xmax=min(record["age"], record["cosinoage"]), color="grey", alpha=0.8, linewidth=2, zorder=1)
+            plt.hlines(y=0, xmin=0, xmax=min(record["age"], record["cosinorage"]), color="grey", alpha=0.8, linewidth=2, zorder=1)
 
-            if record["cosinoage"] > record["age"]:
+            if record["cosinorage"] > record["age"]:
                 color = "red"
             else:
                 color = "green"
 
-            plt.hlines(y=0, xmin=min(record["age"], record["cosinoage"]), xmax=max(record["age"], record["cosinoage"]), color=color, alpha=0.8, linewidth=2, zorder=1)
+            plt.hlines(y=0, xmin=min(record["age"], record["cosinorage"]), xmax=max(record["age"], record["cosinorage"]), color=color, alpha=0.8, linewidth=2, zorder=1)
 
             
-            plt.scatter(record["cosinoage"], 0, color=color, s=100, marker="o", label="CosinorAge")
+            plt.scatter(record["cosinorage"], 0, color=color, s=100, marker="o", label="CosinorAge")
             plt.scatter(record["age"], 0, color=color, s=100, marker="o", label="Age")
 
-            plt.text(record["cosinoage"], 0.4, "CosinorAge", fontsize=12, color=color, alpha=0.8, ha="center", va="bottom", rotation=45)
+            plt.text(record["cosinorage"], 0.4, "CosinorAge", fontsize=12, color=color, alpha=0.8, ha="center", va="bottom", rotation=45)
             plt.text(record["age"], 0.4, "Age", fontsize=12, color=color, alpha=0.8, ha="center", va="bottom", rotation=45)
             plt.text(record["age"], -0.5, f"{record['age']:.1f}", fontsize=12, color=color, alpha=0.8, ha="center", va="top", rotation=45)
-            plt.text(record["cosinoage"], -0.5, f"{record['cosinoage']:.1f}", fontsize=12, color=color, alpha=0.8, ha="center", va="top", rotation=45)
+            plt.text(record["cosinorage"], -0.5, f"{record['cosinorage']:.1f}", fontsize=12, color=color, alpha=0.8, ha="center", va="top", rotation=45)
 
-            plt.xlim(0, max(record["age"], record["cosinoage"])*1.25)
+            plt.xlim(0, max(record["age"], record["cosinorage"])*1.25)
             plt.yticks([])
             plt.ylim(-1.5, 2)
 
