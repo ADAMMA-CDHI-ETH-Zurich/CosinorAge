@@ -13,6 +13,8 @@ An open-source Python package for estimating biological age based on circadian r
 ```bash
 pip install cosinorage
 ```
+ To avoid issues with the installation, please make sure that the dependencies stated in the `requirements.txt` file are installed. It is recommended to set up a fresh virtual environment using Python >= 3.10.
+
 
 ## Package Functionalities
 
