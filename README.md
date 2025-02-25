@@ -26,13 +26,37 @@ For a detailed example of how to use the package, please refer to the examples i
 
 Depending on the data source, we need to use different data handlers which implement the necessary preprocessing and data conversion steps. The datahandlers ensure that the data is available as minute-level ENMO data.
 
+#### GalaxyDataHandler
+
+The GalaxyDataHandler is used to load and preprocess data from the Galaxy Smartwatch. The data is expected to be located in a directory with the following structure:
+
+![Samsung Galaxy Smartwatch Data Directory Structure](docs/figs/Smartwatch_data.png)
+
+For each day a seperate subdirectory is expected to be present - within each day's subdirectory, the data is expected to be located in seperate hourly .binary files. The data can then be loaded into the corresponding GalaxyDataHandler object as follows.
+
 ```python
 galaxy_handler = GalaxyDataHandler(gw_file_dir='../data/smartwatch/GalaxyWatch_Case1/', preprocess=True, preprocess_args=preprocess_args, verbose=True)
 ```
 
+#### NHANESDataHandler
+
+The NHANESDataHandler is used to load and preprocess data from the NHANES study. The data is expected to be located in a directory with the following structure:
+
+![NHANES Data Directory Structure](docs/figs/NHANES_data.png)
+
+It is expected that for a specific version of the dataset (e.g., G or H) three files are present: PAXDAY_<version>.xpt, PAXMIN_<version>.xpt and PAXHD_<version>.xpt. The data can then be loaded into the corresponding NHANESDataHandler object as follows.
+
 ```python
 nhanes_handler = NHANESDataHandler(nhanes_file_dir='../data/nhanes/', person_id=62164, verbose=True)
 ```
+
+#### UKBDataHandler
+
+The UKBDataHandler is used to load and preprocess data from the UK Biobank. The data is expected to be located in a directory with the following structure - however, please note that the data is not publicly available:
+
+![UKB Data Directory Structure](docs/figs/UKB_data.png)
+
+The .csv files containign the ENMO data are expected to be in a common directory - the .csv files also contain the information needed by the UKBDataHandler to correctly determine the timestamps of the ENMO data. In addition to that, the UKBDataHandler also expects a path to a Quality Control .csv file which contains flags for each measured ENMO series indicating whether the data is of acceptable quality. The data can then be loaded into the corresponding UKBDataHandler object as follows.
 
 ```python
 ukb_handler = UKBDataHandler(qa_file_path='../data/ukb/UKB Acc Quality Control.csv', ukb_file_dir='../data/ukb/UKB Sample Data/1_raw5sec_long', eid=1000300, verbose=True)
