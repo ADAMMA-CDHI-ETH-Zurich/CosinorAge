@@ -3,7 +3,7 @@ asttokens==3.0.0
 avro==1.12.0
 claid==0.6.4
 comm==0.2.2
-contourpy==1.3.1
+contourpy==1.3.0
 git+https://github.com/jlohunecke/CosinorAge.git@e1ecd6982c5d5570096377921b2c825910b2cc4f#egg=cosinorage
 cycler==0.12.1
 debugpy==1.8.12
