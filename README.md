@@ -16,7 +16,7 @@ pip install cosinorage
 
 ## Package Functionalities
 
-For a detailed example of how to use the package, please refer to the examples in the [examples](examples) folder.
+For a detailed example of how to use the package, please refer to the examples in the [examples](examples) folder. In addition to the below explanations, a detailed description of the package functionalities (inlcuding references to the underlying papers) can be found in the following [PDF](CosinorAge_Detailed_Package_Description.pdf).To get a detiled documentation of the package source code, please refer to the [Read the Docs](https://cosinorage.readthedocs.io/en/latest/?badge=latest).
 
 ### Modular Scheme 
 
@@ -32,7 +32,7 @@ The GalaxyDataHandler is used to load and preprocess data from the Galaxy Smartw
 
 ![Samsung Galaxy Smartwatch Data Directory Structure](docs/figs/Smartwatch_data.png)
 
-For each day a seperate subdirectory is expected to be present - within each day's subdirectory, the data is expected to be located in seperate hourly .binary files. The data can then be loaded into the corresponding GalaxyDataHandler object as follows.
+For each day a seperate subdirectory is expected to be present - within each day's subdirectory, the data is expected to be located in seperate hourly .binary files (file names need to start with "acceleration_data"). The binary files need to have the following 4 columns: unix_timestamp_in_ms, acceleration_x, acceleration_y, acceleration_z. The data can then be loaded into the corresponding GalaxyDataHandler object as follows.
 
 ```python
 galaxy_handler = GalaxyDataHandler(gw_file_dir='../data/smartwatch/GalaxyWatch_Case1/', preprocess=True, preprocess_args=preprocess_args, verbose=True)
@@ -44,7 +44,7 @@ The NHANESDataHandler is used to load and preprocess data from the NHANES study.
 
 ![NHANES Data Directory Structure](docs/figs/NHANES_data.png)
 
-It is expected that for a specific version of the dataset (e.g., G or H) three files are present: PAXDAY_<version>.xpt, PAXMIN_<version>.xpt and PAXHD_<version>.xpt. The data can then be loaded into the corresponding NHANESDataHandler object as follows.
+It is expected that for a specific version of the dataset (e.g., G or H) three files are present: PAXDAY_<version>.xpt, PAXMIN_<version>.xpt and PAXHD_<version>.xpt. The files follow a very specific format, containing a wide range of different data fields - thus, please use the files as they are provided by NHANES. The data can then be loaded into the corresponding NHANESDataHandler object as follows.
 
 ```python
 nhanes_handler = NHANESDataHandler(nhanes_file_dir='../data/nhanes/', person_id=62164, verbose=True)
@@ -56,7 +56,15 @@ The UKBDataHandler is used to load and preprocess data from the UK Biobank. The 
 
 ![UKB Data Directory Structure](docs/figs/UKB_data.png)
 
-The .csv files containign the ENMO data are expected to be in a common directory - the .csv files also contain the information needed by the UKBDataHandler to correctly determine the timestamps of the ENMO data. In addition to that, the UKBDataHandler also expects a path to a Quality Control .csv file which contains flags for each measured ENMO series indicating whether the data is of acceptable quality. The data can then be loaded into the corresponding UKBDataHandler object as follows.
+The .csv files containing the ENMO data are expected to be in a common directory - the .csv files also contain the information needed by the UKBDataHandler to correctly determine the timestamps of the ENMO data. Below, please find an example of the content of the .csv files (made up data):
+
+![UKB ENMO Data Example](docs/figs/UKB_csv_excerpt.png)
+
+ In addition to that, the UKBDataHandler also expects a path to a Quality Control .csv file which contains flags for each measured ENMO series indicating whether the data is of acceptable quality. The file needs to have the following columns.
+
+![UKB Quality Control File Columns](docs/figs/UKB_QA_cols.png)
+ 
+ The data can then be loaded into the corresponding UKBDataHandler object as follows.
 
 ```python
 ukb_handler = UKBDataHandler(qa_file_path='../data/ukb/UKB Acc Quality Control.csv', ukb_file_dir='../data/ukb/UKB Sample Data/1_raw5sec_long', eid=1000300, verbose=True)
