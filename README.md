@@ -87,6 +87,33 @@ features = WearableFeatures(smartwatch_handler)
 features.run()
 ```
 
+In the following sections the different wearable features are described ion detail. To genereate all the visulaizations at once you can run the following function.
+
+```python
+dashboard(features)
+```
+
+#### Circadian Rhythm Analysis - Cosinor Analysis
+
+![Cosinor Analysis](docs/figs/cosinor_plot.png)
+
+#### Circadian Rhythm Analysis - Non-parametric Analsis
+
+![M10 & L5](docs/figs/M10_L5_plot.png)
+
+![IS and IV](docs/figs/IS_IV_plot.png)
+
+![RA](docs/figs/RA_plot.png)
+
+#### Sleep Analyis
+
+![Sleep Phases](docs/figs/sleep_plot.png)
+![Sleep Metrics](docs/figs/sleep_metrics_plot.png)
+
+#### Physical Activity Analysis 
+
+![Physical Activity](docs/figs/PA_plot.png)
+
 ### CosinorAge Prediction
 
 The `CosinorAge` object can be used to compute CosinorAge. It is capable of processing multiple datahandlers at the same time.
