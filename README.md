@@ -26,7 +26,13 @@ For a detailed example of how to use the package, please refer to the examples i
 
 ### Data Loading
 
-Depending on the data source, we need to use different data handlers which implement the necessary preprocessing and data conversion steps. The datahandlers ensure that the data is available as minute-level ENMO data.
+Depending on the data source, different data handlers are used to perform the necessary preprocessing and data conversion steps. These handlers ensure that the data is consistently formatted as minute-level ENMO data.
+
+The figure below illustrates the supported data sources and the required file types for each DataHandler:
+
+![Supported Data Sources](docs/figs/flowchart.png)
+
+Below, you will find a detailed description of each supported data source and its corresponding DataHandler.
 
 #### GalaxyDataHandler
 
@@ -46,7 +52,7 @@ The NHANESDataHandler is used to load and preprocess data from the NHANES study.
 
 ![NHANES Data Directory Structure](docs/figs/NHANES_data.png)
 
-It is expected that for a specific version of the dataset (e.g., G or H) three files are present: PAXDAY_<version>.xpt, PAXMIN_<version>.xpt and PAXHD_<version>.xpt. The files follow a very specific format, containing a wide range of different data fields - thus, please use the files as they are provided by NHANES. The data can then be loaded into the corresponding NHANESDataHandler object as follows.
+It is expected that for a specific version of the dataset (e.g., G or H) three files are present: PAXDAY_&lt;version&gt;.xpt, PAXMIN_&lt;version&gt;.xpt and PAXHD_&lt;version&gt;.xpt. The files follow a very specific format, containing a wide range of different data fields. Thus, please use the files as they are provided by NHANES - they can be downloaded via this [link](https://wwwn.cdc.gov/nchs/nhanes/search/datapage.aspx?Component=Examination). The data can then be loaded into the corresponding NHANESDataHandler object as follows.
 
 ```python
 nhanes_handler = NHANESDataHandler(nhanes_file_dir='../data/nhanes/', person_id=62164, verbose=True)
