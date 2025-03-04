@@ -1,7 +1,7 @@
 Detailed References and Descriptions of CosinorAge Package Functionality
 ========================================================================
 
-The CosinorAge Python package offers a comprehensive, end-to-end solution for predicting the CosinorAge biomarker [shim2024circadian]_. It seamlessly integrates all necessary steps, starting from data loading and preprocessing, to the computation of wearable features, and ultimately, the prediction of the biological age biomarker.
+The CosinorAge Python package offers a comprehensive, end-to-end solution for predicting the CosinorAge biomarker [1]_. It seamlessly integrates all necessary steps, starting from data loading and preprocessing, to the computation of wearable features, and ultimately, the prediction of the biological age biomarker.
 
 Package Structure
 ----------------
@@ -177,7 +177,7 @@ The constructor accepts a DataHandler object containing minute-level ENMO data f
 Circadian Rhythm Analysis - Cosinor Analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Assessing the circadian rhythm of an individual can be effectively accomplished through Cosinor analysis [cosinor]_, a statistical method designed for periodic data. In this approach, the minute-level ENMO data, collected over multiple days (typically ≥ 5), is used to fit the following regression model:
+Assessing the circadian rhythm of an individual can be effectively accomplished through Cosinor analysis [2]_, a statistical method designed for periodic data. In this approach, the minute-level ENMO data, collected over multiple days (typically ≥ 5), is used to fit the following regression model:
 
 .. math::
 
@@ -220,7 +220,7 @@ To gain a deeper, more detailed understanding of the circadian rhythm of a perso
 Interdaily Stability
 ******************
 
-Interdaily stability (IS) quantifies the consistency of the rest-activity pattern across different days, as proposed in [danilevicz2024measures]_.
+Interdaily stability (IS) quantifies the consistency of the rest-activity pattern across different days, as proposed in [3]_.
 
 .. math::
 
@@ -234,7 +234,7 @@ The IS values range from 0 to 1, where higher values indicate a more consistent 
 Intradaily Variability
 ********************
 
-Intradaily variability (IV) is a metric used in circadian rhythm analysis to quantify the variability in activity hour by hour throughout the days [danilevicz2024measures]_. It measures the frequency and intensity of transitions between periods of activity and rest, providing insight into how consistent or disrupted an individuals activity rhythm is. It's computed using the following formula:
+Intradaily variability (IV) is a metric used in circadian rhythm analysis to quantify the variability in activity hour by hour throughout the days [3]_. It measures the frequency and intensity of transitions between periods of activity and rest, providing insight into how consistent or disrupted an individuals activity rhythm is. It's computed using the following formula:
 
 .. math::
 
@@ -242,12 +242,12 @@ Intradaily variability (IV) is a metric used in circadian rhythm analysis to qua
 
 In this formula, :math:`z` represents the vector containing the hourly ENMO values, :math:`z_p` is the ENMO value in the :math:`p^{\text{th}}` hour, :math:`\bar{z}` is the mean ENMO value across all hours and :math:`P` is the total number of hours considered, e.g. if one considers a timeframe of five days one would have :math:`P=120`.
 
-The values range from :math:`0` to :math:`\infty` - the higher the values get the more fragmented the rhythm is. Values higher than :math:`2` indicate ultradian rhythm or small sample size [danilevicz2024measures]_. By evaluating IV, researchers can assess the stability of daily activity patterns and identify potential disruptions in circadian regulation (sleep-wake cycle).
+The values range from :math:`0` to :math:`\infty` - the higher the values get the more fragmented the rhythm is. Values higher than :math:`2` indicate ultradian rhythm or small sample size [3]_. By evaluating IV, researchers can assess the stability of daily activity patterns and identify potential disruptions in circadian regulation (sleep-wake cycle).
 
 M10, L5, and Relative Amplitude
 ****************************
 
-The metrics M10 and L5 capture the average activity levels during the most active 10-hour period (M10) and the least active 5-hour period (L5) within a day. These metrics serve as approximations of diurnal and nocturnal activity, respectively, and are calculated by averaging the ENMO values over the corresponding time intervals [ferreira2019circadian]_. Along with the M10 and L5 activity values, the corresponding start times — indicating the onset of the most and least active phases within a day — are also determined.
+The metrics M10 and L5 capture the average activity levels during the most active 10-hour period (M10) and the least active 5-hour period (L5) within a day. These metrics serve as approximations of diurnal and nocturnal activity, respectively, and are calculated by averaging the ENMO values over the corresponding time intervals [4]_. Along with the M10 and L5 activity values, the corresponding start times — indicating the onset of the most and least active phases within a day — are also determined.
 
 Building on these metrics, the relative amplitude (RA) is computed to quantify the normalized difference between M10 and L5 using the formula:
 
@@ -255,19 +255,19 @@ Building on these metrics, the relative amplitude (RA) is computed to quantify t
 
     \text{RA} = \frac{\text{M10} - \text{L5}}{\text{M10} + \text{L5}}
 
-The RA provides a measure of the contrast between daytime activity and nighttime rest. Higher RA values indicate a greater difference, with values approaching 1 often observed in healthy individuals. This reflects a clear distinction between high activity levels during the day and minimal activity during sleep phases [rock2014daily]_.
+The RA provides a measure of the contrast between daytime activity and nighttime rest. Higher RA values indicate a greater difference, with values approaching 1 often observed in healthy individuals. This reflects a clear distinction between high activity levels during the day and minimal activity during sleep phases [5]_.
 
 Physical Activity Metrics
 ~~~~~~~~~~~~~~~~~~~~~
 
-Physical activity is a key determinant of individual health, influencing physical, mental, and overall well-being. To evaluate daily physical activity, the time spent across various activity levels is analyzed: sedentary, light, moderate, and vigorous [dupre2023relationship]_. This classification is achieved by assessing ENMO values and using predefined cutpoints that delineate the ENMO ranges corresponding to each activity level.
+Physical activity is a key determinant of individual health, influencing physical, mental, and overall well-being. To evaluate daily physical activity, the time spent across various activity levels is analyzed: sedentary, light, moderate, and vigorous [6]_. This classification is achieved by assessing ENMO values and using predefined cutpoints that delineate the ENMO ranges corresponding to each activity level.
 
 The cutpoints depend on factors such as the individual's age, gender, and the device used for measurement - they are set using the ``feature_dict`` argument which is passed to the constructor.
 
 Sleep Metrics
 ~~~~~~~~~~
 
-Investigating sleep-wake cycles is crucial because sleep is fundamental to physical and mental health, influencing memory, emotional regulation, immune function, and overall well-being. Unless sleep/wake predictions are already provided by the data source the sleep-wake periods need to be predicted based on the minute-level ENMO data. In the CosinorAge package this is done using the Cole-Kripke Algorithm [cole1992automatic]_. Based on the predictions various sleep metrics can be derived including WASO, TST, sleep regularity and sleep efficiency.
+Investigating sleep-wake cycles is crucial because sleep is fundamental to physical and mental health, influencing memory, emotional regulation, immune function, and overall well-being. Unless sleep/wake predictions are already provided by the data source the sleep-wake periods need to be predicted based on the minute-level ENMO data. In the CosinorAge package this is done using the Cole-Kripke Algorithm [7]_. Based on the predictions various sleep metrics can be derived including WASO, TST, sleep regularity and sleep efficiency.
 
 Sleep Detection (Cole-Kripke Algorithm)
 ***********************************
@@ -303,7 +303,7 @@ The calculation of TST is implemented using the ``TotalSleepTime()`` class from 
 Sleep Regularity Index (SRI)
 *************************
 
-The Sleep Regularity Index (SRI) quantifies the consistency of an individual's sleep-wake patterns across days [fischer2021measuring]_. It evaluates the probability that a person remains in the same state (either sleep or wake) at two time points separated by 24 hours. This probability is averaged over the entire study period, with the SRI scaled to range from 0 (completely random) to 100 (perfectly regular). The formula for SRI is given by:
+The Sleep Regularity Index (SRI) quantifies the consistency of an individual's sleep-wake patterns across days [8]_. It evaluates the probability that a person remains in the same state (either sleep or wake) at two time points separated by 24 hours. This probability is averaged over the entire study period, with the SRI scaled to range from 0 (completely random) to 100 (perfectly regular). The formula for SRI is given by:
 
 .. math::
 
@@ -346,16 +346,19 @@ The constructor takes a list of multiple records as an input. The records are ex
 
 The records contain all the necessary information to compute CosinorAge for an individual. Gender is used to select the appropriate set of precomputed weights; if specified as ``unknown``, a general, gender-neutral set of weights is applied.
 
-The CosinorAge [shim2024circadian]_ calculation utilizes circadian rhythmicity parameters derived from wearable accelerometer data to estimate biological age. This approach is grounded in the parameters (:math:`M`, :math:`A`, and :math:`\varphi`) obtained from the Cosinor analysis.
+The CosinorAge [1]_ calculation utilizes circadian rhythmicity parameters derived from wearable accelerometer data to estimate biological age. This approach is grounded in the parameters (:math:`M`, :math:`A`, and :math:`\varphi`) obtained from the Cosinor analysis.
 
-To compute CosinorAge, circadian parameters are integrated into a proportional hazards model [cox1972regression]_ based on the Gompertz distribution. For a detailed explanation of the computational steps leading to the CosinorAge biomarker, refer to "Circadian rhythm analysis using wearable-based accelerometry as a digital biomarker of aging and healthspan" by Shim et al.
+To compute CosinorAge, circadian parameters are integrated into a proportional hazards model [9]_ based on the Gompertz distribution. For a detailed explanation of the computational steps leading to the CosinorAge biomarker, refer to "Circadian rhythm analysis using wearable-based accelerometry as a digital biomarker of aging and healthspan" by Shim et al.
 
-.. [shim2024circadian] Shim et al. (2024). Circadian rhythm analysis using wearable-based accelerometry as a digital biomarker of aging and healthspan.
-.. [cosinor] Nelson et al. (1979). Methods for cosinor-rhythmometry.
-.. [danilevicz2024measures] Danilevicz et al. (2024). Measures of rest-activity rhythm and their relationship with health outcomes: A systematic review.
-.. [ferreira2019circadian] Ferreira et al. (2019). Circadian rhythm and day-to-day variability of physical activity in adolescents measured by accelerometry.
-.. [rock2014daily] Rock et al. (2014). Daily rest-activity patterns in the bipolar phenotype: A controlled actigraphy study.
-.. [dupre2023relationship] Dupre et al. (2023). The relationship between physical activity and cognitive function in older adults: A systematic review.
-.. [cole1992automatic] Cole et al. (1992). Automatic sleep/wake identification from wrist activity.
-.. [fischer2021measuring] Fischer et al. (2021). Measuring sleep regularity: Theoretical properties and practical usage of existing metrics.
-.. [cox1972regression] Cox, D. R. (1972). Regression models and life-tables. 
+Bibliography 
+------------
+
+.. [1] Shim et al. (2024). Circadian rhythm analysis using wearable-based accelerometry as a digital biomarker of aging and healthspan.
+.. [2] Nelson et al. (1979). Methods for cosinor-rhythmometry.
+.. [3] Danilevicz et al. (2024). Measures of rest-activity rhythm and their relationship with health outcomes: A systematic review.
+.. [4] Ferreira et al. (2019). Circadian rhythm and day-to-day variability of physical activity in adolescents measured by accelerometry.
+.. [5] Rock et al. (2014). Daily rest-activity patterns in the bipolar phenotype: A controlled actigraphy study.
+.. [6] Dupre et al. (2023). The relationship between physical activity and cognitive function in older adults: A systematic review.
+.. [7] Cole et al. (1992). Automatic sleep/wake identification from wrist activity.
+.. [8] Fischer et al. (2021). Measuring sleep regularity: Theoretical properties and practical usage of existing metrics.
+.. [9] Cox, D. R. (1972). Regression models and life-tables. 
