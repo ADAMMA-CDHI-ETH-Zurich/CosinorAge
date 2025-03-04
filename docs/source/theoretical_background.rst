@@ -12,7 +12,7 @@ The package is organized into three main modules:
 * **WearableFeatures**: Extracts a comprehensive suite of wearable features from minute-level ENMO data. These include circadian rhythm metrics, sleep parameters, and physical activity features, offering a detailed analysis of health-related behaviors.
 * **CosinorAge**: Predicts the CosinorAge biomarker by leveraging the processed minute-level ENMO data alongside the individual's chronological age.
 
-.. figure:: img/2/schema.png
+.. figure:: ./figs/schema.png
    :align: center
    :width: 100%
 
