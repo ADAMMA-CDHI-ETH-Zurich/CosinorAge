@@ -1,5 +1,5 @@
-CosinorAge Package - Detailed References and Descriptions of Package Functionality
-================================================================================
+Detailed References and Descriptions of CosinorAge Package Functionality
+========================================================================
 
 The CosinorAge Python package offers a comprehensive, end-to-end solution for predicting the CosinorAge biomarker [shim2024circadian]_. It seamlessly integrates all necessary steps, starting from data loading and preprocessing, to the computation of wearable features, and ultimately, the prediction of the biological age biomarker.
 

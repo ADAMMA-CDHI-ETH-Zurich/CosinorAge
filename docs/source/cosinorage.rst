@@ -1,5 +1,5 @@
-cosinorage package
-==================
+CosinorAge Source Code Documentation
+====================================
 
 modules
 -----------
