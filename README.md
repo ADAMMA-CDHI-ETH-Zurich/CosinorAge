@@ -95,9 +95,13 @@ dashboard(features)
 
 #### Circadian Rhythm Analysis - Cosinor Analysis
 
+The `WearableFeatures` module performs a cosinor analysis to determine the acrophase, amplitude, and MESOR of the ENMO signal over a multiday period (see below).
+
 ![Cosinor Analysis](docs/figs/cosinor_plot.png)
 
 #### Circadian Rhythm Analysis - Non-parametric Analsis
+
+In addition, the module performs non-parametric analyses of the circadian rhythm, generating various metrics, including L5, M10, IS, IV, and RA. For a more detailed description of these metrics, please refer to the documentation. Below, you can see an example of the visualized results.
 
 ![M10 & L5](docs/figs/M10_L5_plot.png)
 
@@ -106,6 +110,8 @@ dashboard(features)
 ![RA](docs/figs/RA_plot.png)
 
 #### Sleep Analyis
+
+The module is also capable of predicting sleep phases based on the provided ENMO signal. Using the predicted sleep phases, various metrics—including TST, WASO, PTA, NWB, and SOL—are computed. Exemplary results are visualized below.
 
 ![Sleep Phases](docs/figs/sleep_plot.png)
 ![Sleep Metrics](docs/figs/sleep_metrics_plot.png)
@@ -129,6 +135,10 @@ records = [
 cosinor_age = CosinorAge(records)
 cosinor_age.get_predictions()
 ```
+
+The plot below visualizes the CosinorAge advance of a patient, showing a CosinorAge of approximately 56 years, which is higher than the patient’s chronological age of 53.
+
+![CosinorAge Prediction](docs/figs/cosinorage.png)
 
 ## Open Source Development
 
