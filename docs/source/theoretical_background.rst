@@ -206,7 +206,7 @@ where:
 
 The circadian parameters (:math:`M`, :math:`A`, and :math:`\varphi`) are estimated through least-squares optimization. Together, these parameters provide a comprehensive characterization of the rhythmic pattern.
 
-.. figure:: img/2/cosinor.png
+.. figure:: ./figs/cosinor_plot.png
    :align: center
    :width: 95%
 
