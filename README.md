@@ -36,9 +36,7 @@ Below, you will find a detailed description of each supported data source and it
 
 #### GalaxyDataHandler 
 
-<div style="border: 2px solid red; padding: 10px;">
-⚠️ DISCLAIMER - The preprocessing functionality for Galaxy Smartwatch data is currently under validation and has not been fully verified yet. Use with caution.
-</div>
+> ⚠️ **DISCLAIMER**: The preprocessing functionality for Galaxy Smartwatch data is currently under validation and has not been fully verified yet. Use with caution.
 
 The GalaxyDataHandler is used to load and preprocess data from the Galaxy Smartwatch. The data is expected to be located in a directory with the following structure:
 
