@@ -18,7 +18,7 @@ pip install cosinorage
 
 ## Package Functionalities
 
-For a detailed example of how to use the package, please refer to the examples in the [examples](examples) folder. In addition to the below explanations, a detailed description of the package functionalities (inlcuding references to the underlying papers) can be found in the following [PDF](CosinorAge_Detailed_Package_Description.pdf). To get a detiled documentation of the package source code, please refer to the [Read the Docs](https://cosinorage.readthedocs.io/en/latest/?badge=latest).
+For detailed examples of how to use the package, please refer to the [examples](examples) folder. The package's theoretical background, including references to the underlying research papers, is documented in our [Read the Docs theoretical background section](https://cosinorage.readthedocs.io/en/latest/theoretical_background.html). For comprehensive API documentation, please see the [package reference](https://cosinorage.readthedocs.io/en/latest/cosinorage.html).
 
 ### Modular Scheme 
 
