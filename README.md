@@ -185,3 +185,5 @@ pip install twine
 twine upload dist/*
 ```
 
+## Citation
+Shim, J., Fleisch, E. & Barata, F. Circadian rhythm analysis using wearable-based accelerometry as a digital biomarker of aging and healthspan. npj Digit. Med. 7, 146 (2024). https://doi.org/10.1038/s41746-024-01111-x
