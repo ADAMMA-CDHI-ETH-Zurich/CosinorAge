@@ -118,10 +118,6 @@ The module is also capable of predicting sleep phases based on the provided ENMO
 ![Sleep Phases](docs/figs/sleep_plot.png)
 ![Sleep Metrics](docs/figs/sleep_metrics_plot.png)
 
-#### Physical Activity Analysis 
-
-![Physical Activity](docs/figs/PA_plot.png)
-
 ### CosinorAge Prediction
 
 The `CosinorAge` object can be used to compute CosinorAge. It is capable of processing multiple datahandlers at the same time.
