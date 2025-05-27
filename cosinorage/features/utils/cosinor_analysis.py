@@ -23,6 +23,7 @@ import pandas as pd
 import numpy as np
 from statsmodels.formula.api import ols
 from scipy import optimize
+from CosinorPy import cosinor1 
 
 
 def cosinor_multiday(df: pd.DataFrame) -> pd.DataFrame:
@@ -137,6 +138,7 @@ def fit_cosinor(time, data, period=24):
     Returns:
     dict: Dictionary containing fitted parameters and statistics
     """
+    """
     # Initial parameter guesses
     M_guess = np.mean(data)
     A_guess = np.abs((np.max(data) - np.min(data)) / 2)
@@ -180,5 +182,16 @@ def fit_cosinor(time, data, period=24):
         'r_squared': r_squared,
         'fitted_values': fitted
     }
-    
+    """
+
+    fit, _, _, statistics = cosinor1.fit_cosinor(time, data, period=24*60, plot_on=False)
+
+    results = {
+        'MESOR': statistics['values'][0],
+        'amplitude': statistics['values'][1],
+        'acrophase': statistics['values'][2],
+        'fitted_values': fit.fittedvalues
+    }
+    print("done")
+
     return results
