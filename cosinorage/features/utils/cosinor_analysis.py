@@ -1,5 +1,5 @@
 ###########################################################################
-# Copyright (C) 2024 ETH Zurich
+# Copyright (C) 2025 ETH Zurich
 # CosinorAge: Prediction of biological age based on accelerometer data
 # using the CosinorAge method proposed by Shim, Fleisch and Barata
 # (https://www.nature.com/articles/s41746-024-01111-x)
@@ -192,6 +192,5 @@ def fit_cosinor(time, data, period=24):
         'acrophase': statistics['values'][2],
         'fitted_values': fit.fittedvalues
     }
-    print("done")
 
     return results
