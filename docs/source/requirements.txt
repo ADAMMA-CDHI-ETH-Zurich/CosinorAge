@@ -12,5 +12,6 @@ scikit-learn
 statsmodels
 scikit-digital-health
 claid
+CosinorPy
 
 git+https://github.com/readthedocs/sphinx-build-compatibility#egg=sphinx-build-compatibility
