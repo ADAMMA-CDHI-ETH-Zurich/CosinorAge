@@ -22,7 +22,7 @@ if os.environ.get("READTHEDOCS", "") == "True":
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'CosinorAge'
-copyright = '2024, Jacob Leo Oskar Hunecke'
+copyright = '2025, Jacob Leo Oskar Hunecke'
 author = 'Jacob Leo Oskar Hunecke'
 release = '0.0.1'
 

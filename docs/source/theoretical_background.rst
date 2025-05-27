@@ -1,4 +1,4 @@
-Detailed References and Descriptions of CosinorAge Package Functionality
+Detailed References and Descriptions of Package Functionality
 ========================================================================
 
 The CosinorAge Python package offers a comprehensive, end-to-end solution for predicting the CosinorAge biomarker [1]_. It seamlessly integrates all necessary steps, starting from data loading and preprocessing, to the computation of wearable features, and ultimately, the prediction of the biological age biomarker.

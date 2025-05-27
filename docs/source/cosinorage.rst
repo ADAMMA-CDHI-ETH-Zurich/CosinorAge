@@ -1,4 +1,4 @@
-CosinorAge Source Code Documentation
+Source Code Documentation
 ====================================
 
 modules
