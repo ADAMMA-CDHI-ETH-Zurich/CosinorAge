@@ -138,51 +138,6 @@ def fit_cosinor(time, data, period=24):
     Returns:
     dict: Dictionary containing fitted parameters and statistics
     """
-    """
-    # Initial parameter guesses
-    M_guess = np.mean(data)
-    A_guess = np.abs((np.max(data) - np.min(data)) / 2)
-    phi_guess = 0
-    
-    # Define the residual function for optimization
-    def residuals(params):
-        M, A_signed, phi = params
-        # Force amplitude to be positive by taking absolute value
-        A = np.abs(A_signed)
-        return data - cosinor_model(time, M, A, phi, period)
-    
-    # Perform least squares optimization
-    optimal_params, _ = optimize.leastsq(
-        residuals, 
-        [M_guess, A_guess, phi_guess]
-    )
-    
-    # Extract fitted parameters
-    M_fit, A_signed, phi_fit = optimal_params
-    
-    # Ensure amplitude is positive
-    A_fit = np.abs(A_signed)
-    
-    # Keep acrophase in radians (can be negative)
-    # No normalization to positive values
-    
-    # Calculate fitted values
-    fitted = cosinor_model(time, M_fit, A_fit, phi_fit, period)
-    
-    # Calculate R-squared
-    ss_tot = np.sum((data - np.mean(data))**2)
-    ss_res = np.sum((data - fitted)**2)
-    r_squared = 1 - (ss_res / ss_tot)
-    
-    results = {
-        'MESOR': M_fit,
-        'amplitude': A_fit,
-        'acrophase': phi_fit,  # in radians, can be negative
-        'period': period,
-        'r_squared': r_squared,
-        'fitted_values': fitted
-    }
-    """
 
     fit, _, _, statistics = cosinor1.fit_cosinor(time, data, period=24*60, plot_on=False)
 
