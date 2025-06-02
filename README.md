@@ -4,7 +4,7 @@
 </div>
 
 [![Documentation Status](https://readthedocs.org/projects/cosinorage/badge/?version=latest)](https://cosinorage.readthedocs.io/en/latest/?badge=latest)
-[![PyPI version](https://img.shields.io/pypi/v/cosinorage.svg)](https://pypi.org/project/cosinorage/)
+
 
 An open-source Python package for estimating biological age based on circadian rhythms derived from accelerometer data. The package offers a unified framework that integrates data preprocessing, feature extraction, and predictive modeling of biological age using the CosinorAge biomarker.
 
@@ -229,3 +229,6 @@ twine upload dist/*
 
 ## Citation
 Shim, J., Fleisch, E. & Barata, F. Circadian rhythm analysis using wearable-based accelerometry as a digital biomarker of aging and healthspan. npj Digit. Med. 7, 146 (2024). https://doi.org/10.1038/s41746-024-01111-x
+
+## Acknowledgments
+This project is developed in collaboration with [ADAMMA](https://adamma.ethz.ch/) - the Core for AI and Digital Biomarker Research at ETH Zurich. ADAMMA innovates at the intersection of technology, medicine, and data science to revolutionize health monitoring and disease prevention.
