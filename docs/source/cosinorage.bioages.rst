@@ -1,7 +1,7 @@
-cosinorage.bioages module
+cosinorage.bioages Module
 =========================
 
-module contents
+Module Contents
 ---------------
 
 .. automodule:: cosinorage.bioages
@@ -9,8 +9,8 @@ module contents
    :undoc-members:
    :show-inheritance:
 
-classes
-----------------------------------------
+Classes
+-------
 
 .. autoclass:: cosinorage.bioages.CosinorAge
    :members:

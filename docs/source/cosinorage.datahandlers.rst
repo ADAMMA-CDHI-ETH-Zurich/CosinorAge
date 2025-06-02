@@ -1,15 +1,15 @@
-cosinorage.datahandlers module
+cosinorage.datahandlers Module
 =============================
 
-module contents
+Module Contents
 ---------------
 
 .. automodule:: cosinorage.datahandlers
    :no-members:
 
 
-classes
-----------------------------------------
+Classes
+-------
 
 .. autoclass:: cosinorage.datahandlers.DataHandler
    :members:
@@ -23,11 +23,11 @@ classes
 .. autoclass:: cosinorage.datahandlers.UKBDataHandler
    :members:
 
-utility functions
-----------------------------------------
+Utility Functions
+-----------------
 
-galaxy smartwatch data functions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Galaxy Smartwatch Data Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: cosinorage.datahandlers.read_galaxy_data()
 
@@ -47,8 +47,8 @@ galaxy smartwatch data functions
 
 .. autofunction:: cosinorage.datahandlers.calc_weartime()
 
-uk biobank data functions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+UK Biobank Data Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: cosinorage.datahandlers.read_ukb_data()
 
@@ -57,8 +57,8 @@ uk biobank data functions
 .. autofunction:: cosinorage.datahandlers.resample_ukb_data()
 
 
-nhanes data functions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+NHANES Data Functions
+~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: cosinorage.datahandlers.read_nhanes_data()
 
@@ -73,8 +73,8 @@ nhanes data functions
 .. autofunction:: cosinorage.datahandlers.calculate_measure_time()
 
 
-general utility functions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+General Utility Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: cosinorage.datahandlers.filter_incomplete_days()
 
@@ -87,8 +87,8 @@ general utility functions
 .. autofunction:: cosinorage.datahandlers.calculate_minute_level_enmo()
 
 
-visualization functions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Visualization Functions
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: cosinorage.datahandlers.plot_orig_enmo()
 
