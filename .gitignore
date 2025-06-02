@@ -12,3 +12,6 @@ cosinor_results*
 *.pkl
 
 .DS_Store
+
+# VS Code workspace files
+*.code-workspace
