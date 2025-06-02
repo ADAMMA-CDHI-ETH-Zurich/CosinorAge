@@ -36,7 +36,7 @@ Below, you will find a detailed description of each supported data source and it
 
 #### GalaxyDataHandler 
 
-> ⚠️ **DISCLAIMER**: The preprocessing functionality for Galaxy Smartwatch data is currently under validation and has not been fully verified yet. Use with caution.
+> ⚠️ **DISCLAIMER**: Signal scaling factors have been calibrated through internal validation experiments. Use with caution.
 
 The GalaxyDataHandler is used to load and preprocess data from the Galaxy Smartwatch. The data is expected to be located in a directory with the following structure:
 
@@ -134,7 +134,7 @@ cosinor_age = CosinorAge(records)
 cosinor_age.get_predictions()
 ```
 
-The plot below visualizes the CosinorAge advance of a patient, showing a CosinorAge of approximately 56 years, which is higher than the patient’s chronological age of 53.
+The plot below visualizes the CosinorAge advance of a patient, showing a CosinorAge of approximately 56 years, which is higher than the patient's chronological age of 53.
 
 ![CosinorAge Prediction](docs/figs/cosinorage.png)
 
