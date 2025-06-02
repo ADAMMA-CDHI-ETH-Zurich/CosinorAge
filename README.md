@@ -8,13 +8,69 @@
 
 An open-source Python package for estimating biological age based on circadian rhythms derived from accelerometer data. The package offers a unified framework that integrates data preprocessing, feature extraction, and predictive modeling of biological age using the CosinorAge biomarker.
 
-## Installation
+## Getting Started
 
-```bash
-pip install cosinorage
+### Prerequisites
+- Python >= 3.10
+- pip (Python package installer)
+- git
+
+### Installation Steps
+
+1. **Clone the Repository**
+   ```bash
+   git clone https://github.com/yourusername/cosinorage.git
+   cd cosinorage
+   ```
+
+2. **Set Up Virtual Environment**
+   ```bash
+   # Create a new virtual environment
+   python -m venv venv
+
+   # Activate the virtual environment
+   # On Windows:
+   venv\Scripts\activate
+   # On macOS/Linux:
+   source venv/bin/activate
+   ```
+
+3. **Install Dependencies**
+   ```bash
+   # Upgrade pip
+   pip install --upgrade pip
+
+   # Install required packages
+   pip install -r requirements.txt
+   ```
+
+4. **Install the Package**
+   ```bash
+   # Install in development mode
+   pip install -e .
+   ```
+
+### Quick Start
+After installation, you can start using the package:
+
+```python
+import cosinorage
+from cosinorage.datahandlers import GalaxyDataHandler
+
+# Initialize a data handler
+handler = GalaxyDataHandler(gw_file_dir='path/to/your/data')
+
+# Compute features
+from cosinorage.features import WearableFeatures
+features = WearableFeatures(handler)
+features.run()
+
+# Generate visualizations
+from cosinorage.visualization import dashboard
+dashboard(features)
 ```
- To avoid issues with the installation, please make sure that the dependencies stated in the `requirements.txt` file are installed. It is recommended to set up a fresh virtual environment using Python >= 3.10.
 
+For more detailed examples, please refer to the [examples](examples) directory.
 
 ## Package Functionalities
 
@@ -141,16 +197,6 @@ The plot below visualizes the CosinorAge advance of a patient, showing a Cosinor
 ## Open Source Development
 
 The package is developed in an open-source manner. We welcome contributions to the package. 
-
-### Clone the Repository
-
-Clone the repository and install the package with:
-
-```bash
-git clone https://github.com/yourusername/cosinorage.git
-cd cosinorage
-pip install .
-```
 
 ### Improve the Package
 
