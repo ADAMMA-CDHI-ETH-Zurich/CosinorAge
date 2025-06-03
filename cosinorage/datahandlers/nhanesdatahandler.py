@@ -68,3 +68,9 @@ class NHANESDataHandler(DataHandler):
         self.sf_data = resample_nhanes_data(self.sf_data, meta_dict=self.meta_dict, verbose=verbose)
         self.ml_data = self.sf_data
 
+    def get_ml_data(self):
+        """
+        Get the minute-level data.
+        """
+        return self.ml_data
+
