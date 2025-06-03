@@ -58,16 +58,23 @@ import cosinorage
 from cosinorage.datahandlers import GalaxyDataHandler
 
 # Initialize a data handler
-handler = GalaxyDataHandler(gw_file_dir='path/to/your/data')
+handler = GalaxyDataHandler(galaxy_file_dir='path/to/your/data')
 
 # Compute features
-from cosinorage.features import WearableFeatures
+from cosinorage.features import WearableFeatures, dashboard
 features = WearableFeatures(handler)
-features.run()
-
-# Generate visualizations
-from cosinorage.visualization import dashboard
 dashboard(features)
+
+# Compute CosinorAge (dummy data)
+from cosinorage.bioages import CosinorAge
+records = [
+    {'handler': handler, 
+     'age': 60, 
+     'gender': 'male', 
+    }
+]
+predictions = CosinorAge(records)
+predictions.get_predictions()
 ```
 
 For more detailed examples, please refer to the [examples](examples) directory.
