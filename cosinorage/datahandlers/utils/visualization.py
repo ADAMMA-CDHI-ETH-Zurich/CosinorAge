@@ -72,8 +72,8 @@ def plot_enmo(handler):
     plt.plot(_data['TIMESTAMP'], _data['ENMO'], label='ENMO', color='black')
 
     if 'wear' in _data.columns:
-        plt.fill_between(_data['TIMESTAMP'], _data['wear'], color='green', alpha=0.5, label='wear')
-        plt.fill_between(_data['TIMESTAMP'], (1-_data['wear']), color='red', alpha=0.5, label='non-wear')
+        plt.fill_between(_data['TIMESTAMP'], _data['wear']*max(_data['ENMO'])*1.25, color='green', alpha=0.5, label='wear')
+        plt.fill_between(_data['TIMESTAMP'], (1-_data['wear'])*max(_data['ENMO'])*1.25, color='red', alpha=0.5, label='non-wear')
         plt.legend()
         
     plt.ylim(0, max(_data['ENMO'])*1.25)
