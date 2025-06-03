@@ -153,7 +153,7 @@ def preprocess_galaxy_data(data: pd.DataFrame, preprocess_args: dict = {}, meta_
     _data = data.copy()
     _data[['X_raw', 'Y_raw', 'Z_raw']] = _data[['X', 'Y', 'Z']]
 
-    # recaling of accelerometer data
+    # recaling of accelerometer data according to blog post: https://developer.samsung.com/sdp/blog/en/2025/04/10/understanding-and-converting-galaxy-watch-accelerometer-data
     _data[['X', 'Y', 'Z']] = _data[['X', 'Y', 'Z']] / 4096
 
     # calibration
@@ -176,7 +176,7 @@ def preprocess_galaxy_data(data: pd.DataFrame, preprocess_args: dict = {}, meta_
     # calculate total, wear, and non-wear time
     calc_weartime(_data, sf=25, meta_dict=meta_dict, verbose=verbose)
 
-    _data['ENMO'] = calculate_enmo(_data, verbose=verbose) * 500
+    _data['ENMO'] = calculate_enmo(_data, verbose=verbose) * 1000
 
     if verbose:
         print(f"Preprocessed accelerometer data")

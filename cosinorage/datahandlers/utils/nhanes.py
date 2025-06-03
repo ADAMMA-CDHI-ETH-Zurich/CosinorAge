@@ -214,7 +214,6 @@ def filter_and_preprocess_nhanes_data(data: pd.DataFrame, meta_dict: dict = {}, 
     if verbose:
         print(f"Calculated ENMO data")
 
-
     return _data
 
 def resample_nhanes_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
