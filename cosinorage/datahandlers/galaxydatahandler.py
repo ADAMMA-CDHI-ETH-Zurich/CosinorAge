@@ -72,7 +72,7 @@ class GalaxyDataHandler(DataHandler):
         """
 
         self.raw_data = read_galaxy_data(self.galaxy_file_dir, meta_dict=self.meta_dict, verbose=verbose)
-        self.sf_data = filter_galaxy_data(self.raw_data, meta_dict=self.meta_dict, verbose=verbose)
+        self.sf_data = filter_galaxy_data(self.raw_data, meta_dict=self.meta_dict, verbose=verbose, preprocess_args=self.preprocess_args)
         self.sf_data = resample_galaxy_data(self.sf_data, meta_dict=self.meta_dict, verbose=verbose)
         self.sf_data = preprocess_galaxy_data(self.sf_data, preprocess_args=self.preprocess_args, meta_dict=self.meta_dict, verbose=verbose)
         self.ml_data = calculate_minute_level_enmo(self.sf_data, sf=25, verbose=verbose)

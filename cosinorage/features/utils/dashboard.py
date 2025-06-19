@@ -201,7 +201,7 @@ def dashboard(features):
         axes[i].fill_between(day_data.index, day_data['sleep']*enmo_y_range[1], color='blue', alpha=0.5, label='Sleep')
 
         # highlight non-wear periods
-        if 'wear' in day_data.columns:
+        if 'wear' in day_data.columns and day_data['wear'].max() != -1:
             axes[i].fill_between(day_data.index, (1-day_data['wear'])*enmo_y_range[1], color='red', alpha=0.5, label='Non-wear')
         
         axes[i].set_title(f"Sleep Predictions - {day}")

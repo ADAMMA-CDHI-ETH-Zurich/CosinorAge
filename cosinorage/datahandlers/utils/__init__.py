@@ -24,3 +24,5 @@ from .filtering import *
 from .visualization import *
 from .ukb import *
 from .nhanes import *
+from .galaxy_csv import *
+from .galaxy import *
