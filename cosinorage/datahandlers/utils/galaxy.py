@@ -80,7 +80,7 @@ def read_galaxy_data(galaxy_file_dir: str, meta_dict: dict, verbose: bool = Fals
     return data
 
 
-def filter_galaxy_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+def filter_galaxy_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False, preprocess_args: dict = {}) -> pd.DataFrame:
     """
     Filter Galaxy Watch accelerometer data by removing incomplete days and selecting longest consecutive sequence.
 
@@ -101,8 +101,9 @@ def filter_galaxy_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool =
         print(f"Filtered out {n_old - _data.shape[0]}/{_data.shape[0]} accelerometer records due to filtering out first and last day")
 
     # filter out sparse days
+    required_points_per_day = preprocess_args.get('required_daily_coverage', 0.5) * 2160000
     n_old = _data.shape[0]
-    _data = filter_incomplete_days(_data, data_freq=25, expected_points_per_day=2000000)
+    _data = filter_incomplete_days(_data, data_freq=25, expected_points_per_day=required_points_per_day)
     if verbose:
         print(f"Filtered out {n_old - _data.shape[0]}/{n_old} accelerometer records due to incomplete daily coverage")
 
