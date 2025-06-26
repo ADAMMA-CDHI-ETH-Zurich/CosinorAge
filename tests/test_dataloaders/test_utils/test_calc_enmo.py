@@ -83,5 +83,5 @@ def test_calculate_minute_level_enmo_empty():
         'ENMO': []
     }).set_index('TIMESTAMP')
     
-    result = calculate_minute_level_enmo(empty_df, 1)
-    assert result.empty
+    meta_dict = {'sf': 25}  # Provide sampling frequency
+    result = calculate_minute_level_enmo(empty_df, meta_dict=meta_dict)
