@@ -29,5 +29,5 @@ from .datahandler import *
 from .nhanesdatahandler import *
 from .galaxydatahandler import *
 from .ukbdatahandler import *
-from .galaxycsvdatahandler import *
+from .genericdatahandler import *
 from .utils import *

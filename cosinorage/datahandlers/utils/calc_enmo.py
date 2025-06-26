@@ -59,15 +59,13 @@ def calculate_enmo(data: pd.DataFrame, verbose: bool = False) -> pd.DataFrame:
     return _enmo_vals
 
 
-def calculate_minute_level_enmo(data: pd.DataFrame, sf: float, verbose: bool = False) -> pd.DataFrame:
+def calculate_minute_level_enmo(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
     """
     Resample high-frequency ENMO data to minute-level by averaging over each minute.
 
     Args:
         data (pd.DataFrame): DataFrame with 'TIMESTAMP' as index and 'ENMO' column 
             containing high-frequency ENMO data. Optional 'wear' column for wear time.
-        sf (float): Sampling frequency of the data in Hz (samples per second).
-        verbose (bool, optional): If True, prints processing information. Defaults to False.
 
     Returns:
         pd.DataFrame: DataFrame containing minute-level aggregated data with:
@@ -83,6 +81,9 @@ def calculate_minute_level_enmo(data: pd.DataFrame, sf: float, verbose: bool = F
         Timestamps are converted to datetime format in the output.
     """
 
+    # Get sampling frequency from meta_dict or use default
+    sf = meta_dict.get('sf', 25)  # Default to 25Hz if not specified
+    
     if sf < 1/60:
         raise ValueError("Sampling frequency must be at least 1 minute")
 

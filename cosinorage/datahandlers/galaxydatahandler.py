@@ -20,44 +20,115 @@
 ##########################################################################
 
 import os
+from typing import Union
 
 from .utils.calc_enmo import calculate_minute_level_enmo
-from .utils.galaxy import read_galaxy_data, filter_galaxy_data, resample_galaxy_data, preprocess_galaxy_data
+from .utils.galaxy_binary import read_galaxy_binary_data, filter_galaxy_binary_data, resample_galaxy_binary_data, preprocess_galaxy_binary_data
+from .utils.galaxy_csv import read_galaxy_csv_data, filter_galaxy_csv_data, resample_galaxy_csv_data, preprocess_galaxy_csv_data
 from .datahandler import DataHandler, clock
 
 
 class GalaxyDataHandler(DataHandler):
     """
-    Data handler for Samsung Galaxy Watch accelerometer data.
+    Unified data handler for Samsung Galaxy Watch accelerometer data.
 
-    This class handles loading, filtering, and processing of Galaxy Watch accelerometer data.
+    This class handles loading, filtering, and processing of Galaxy Watch accelerometer data
+    in both binary and CSV formats. Currently supports:
+    - Binary format with accelerometer data type
+    - CSV format with ENMO data type
 
     Args:
-        galaxy_file_dir (str): Directory path containing Galaxy Watch data files.
-        preprocess (bool, optional): Whether to preprocess the data. Defaults to True.
+        galaxy_file_path (str): Path to the Galaxy Watch data file (for CSV) or directory (for binary).
+        data_format (str): Format of the data - either 'csv' or 'binary'. Defaults to 'binary'.
+        data_type (str): Type of the data - either 'enmo' or 'accelerometer'. 
+                        For CSV format, defaults to 'enmo'.
+                        For binary format, defaults to 'accelerometer'.
+        time_column (str): Name of the timestamp column in CSV files. 
+                          For CSV format, defaults to 'time'.
+                          For binary format, defaults to 'unix_timestamp_in_ms'.
+        data_columns (list): Names of the data columns in CSV files.
+                            For 'enmo' data_type, defaults to ['enmo_mg'].
+                            For 'accelerometer' data_type, defaults to ['acceleration_x', 'acceleration_y', 'acceleration_z'].
         preprocess_args (dict, optional): Arguments for preprocessing. Defaults to {}.
         verbose (bool, optional): Whether to print processing information. Defaults to False.
 
     Attributes:
-        galaxy_file_dir (str): Directory containing Galaxy Watch data files.
-        preprocess (bool): Whether to preprocess the data.
+        galaxy_file_path (str): Path to the Galaxy Watch data file or directory.
+        data_format (str): Format of the data ('csv' or 'binary').
+        data_type (str): Type of the data ('enmo' or 'accelerometer').
+        time_column (str): Name of the timestamp column.
+        data_columns (list): Names of the data columns.
         preprocess_args (dict): Arguments for preprocessing.
     """
 
     def __init__(self, 
-                 galaxy_file_dir: str, 
+                 galaxy_file_path: str, 
+                 data_format: str = 'binary',
+                 data_type: Union[str, None] = None,
+                 time_column: Union[str, None] = None,
+                 data_columns: Union[list, None] = None,
                  preprocess_args: dict = {}, 
                  verbose: bool = False):
 
         super().__init__()
 
-        if not os.path.isdir(galaxy_file_dir):
-            raise ValueError("The Galaxy Watch file directory should be a directory path")
+        if data_format not in ['csv', 'binary']:
+            raise ValueError("data_format must be either 'csv' or 'binary'")
+        
+        # Set default data_type based on data_format if not provided
+        if data_type is None:
+            if data_format == 'csv':
+                data_type = 'enmo'
+            else:  # binary
+                data_type = 'accelerometer'
+        
+        if data_type not in ['enmo', 'accelerometer']:
+            raise ValueError("data_type must be either 'enmo' or 'accelerometer'")
 
-        self.galaxy_file_dir = galaxy_file_dir
+        # Set default column names based on data_format and data_type
+        if time_column is None:
+            if data_format == 'csv':
+                time_column = 'time'  # Only ENMO is supported for CSV
+            else:  # binary
+                time_column = 'unix_timestamp_in_ms'
+        
+        if data_columns is None:
+            if data_type == 'enmo':
+                data_columns = ['enmo_mg']
+            else:  # accelerometer (binary only)
+                data_columns = ['acceleration_x', 'acceleration_y', 'acceleration_z']
+
+        # Validate format-type combinations
+        if data_format == 'csv' and data_type != 'enmo':
+            raise ValueError("CSV format currently only supports 'enmo' data_type")
+        if data_format == 'binary' and data_type != 'accelerometer':
+            raise ValueError("Binary format currently only supports 'accelerometer' data_type")
+
+        # Validate data_columns based on data_type
+        if data_type == 'enmo' and len(data_columns) != 1:
+            raise ValueError("For 'enmo' data_type, data_columns should contain exactly one column name")
+        if data_type == 'accelerometer' and len(data_columns) != 3:
+            raise ValueError("For 'accelerometer' data_type, data_columns should contain exactly three column names")
+
+        if data_format == 'csv':
+            if not os.path.isfile(galaxy_file_path):
+                raise ValueError("For CSV format, galaxy_file_path should be a file path. Please also ensure that the file is existing.")
+        else:  # binary
+            if not os.path.isdir(galaxy_file_path):
+                raise ValueError("For binary format, galaxy_file_path should be a directory path. Please also ensure that the directory is existing.")
+
+        self.galaxy_file_path = galaxy_file_path
+        self.data_format = data_format
+        self.data_type = data_type
+        self.time_column = time_column
+        self.data_columns = data_columns
         self.preprocess_args = preprocess_args
 
-        self.meta_dict['datasource'] = 'samsung galaxy smartwatch'
+        self.meta_dict['datasource'] = 'Samsung Galaxy Smartwatch'
+        self.meta_dict['data_format'] = 'CSV' if data_format == 'csv' else 'Binary' if data_format == 'binary' else 'Unknown'
+        self.meta_dict['raw_data_type'] = 'ENMO' if data_type == 'enmo' else 'Accelerometer' if data_type == 'accelerometer' else 'Unknown'
+        self.meta_dict['time_column'] = time_column
+        self.meta_dict['data_columns'] = data_columns
 
         self.__load_data(verbose=verbose)
     
@@ -71,8 +142,22 @@ class GalaxyDataHandler(DataHandler):
             verbose (bool, optional): Whether to print processing information. Defaults to False.
         """
 
-        self.raw_data = read_galaxy_data(self.galaxy_file_dir, meta_dict=self.meta_dict, verbose=verbose)
-        self.sf_data = filter_galaxy_data(self.raw_data, meta_dict=self.meta_dict, verbose=verbose, preprocess_args=self.preprocess_args)
-        self.sf_data = resample_galaxy_data(self.sf_data, meta_dict=self.meta_dict, verbose=verbose)
-        self.sf_data = preprocess_galaxy_data(self.sf_data, preprocess_args=self.preprocess_args, meta_dict=self.meta_dict, verbose=verbose)
-        self.ml_data = calculate_minute_level_enmo(self.sf_data, sf=25, verbose=verbose)
+        if self.data_format == 'csv' and self.data_type == 'enmo':
+            # Use CSV processing functions for ENMO data
+            self.raw_data = read_galaxy_csv_data(self.galaxy_file_path, meta_dict=self.meta_dict, 
+                                                time_column=self.time_column, data_columns=self.data_columns, verbose=verbose)
+            self.sf_data = filter_galaxy_csv_data(self.raw_data, meta_dict=self.meta_dict, verbose=verbose, preprocess_args=self.preprocess_args)
+            self.sf_data = resample_galaxy_csv_data(self.sf_data, meta_dict=self.meta_dict, verbose=verbose)
+            self.sf_data = preprocess_galaxy_csv_data(self.sf_data, preprocess_args=self.preprocess_args, meta_dict=self.meta_dict, verbose=verbose)
+            self.ml_data = calculate_minute_level_enmo(self.sf_data, self.meta_dict, verbose=verbose)
+        elif self.data_format == 'binary' and self.data_type == 'accelerometer':
+            # Use binary processing functions for accelerometer data
+            self.raw_data = read_galaxy_binary_data(self.galaxy_file_path, meta_dict=self.meta_dict, 
+                                                   time_column=self.time_column, data_columns=self.data_columns, verbose=verbose)
+            self.sf_data = filter_galaxy_binary_data(self.raw_data, meta_dict=self.meta_dict, verbose=verbose, preprocess_args=self.preprocess_args)
+            self.sf_data = resample_galaxy_binary_data(self.sf_data, meta_dict=self.meta_dict, verbose=verbose)
+            self.sf_data = preprocess_galaxy_binary_data(self.sf_data, preprocess_args=self.preprocess_args, meta_dict=self.meta_dict, verbose=verbose)
+            self.ml_data = calculate_minute_level_enmo(self.sf_data, self.meta_dict, verbose=verbose)
+        else:
+            # This should not happen due to validation in __init__, but just in case
+            raise ValueError(f"Unsupported combination: data_format='{self.data_format}', data_type='{self.data_type}'")

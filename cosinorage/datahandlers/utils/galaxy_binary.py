@@ -22,27 +22,34 @@
 import pandas as pd
 import os
 import numpy as np
-from typing import Tuple
+from typing import Tuple, Union
 from skdh.preprocessing import CalibrateAccelerometer, AccelThresholdWearDetection
 from scipy.signal import butter, filtfilt
 from claid.data_collection.load.load_sensor_data import *
 
 from .filtering import filter_incomplete_days, filter_consecutive_days
 from .calc_enmo import calculate_enmo
+from .frequency_detection import detect_frequency_from_timestamps
 
 
-def read_galaxy_data(galaxy_file_dir: str, meta_dict: dict, verbose: bool = False):
+def read_galaxy_binary_data(galaxy_file_dir: str, meta_dict: dict, time_column: str = 'unix_timestamp_in_ms', data_columns: Union[list, None] = None, verbose: bool = False):
     """
     Read accelerometer data from Galaxy Watch binary files.
 
     Args:
         galaxy_file_dir (str): Directory containing Galaxy Watch data files
         meta_dict (dict): Dictionary to store metadata about the loaded data
+        time_column (str): Name of the timestamp column in the binary data
+        data_columns (list): Names of the data columns in the binary data
         verbose (bool): Whether to print progress information
 
     Returns:
         pd.DataFrame: DataFrame containing accelerometer data with columns ['X', 'Y', 'Z']
     """
+
+    # Set default data_columns if not provided
+    if data_columns is None:
+        data_columns = ['acceleration_x', 'acceleration_y', 'acceleration_z']
 
     data = pd.DataFrame()
 
@@ -59,7 +66,17 @@ def read_galaxy_data(galaxy_file_dir: str, meta_dict: dict, verbose: bool = Fals
     if verbose:
         print(f"Read {n_files} files from {galaxy_file_dir}")
 
-    data = data.rename(columns={'unix_timestamp_in_ms': 'TIMESTAMP', 'acceleration_x': 'X', 'acceleration_y': 'Y', 'acceleration_z': 'Z'})
+    # Rename columns to standard format
+    column_mapping = {time_column: 'TIMESTAMP'}
+    for i, col in enumerate(data_columns):
+        if i == 0:
+            column_mapping[col] = 'X'
+        elif i == 1:
+            column_mapping[col] = 'Y'
+        elif i == 2:
+            column_mapping[col] = 'Z'
+    
+    data = data.rename(columns=column_mapping)
     data['TIMESTAMP'] = pd.to_datetime(data['TIMESTAMP'], unit='ms')
     data.set_index('TIMESTAMP', inplace=True)
     data.drop(columns=['effective_time_frame', 'sensor_body_location'], inplace=True)
@@ -73,14 +90,14 @@ def read_galaxy_data(galaxy_file_dir: str, meta_dict: dict, verbose: bool = Fals
     meta_dict['raw_n_datapoints'] = data.shape[0]
     meta_dict['raw_start_datetime'] = data.index.min()
     meta_dict['raw_end_datetime'] = data.index.max()
-    meta_dict['raw_data_frequency'] = '25Hz'
-    meta_dict['raw_data_type'] = 'accelerometer'
-    meta_dict['raw_data_unit'] = 'custom'
+    meta_dict['sf'] = detect_frequency_from_timestamps(data.index)
+    meta_dict['raw_data_frequency'] = f'{meta_dict["sf"]}Hz'
+    meta_dict['raw_data_unit'] = 'Custom'
 
     return data
 
 
-def filter_galaxy_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False, preprocess_args: dict = {}) -> pd.DataFrame:
+def filter_galaxy_binary_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False, preprocess_args: dict = {}) -> pd.DataFrame:
     """
     Filter Galaxy Watch accelerometer data by removing incomplete days and selecting longest consecutive sequence.
 
@@ -103,7 +120,8 @@ def filter_galaxy_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool =
     # filter out sparse days
     required_points_per_day = preprocess_args.get('required_daily_coverage', 0.5) * 2160000
     n_old = _data.shape[0]
-    _data = filter_incomplete_days(_data, data_freq=25, expected_points_per_day=required_points_per_day)
+    sf = meta_dict.get('sf', 25)  # Default to 25Hz if not specified
+    _data = filter_incomplete_days(_data, data_freq=sf, expected_points_per_day=required_points_per_day)
     if verbose:
         print(f"Filtered out {n_old - _data.shape[0]}/{n_old} accelerometer records due to incomplete daily coverage")
 
@@ -116,9 +134,9 @@ def filter_galaxy_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool =
     return _data
 
 
-def resample_galaxy_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+def resample_galaxy_binary_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
     """
-    Resample Galaxy Watch accelerometer data to a regular 40ms interval (25Hz).
+    Resample Galaxy Watch accelerometer data to a regular interval.
 
     Args:
         data (pd.DataFrame): Filtered accelerometer data
@@ -126,7 +144,7 @@ def resample_galaxy_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool
         verbose (bool): Whether to print progress information
 
     Returns:
-        pd.DataFrame: Resampled accelerometer data at 25Hz
+        pd.DataFrame: Resampled accelerometer data at regular frequency.
     """
     _data = data.copy()
 
@@ -138,7 +156,7 @@ def resample_galaxy_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool
     return _data
 
 
-def preprocess_galaxy_data(data: pd.DataFrame, preprocess_args: dict = {}, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+def preprocess_galaxy_binary_data(data: pd.DataFrame, preprocess_args: dict = {}, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
     """
     Preprocess Galaxy Watch accelerometer data including rescaling, calibration, noise removal, and wear detection.
 
@@ -160,22 +178,22 @@ def preprocess_galaxy_data(data: pd.DataFrame, preprocess_args: dict = {}, meta_
     # calibration
     sphere_crit = preprocess_args.get('autocalib_sphere_crit', 1)
     sd_criter = preprocess_args.get('autocalib_sd_criter', 0.3)
-    _data[['X', 'Y', 'Z']] = calibrate(_data, sf=25, sphere_crit=sphere_crit, sd_criteria=sd_criter, meta_dict=meta_dict, verbose=verbose)
+    _data[['X', 'Y', 'Z']] = calibrate_binary(_data, sphere_crit=sphere_crit, sd_criteria=sd_criter, meta_dict=meta_dict, verbose=verbose)
 
     # noise removal
     type = preprocess_args.get('filter_type', 'highpass')
     cutoff = preprocess_args.get('filter_cutoff', 15)
-    _data[['X', 'Y', 'Z']] = remove_noise(_data, sf=25, filter_type=type, filter_cutoff=cutoff, verbose=verbose)
+    _data[['X', 'Y', 'Z']] = remove_noise_binary(_data, sf=meta_dict['sf'], filter_type=type, filter_cutoff=cutoff, verbose=verbose)
 
     # wear detection
     sd_crit = preprocess_args.get('wear_sd_crit', 0.00013)
     range_crit = preprocess_args.get('wear_range_crit', 0.00067)
     window_length = preprocess_args.get('wear_window_length', 30)
     window_skip = preprocess_args.get('wear_window_skip', 7)
-    _data['wear'] = detect_wear(_data, 25, sd_crit, range_crit, window_length, window_skip, meta_dict=meta_dict, verbose=verbose)
+    _data['wear'] = detect_wear_binary(_data, meta_dict['sf'], sd_crit, range_crit, window_length, window_skip, meta_dict=meta_dict, verbose=verbose)
 
     # calculate total, wear, and non-wear time
-    calc_weartime(_data, sf=25, meta_dict=meta_dict, verbose=verbose)
+    calc_weartime_binary(_data, sf=meta_dict['sf'], meta_dict=meta_dict, verbose=verbose)
 
     _data['ENMO'] = calculate_enmo(_data, verbose=verbose) * 1000
 
@@ -209,13 +227,12 @@ def acceleration_data_to_dataframe(data):
     return pd.DataFrame(rows)
 
 
-def calibrate(data: pd.DataFrame, sf: float, sphere_crit: float, sd_criteria: float, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+def calibrate_binary(data: pd.DataFrame, sphere_crit: float, sd_criteria: float, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
     """
     Calibrate accelerometer data using sphere fitting method.
 
     Args:
         data (pd.DataFrame): Raw accelerometer data
-        sf (float): Sampling frequency in Hz
         sphere_crit (float): Sphere fitting criterion threshold
         sd_criteria (float): Standard deviation criterion threshold
         meta_dict (dict): Dictionary to store calibration parameters
@@ -231,6 +248,7 @@ def calibrate(data: pd.DataFrame, sf: float, sphere_crit: float, sd_criteria: fl
     acc = np.array(_data[["X", "Y", "Z"]]).astype(np.float64)
 
     calibrator = CalibrateAccelerometer(sphere_crit=sphere_crit, sd_criteria=sd_criteria)
+    sf = meta_dict.get('sf', 25)  # Default to 25Hz if not specified
     result = calibrator.predict(time=time, accel=acc, fs=sf)
 
     _data = pd.DataFrame(result['accel'], columns=['X', 'Y', 'Z'])
@@ -245,7 +263,7 @@ def calibrate(data: pd.DataFrame, sf: float, sphere_crit: float, sd_criteria: fl
     return _data[['X', 'Y', 'Z']]
 
 
-def remove_noise(data: pd.DataFrame, sf: float, filter_type: str = 'lowpass', filter_cutoff: float = 2, verbose: bool = False) -> pd.DataFrame:
+def remove_noise_binary(data: pd.DataFrame, sf: float, filter_type: str = 'lowpass', filter_cutoff: float = 2, verbose: bool = False) -> pd.DataFrame:
     """
     Remove noise from accelerometer data using a Butterworth low-pass filter.
 
@@ -292,7 +310,7 @@ def remove_noise(data: pd.DataFrame, sf: float, filter_type: str = 'lowpass', fi
     return _data[['X', 'Y', 'Z']]
 
 
-def detect_wear(data: pd.DataFrame, sf: float, sd_crit: float, range_crit: float, window_length: int, window_skip: int, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+def detect_wear_binary(data: pd.DataFrame, sf: float, sd_crit: float, range_crit: float, window_length: int, window_skip: int, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
     """
     Detect periods of device wear using acceleration thresholds.
 
@@ -330,7 +348,7 @@ def detect_wear(data: pd.DataFrame, sf: float, sd_crit: float, range_crit: float
     return _data[['wear']]
 
 
-def calc_weartime(data: pd.DataFrame, sf: float, meta_dict: dict, verbose: bool) -> Tuple[float, float, float]:
+def calc_weartime_binary(data: pd.DataFrame, sf: float, meta_dict: dict, verbose: bool) -> Tuple[float, float, float]:
     """
     Calculate total, wear, and non-wear time from accelerometer data.
 
@@ -354,4 +372,4 @@ def calc_weartime(data: pd.DataFrame, sf: float, meta_dict: dict, verbose: bool)
 
     meta_dict.update({'total_time': total, 'wear_time': wear, 'non-wear_time': nonwear})
     if verbose:
-        print('Wear time calculated')
+        print('Wear time calculated') 

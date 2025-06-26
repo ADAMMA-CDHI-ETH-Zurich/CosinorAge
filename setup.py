@@ -19,10 +19,11 @@ setup(
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Topic :: Scientific/Engineering :: Medical Science Apps.',
     ],
-    python_requires='>=3.10',
+    python_requires='>=3.9',
     install_requires=[
         'numpy',
         'pandas',

@@ -3,11 +3,11 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="prev" title="cosinorage.DataHandlers module" href="cosinorage.DataHandlers.html" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="cosinorage.bioages Module" href="cosinorage.bioages.html" /><link rel="prev" title="cosinorage.datahandlers Module" href="cosinorage.datahandlers.html" />
 
     <!-- Generated with Sphinx 7.4.7 and Furo 2024.08.06 -->
-        <title>cosinorage.features module - CosinorAge 0.0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
+        <title>cosinorage.features Module - CosinorAge 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=302659d7" />
     
@@ -203,12 +203,13 @@
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1 current has-children"><a class="reference internal" href="cosinorage.html">cosinorage package</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of cosinorage package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="cosinorage.bioages.html">cosinorage.bioages module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cosinorage.DataHandlers.html">cosinorage.DataHandlers module</a></li>
-<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">cosinorage.features module</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="cosinorage.html">Source Code Documentation</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Source Code Documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="cosinorage.datahandlers.html">cosinorage.datahandlers Module</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">cosinorage.features Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cosinorage.bioages.html">cosinorage.bioages Module</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="theoretical_background.html">Detailed References and Descriptions of Package Functionality</a></li>
 </ul>
 
 </div>
@@ -250,14 +251,484 @@
         </div>
         <article role="main" id="furo-main-content">
           <section id="cosinorage-features-module">
-<h1>cosinorage.features module<a class="headerlink" href="#cosinorage-features-module" title="Link to this heading">¶</a></h1>
+<h1>cosinorage.features Module<a class="headerlink" href="#cosinorage-features-module" title="Link to this heading">¶</a></h1>
 <section id="module-cosinorage.features">
-<span id="module-contents"></span><h2>module contents<a class="headerlink" href="#module-cosinorage.features" title="Link to this heading">¶</a></h2>
+<span id="module-contents"></span><h2>Module Contents<a class="headerlink" href="#module-cosinorage.features" title="Link to this heading">¶</a></h2>
 <p>This module provides the functionality to compute a wide range
 wearable-features based on minute-level ENMO data including
 - Circadian rhythm features, e.g., IV, IS, RA, M10, L5
 - Physical activity features, e.g., SB, LIPA, MVPA
 - Sleep features, e.g., TST, WASO, SE, SR</p>
+</section>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="cosinorage.features.WearableFeatures">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">WearableFeatures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/features/features.html#WearableFeatures"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.features.WearableFeatures" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class for computing and managing features from wearable accelerometer data.</p>
+<p>This class processes raw ENMO (Euclidean Norm Minus One) data to compute various
+circadian rhythm and physical activity metrics, including cosinor analysis,
+non-parametric measures, activity levels, and sleep metrics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>handler</strong> (<a class="reference internal" href="cosinorage.datahandlers.html#cosinorage.datahandlers.DataHandler" title="cosinorage.datahandlers.datahandler.DataHandler"><em>DataHandler</em></a>)</p></li>
+<li><p><strong>features_args</strong> (<em>dict</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cosinorage.features.WearableFeatures.enmo">
+<span class="sig-name descname"><span class="pre">enmo</span></span><a class="headerlink" href="#cosinorage.features.WearableFeatures.enmo" title="Link to this definition">¶</a></dt>
+<dd><p>Raw ENMO data with datetime index</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cosinorage.features.WearableFeatures.feature_dict">
+<span class="sig-name descname"><span class="pre">feature_dict</span></span><a class="headerlink" href="#cosinorage.features.WearableFeatures.feature_dict" title="Link to this definition">¶</a></dt>
+<dd><p>Additional feature storage (if needed)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosinorage.features.WearableFeatures.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/features/features.html#WearableFeatures.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.features.WearableFeatures.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Initialize WearableFeatures with data from a DataHandler.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>handler</strong> (<a class="reference internal" href="cosinorage.datahandlers.html#cosinorage.datahandlers.DataHandler" title="cosinorage.datahandlers.DataHandler"><em>DataHandler</em></a>) – DataHandler instance containing ENMO data</p></li>
+<li><p><strong>features_args</strong> (<em>dict</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosinorage.features.WearableFeatures.get_features">
+<span class="sig-name descname"><span class="pre">get_features</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/features/features.html#WearableFeatures.get_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.features.WearableFeatures.get_features" title="Link to this definition">¶</a></dt>
+<dd><p>Returns the entire feature DataFrame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>DataFrame containing all computed features</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosinorage.features.WearableFeatures.get_ml_data">
+<span class="sig-name descname"><span class="pre">get_ml_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/features/features.html#WearableFeatures.get_ml_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.features.WearableFeatures.get_ml_data" title="Link to this definition">¶</a></dt>
+<dd><p>Returns the raw ENMO data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>DataFrame containing ENMO data with datetime index</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="utility-functions">
+<h2>Utility Functions<a class="headerlink" href="#utility-functions" title="Link to this heading">¶</a></h2>
+<section id="cosinor-circadian-rhythm-analysis-analysis">
+<h3>Cosinor (Circadian Rhythm Analysis) Analysis<a class="headerlink" href="#cosinor-circadian-rhythm-analysis-analysis" title="Link to this heading">¶</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="cosinorage.features.cosinor_multiday">
+<span class="sig-name descname"><span class="pre">cosinor_multiday</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/features/utils/cosinor_analysis.html#cosinor_multiday"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.features.cosinor_multiday" title="Link to this definition">¶</a></dt>
+<dd><p>A parametric approach to study circadian rhythmicity assuming cosinor shape, fitting a model for multiple days.</p>
+<section id="parameters">
+<h4>Parameters:<a class="headerlink" href="#parameters" title="Link to this heading">¶</a></h4>
+<dl class="simple">
+<dt>df<span class="classifier">pandas.DataFrame</span></dt><dd><p>DataFrame with a Timestamp index and a column ‘ENMO’ containing minute-level activity data.</p>
+</dd>
+</dl>
+</section>
+<section id="returns">
+<h4>Returns:<a class="headerlink" href="#returns" title="Link to this heading">¶</a></h4>
+<dl class="simple">
+<dt>tuple:</dt><dd><ul class="simple">
+<li><dl class="simple">
+<dt>dict: Dictionary containing cosinor parameters:</dt><dd><ul>
+<li><p>MESOR: Midline Estimating Statistic Of Rhythm (rhythm-adjusted mean)</p></li>
+<li><p>amplitude: Half the difference between maximum and minimum values</p></li>
+<li><p>acrophase: Time of peak relative to midnight in radians</p></li>
+<li><p>acrophase_time: Time of peak in hours (0-24)</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p>pandas.Series: Fitted values for each timepoint</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="raises">
+<h4>Raises:<a class="headerlink" href="#raises" title="Link to this heading">¶</a></h4>
+<dl class="simple">
+<dt>ValueError:</dt><dd><p>If DataFrame doesn’t have required ‘ENMO’ column or timestamp index
+If data length is not a multiple of 1440 (minutes in a day)</p>
+</dd>
+</dl>
+</section>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df</strong> (<em>DataFrame</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>DataFrame</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="non-parametric-circadian-rhythm-analysis-analysis">
+<h3>Non-parametric (Circadian Rhythm Analysis) Analysis<a class="headerlink" href="#non-parametric-circadian-rhythm-analysis-analysis" title="Link to this heading">¶</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="cosinorage.features.IV">
+<span class="sig-name descname"><span class="pre">IV</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/features/utils/nonparam_analysis.html#IV"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.features.IV" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate the intradaily variability for each day separately.</p>
+<p>Intradaily variability quantifies the fragmentation of rest-activity patterns
+within each 24-hour period. It is calculated as the ratio of the mean squared
+first derivative to the variance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>pd.Series</em>) – Time series data containing activity measurements with datetime index
+and ‘ENMO’ column</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with date index and ‘IV’ column containing intradaily
+variability values for each day</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cosinorage.features.IS">
+<span class="sig-name descname"><span class="pre">IS</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/features/utils/nonparam_analysis.html#IS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.features.IS" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate the interdaily stability (IS) for each day separately.</p>
+<p>Interdaily stability quantifies the strength of coupling between the
+rest-activity rhythm and environmental zeitgebers. It compares the
+24-hour pattern across days.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>pd.Series</em>) – Time series data containing activity measurements with datetime index
+and ‘ENMO’ column</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with date index and ‘IS’ column containing interdaily
+stability values for each day</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cosinorage.features.RA">
+<span class="sig-name descname"><span class="pre">RA</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/features/utils/nonparam_analysis.html#RA"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.features.RA" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate the relative amplitude (RA) for each day separately.</p>
+<p>Relative amplitude is calculated as the difference between the most active
+10-hour period and least active 5-hour period, divided by their sum.
+This provides a normalized measure of the daily activity rhythm strength.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pd.Series</em>) – Time series data containing activity measurements with datetime index
+and ‘ENMO’ column</p></li>
+<li><p><strong>m10</strong> (<em>List</em><em>[</em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>l5</strong> (<em>List</em><em>[</em><em>float</em><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with date index and ‘RA’ column containing relative
+amplitude values for each day</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cosinorage.features.M10">
+<span class="sig-name descname"><span class="pre">M10</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/features/utils/nonparam_analysis.html#M10"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.features.M10" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate the M10 (mean activity during the 10 most active hours)
+and the start time of the 10 most active hours (M10_start) for each day.</p>
+<p>M10 provides information about the most active period during each day,
+which typically corresponds to the main activity phase.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>pd.Series</em>) – Time series data containing activity measurements with datetime index
+and ‘ENMO’ column</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with date index and two columns:
+- ‘M10’: Mean activity during the 10 most active hours
+- ‘M10_start’: Hour (0-23) when the most active period starts</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cosinorage.features.L5">
+<span class="sig-name descname"><span class="pre">L5</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/features/utils/nonparam_analysis.html#L5"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.features.L5" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate the L5 (mean activity during the 5 least active hours)
+and the start time of the 5 least active hours (L5_start) for each day.</p>
+<p>L5 provides information about the least active period during each day,
+which typically corresponds to the main rest phase.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>pd.Series</em>) – Time series data containing activity measurements with datetime index
+and ‘ENMO’ column</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with date index and two columns:
+- ‘L5’: Mean activity during the 5 least active hours
+- ‘L5_start’: Hour (0-23) when the least active period starts</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="physical-activity-metrics">
+<h3>Physical Activity Metrics<a class="headerlink" href="#physical-activity-metrics" title="Link to this heading">¶</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="cosinorage.features.activity_metrics">
+<span class="sig-name descname"><span class="pre">activity_metrics</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/features/utils/physical_activity_metrics.html#activity_metrics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.features.activity_metrics" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate Sedentary Behavior (SB), Light Physical Activity (LIPA), and
+Moderate-to-Vigorous Physical Activity (MVPA) durations in hours for each day.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pd.Series</em>) – A pandas Series with a DatetimeIndex and ENMO (Euclidean Norm Minus One) values.
+The index should be datetime with minute-level resolution.
+The values should be float numbers representing acceleration in g units.</p></li>
+<li><p><strong>pa_params</strong> (<em>dict</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>DataFrame with daily physical activity metrics:
+- Index: date (datetime.date)
+- Columns:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>SB: Hours spent in sedentary behavior (ENMO ≤ 0.00001g)</p></li>
+<li><p>LIPA: Hours spent in light physical activity (0.00001g &lt; ENMO ≤ 0.01g)</p></li>
+<li><p>MVPA: Hours spent in moderate-to-vigorous physical activity (ENMO &gt; 0.01g)</p></li>
+</ul>
+</div></blockquote>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The function assumes minute-level data when converting to hours</p></li>
+<li><dl class="simple">
+<dt>ENMO cutpoints are based on established thresholds:</dt><dd><ul>
+<li><p>SB: ≤ 0.00001g</p></li>
+<li><p>LIPA: &gt; 0.00001g and ≤ 0.01g</p></li>
+<li><p>MVPA: &gt; 0.01g</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dates</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s1">&#39;2023-01-01&#39;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">1440</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;min&#39;</span><span class="p">)</span>  <span class="c1"># One day</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">enmo</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">1440</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">dates</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">activity_metrics</span><span class="p">(</span><span class="n">enmo</span><span class="p">)</span>
+<span class="go">          SB      LIPA      MVPA</span>
+<span class="go">2023-01-01  8.2  10.5  5.3</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="sleep-metrics">
+<h3>Sleep Metrics<a class="headerlink" href="#sleep-metrics" title="Link to this heading">¶</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="cosinorage.features.apply_sleep_wake_predictions">
+<span class="sig-name descname"><span class="pre">apply_sleep_wake_predictions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/features/utils/sleep_metrics.html#apply_sleep_wake_predictions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.features.apply_sleep_wake_predictions" title="Link to this definition">¶</a></dt>
+<dd><p>Apply sleep-wake prediction to a DataFrame with ENMO values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – Input DataFrame containing ENMO values in a column named ‘ENMO’.</p></li>
+<li><p><strong>sleep_params</strong> (<em>dict</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Series containing sleep predictions where:
+1 = sleep
+0 = wake</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.Series</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If ‘ENMO’ column is not found in DataFrame.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="rescaling-functions">
+<h3>Rescaling Functions<a class="headerlink" href="#rescaling-functions" title="Link to this heading">¶</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="cosinorage.features.utils.rescaling.min_max_scaling_exclude_outliers">
+<span class="sig-name descname"><span class="pre">min_max_scaling_exclude_outliers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/features/utils/rescaling.html#min_max_scaling_exclude_outliers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.features.utils.rescaling.min_max_scaling_exclude_outliers" title="Link to this definition">¶</a></dt>
+<dd><p>Scales the data using min-max scaling to a [0,100] range, excluding outliers based on quantiles.
+Values above the upper quantile threshold are not excluded from the final result but may exceed 100.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pd.Series</em><em> or </em><em>np.ndarray</em>) – Input data to be scaled. Can be either a pandas Series
+or numpy array of numeric values.</p></li>
+<li><p><strong>upper_quantile</strong> (<em>float</em><em>, </em><em>optional</em>) – Upper quantile threshold for excluding outliers when
+calculating min/max bounds. Defaults to 0.999 (99.9th percentile).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>Scaled data with values generally ranging from 0 to 100. Note:</dt><dd><ul class="simple">
+<li><p>If input contains all identical values, returns zeros</p></li>
+<li><p>Values above the upper_quantile may exceed 100 in the output</p></li>
+<li><p>Output maintains the same length as input</p></li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.Series</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If input data is empty.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">100</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">min_max_scaling_exclude_outliers</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">upper_quantile</span><span class="o">=</span><span class="mf">0.75</span><span class="p">)</span>
+<span class="go">0    0.0</span>
+<span class="go">1    50.0</span>
+<span class="go">2    100.0</span>
+<span class="go">3    4950.0</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="visualization-functions">
+<h3>Visualization Functions<a class="headerlink" href="#visualization-functions" title="Link to this heading">¶</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="cosinorage.features.utils.visualization.plot_sleep_predictions">
+<span class="sig-name descname"><span class="pre">plot_sleep_predictions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/features/utils/visualization.html#plot_sleep_predictions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.features.utils.visualization.plot_sleep_predictions" title="Link to this definition">¶</a></dt>
+<dd><p>Plot sleep predictions over time.</p>
+<p>Creates visualization of sleep/wake predictions, optionally including non-wear periods.
+Simple mode shows a binary plot with dots, while detailed mode shows ENMO data
+with colored bands for sleep/wake states.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>feature_obj</strong> – Feature object containing ml_data with sleep predictions</p></li>
+<li><p><strong>simple</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, shows simple binary plot. If False, shows detailed plot. Defaults to True.</p></li>
+<li><p><strong>start_date</strong> (<em>datetime</em><em>, </em><em>optional</em>) – Start date for plotting. Defaults to None (earliest date).</p></li>
+<li><p><strong>end_date</strong> (<em>datetime</em><em>, </em><em>optional</em>) – End date for plotting. Defaults to None (latest date).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Displays the plot using matplotlib</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cosinorage.features.utils.visualization.plot_non_wear">
+<span class="sig-name descname"><span class="pre">plot_non_wear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/features/utils/visualization.html#plot_non_wear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.features.utils.visualization.plot_non_wear" title="Link to this definition">¶</a></dt>
+<dd><p>Plot non-wear periods over time.</p>
+<p>Creates visualization of wear/non-wear periods. Simple mode shows a binary plot
+with dots, while detailed mode shows ENMO data with colored bands for wear states.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>feature_obj</strong> – Feature object containing ml_data with wear/non-wear predictions</p></li>
+<li><p><strong>simple</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, shows simple binary plot. If False, shows detailed plot. Defaults to True.</p></li>
+<li><p><strong>start_date</strong> (<em>datetime</em><em>, </em><em>optional</em>) – Start date for plotting. Defaults to None (earliest date).</p></li>
+<li><p><strong>end_date</strong> (<em>datetime</em><em>, </em><em>optional</em>) – End date for plotting. Defaults to None (latest date).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Displays the plot using matplotlib</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cosinorage.features.utils.visualization.plot_cosinor">
+<span class="sig-name descname"><span class="pre">plot_cosinor</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/features/utils/visualization.html#plot_cosinor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.features.utils.visualization.plot_cosinor" title="Link to this definition">¶</a></dt>
+<dd><p>Plot cosinor analysis results for activity rhythm analysis.</p>
+<p>Creates detailed visualizations of circadian rhythm analysis showing raw activity data (ENMO)
+overlaid with fitted cosinor curves. Includes markers for key circadian parameters:
+MESOR (rhythm-adjusted mean), amplitude, and acrophase (peak timing).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>feature_obj</strong> – Feature object containing cosinor analysis results and ENMO data</p></li>
+<li><p><strong>multiday</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, shows analysis across all days combined.
+If False, shows individual daily plots. Defaults to True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Displays the plot(s) using matplotlib</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If cosinor features haven’t been computed (either multiday or by-day)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
 </section>
 </section>
 
@@ -266,15 +737,23 @@ wearable-features based on minute-level ENMO data including
       <footer>
         
         <div class="related-pages">
-          
-          <a class="prev-page" href="cosinorage.DataHandlers.html">
+          <a class="next-page" href="cosinorage.bioages.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">cosinorage.bioages Module</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="cosinorage.datahandlers.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">cosinorage.DataHandlers module</div>
+                <div class="title">cosinorage.datahandlers Module</div>
                 
               </div>
             </a>
@@ -284,6 +763,10 @@ wearable-features based on minute-level ENMO data including
             <div class="copyright">
                 Copyright &#169; 2025, Jacob Leo Oskar Hunecke
             </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
           </div>
           <div class="right-details">
             
@@ -304,8 +787,52 @@ wearable-features based on minute-level ENMO data including
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">cosinorage.features module</a><ul>
-<li><a class="reference internal" href="#module-cosinorage.features">module contents</a></li>
+<li><a class="reference internal" href="#">cosinorage.features Module</a><ul>
+<li><a class="reference internal" href="#module-cosinorage.features">Module Contents</a></li>
+<li><a class="reference internal" href="#classes">Classes</a><ul>
+<li><a class="reference internal" href="#cosinorage.features.WearableFeatures"><code class="docutils literal notranslate"><span class="pre">WearableFeatures</span></code></a><ul>
+<li><a class="reference internal" href="#cosinorage.features.WearableFeatures.enmo"><code class="docutils literal notranslate"><span class="pre">WearableFeatures.enmo</span></code></a></li>
+<li><a class="reference internal" href="#cosinorage.features.WearableFeatures.feature_dict"><code class="docutils literal notranslate"><span class="pre">WearableFeatures.feature_dict</span></code></a></li>
+<li><a class="reference internal" href="#cosinorage.features.WearableFeatures.__init__"><code class="docutils literal notranslate"><span class="pre">WearableFeatures.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#cosinorage.features.WearableFeatures.get_features"><code class="docutils literal notranslate"><span class="pre">WearableFeatures.get_features()</span></code></a></li>
+<li><a class="reference internal" href="#cosinorage.features.WearableFeatures.get_ml_data"><code class="docutils literal notranslate"><span class="pre">WearableFeatures.get_ml_data()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#utility-functions">Utility Functions</a><ul>
+<li><a class="reference internal" href="#cosinor-circadian-rhythm-analysis-analysis">Cosinor (Circadian Rhythm Analysis) Analysis</a><ul>
+<li><a class="reference internal" href="#cosinorage.features.cosinor_multiday"><code class="docutils literal notranslate"><span class="pre">cosinor_multiday()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#non-parametric-circadian-rhythm-analysis-analysis">Non-parametric (Circadian Rhythm Analysis) Analysis</a><ul>
+<li><a class="reference internal" href="#cosinorage.features.IV"><code class="docutils literal notranslate"><span class="pre">IV()</span></code></a></li>
+<li><a class="reference internal" href="#cosinorage.features.IS"><code class="docutils literal notranslate"><span class="pre">IS()</span></code></a></li>
+<li><a class="reference internal" href="#cosinorage.features.RA"><code class="docutils literal notranslate"><span class="pre">RA()</span></code></a></li>
+<li><a class="reference internal" href="#cosinorage.features.M10"><code class="docutils literal notranslate"><span class="pre">M10()</span></code></a></li>
+<li><a class="reference internal" href="#cosinorage.features.L5"><code class="docutils literal notranslate"><span class="pre">L5()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#physical-activity-metrics">Physical Activity Metrics</a><ul>
+<li><a class="reference internal" href="#cosinorage.features.activity_metrics"><code class="docutils literal notranslate"><span class="pre">activity_metrics()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sleep-metrics">Sleep Metrics</a><ul>
+<li><a class="reference internal" href="#cosinorage.features.apply_sleep_wake_predictions"><code class="docutils literal notranslate"><span class="pre">apply_sleep_wake_predictions()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#rescaling-functions">Rescaling Functions</a><ul>
+<li><a class="reference internal" href="#cosinorage.features.utils.rescaling.min_max_scaling_exclude_outliers"><code class="docutils literal notranslate"><span class="pre">min_max_scaling_exclude_outliers()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#visualization-functions">Visualization Functions</a><ul>
+<li><a class="reference internal" href="#cosinorage.features.utils.visualization.plot_sleep_predictions"><code class="docutils literal notranslate"><span class="pre">plot_sleep_predictions()</span></code></a></li>
+<li><a class="reference internal" href="#cosinorage.features.utils.visualization.plot_non_wear"><code class="docutils literal notranslate"><span class="pre">plot_non_wear()</span></code></a></li>
+<li><a class="reference internal" href="#cosinorage.features.utils.visualization.plot_cosinor"><code class="docutils literal notranslate"><span class="pre">plot_cosinor()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

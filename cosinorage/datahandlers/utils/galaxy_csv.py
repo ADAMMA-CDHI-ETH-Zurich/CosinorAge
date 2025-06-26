@@ -20,17 +20,21 @@
 ##########################################################################
 
 import pandas as pd
-from claid.data_collection.load.load_sensor_data import *
+from typing import Optional
 
+from .frequency_detection import detect_frequency_from_timestamps
 from .filtering import filter_incomplete_days, filter_consecutive_days
 
-def read_galaxy_csv_data(galaxy_file_path: str, meta_dict: dict, verbose: bool = False):
+
+def read_galaxy_csv_data(galaxy_file_path: str, meta_dict: dict, time_column: str = 'timestamp', data_columns: Optional[list] = None, verbose: bool = False):
     """
     Read ENMO data from Galaxy Watch csv file.
 
     Args:
         galaxy_file_path (str): Path to the Galaxy Watch data file
         meta_dict (dict): Dictionary to store metadata about the loaded data
+        time_column (str): Name of the timestamp column in the CSV file
+        data_columns (list): Names of the data columns in the CSV file
         verbose (bool): Whether to print progress information
     Returns:
         pd.DataFrame: DataFrame containing ENMO data with columns ['TIMESTAMP', 'ENMO']
@@ -41,7 +45,18 @@ def read_galaxy_csv_data(galaxy_file_path: str, meta_dict: dict, verbose: bool =
     if verbose:
         print(f"Read csv file from {galaxy_file_path}")
 
-    data = data.rename(columns={'time': 'TIMESTAMP', 'enmo_mg': 'ENMO'})
+    # Set default data_columns if not provided
+    if data_columns is None:
+        data_columns = ['enmo']
+
+    # Rename columns to standard format
+    column_mapping = {time_column: 'TIMESTAMP'}
+    for i, col in enumerate(data_columns):
+        if i == 0:  # First column should be ENMO
+            column_mapping[col] = 'ENMO'
+    
+    data = data.rename(columns=column_mapping)
+    
     # Convert UTC timestamps to local time
     data['TIMESTAMP'] = pd.to_datetime(data['TIMESTAMP']).dt.tz_localize(None)
     data.set_index('TIMESTAMP', inplace=True)
@@ -55,7 +70,8 @@ def read_galaxy_csv_data(galaxy_file_path: str, meta_dict: dict, verbose: bool =
     meta_dict['raw_n_datapoints'] = data.shape[0]
     meta_dict['raw_start_datetime'] = data.index.min()
     meta_dict['raw_end_datetime'] = data.index.max()
-    meta_dict['raw_data_frequency'] = '1/60Hz'
+    meta_dict['sf'] = detect_frequency_from_timestamps(data.index)
+    meta_dict['raw_data_frequency'] = f'{meta_dict["sf"]}Hz'
     meta_dict['raw_data_type'] = 'ENMO'
     meta_dict['raw_data_unit'] = 'mg'
 
@@ -79,7 +95,7 @@ def filter_galaxy_csv_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bo
     # filter out sparse days
     required_points_per_day = preprocess_args.get('required_daily_coverage', 0.5) * 1440
     n_old = _data.shape[0]
-    _data = filter_incomplete_days(_data, data_freq=1/60, expected_points_per_day=required_points_per_day)
+    _data = filter_incomplete_days(_data, data_freq=meta_dict['sf'], expected_points_per_day=required_points_per_day)
     if verbose:
         print(f"Filtered out {n_old - _data.shape[0]}/{n_old} ENMO records due to incomplete daily coverage")
 

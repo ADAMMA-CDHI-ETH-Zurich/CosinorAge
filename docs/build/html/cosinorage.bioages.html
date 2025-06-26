@@ -3,11 +3,11 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="cosinorage.DataHandlers module" href="cosinorage.DataHandlers.html" /><link rel="prev" title="cosinorage package" href="cosinorage.html" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Detailed References and Descriptions of Package Functionality" href="theoretical_background.html" /><link rel="prev" title="cosinorage.features Module" href="cosinorage.features.html" />
 
     <!-- Generated with Sphinx 7.4.7 and Furo 2024.08.06 -->
-        <title>cosinorage.bioages module - CosinorAge 0.0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
+        <title>cosinorage.bioages Module - CosinorAge 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=302659d7" />
     
@@ -203,12 +203,13 @@
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1 current has-children"><a class="reference internal" href="cosinorage.html">cosinorage package</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of cosinorage package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
-<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">cosinorage.bioages module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cosinorage.DataHandlers.html">cosinorage.DataHandlers module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cosinorage.features.html">cosinorage.features module</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="cosinorage.html">Source Code Documentation</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Source Code Documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="cosinorage.datahandlers.html">cosinorage.datahandlers Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cosinorage.features.html">cosinorage.features Module</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">cosinorage.bioages Module</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="theoretical_background.html">Detailed References and Descriptions of Package Functionality</a></li>
 </ul>
 
 </div>
@@ -250,11 +251,68 @@
         </div>
         <article role="main" id="furo-main-content">
           <section id="cosinorage-bioages-module">
-<h1>cosinorage.bioages module<a class="headerlink" href="#cosinorage-bioages-module" title="Link to this heading">¶</a></h1>
+<h1>cosinorage.bioages Module<a class="headerlink" href="#cosinorage-bioages-module" title="Link to this heading">¶</a></h1>
 <section id="module-cosinorage.bioages">
-<span id="module-contents"></span><h2>module contents<a class="headerlink" href="#module-cosinorage.bioages" title="Link to this heading">¶</a></h2>
+<span id="module-contents"></span><h2>Module Contents<a class="headerlink" href="#module-cosinorage.bioages" title="Link to this heading">¶</a></h2>
 <p>This module impelements the functionality to compute biological age based on
 multiple methods including the novel proposed CosinorAge method.</p>
+</section>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="cosinorage.bioages.CosinorAge">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">CosinorAge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">records</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/bioages/cosinorage.html#CosinorAge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.bioages.CosinorAge" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class to compute biological age predictions using the CosinorAge method.</p>
+<p>This class implements the CosinorAge method proposed by Shim, Fleisch and Barata
+for predicting biological age based on accelerometer data patterns.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>records</strong> (<em>List</em><em>[</em><em>dict</em><em>]</em>) – A list of dictionaries containing accelerometer data records.
+Each record must contain a ‘handler’ key with a DataHandler object and an ‘age’ key.
+Optionally, records can include a ‘gender’ key with values ‘male’, ‘female’, or ‘unknown’.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="cosinorage.bioages.CosinorAge.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">records</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/bioages/cosinorage.html#CosinorAge.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.bioages.CosinorAge.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>records</strong> (<em>List</em><em>[</em><em>dict</em><em>]</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosinorage.bioages.CosinorAge.get_predictions">
+<span class="sig-name descname"><span class="pre">get_predictions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/bioages/cosinorage.html#CosinorAge.get_predictions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.bioages.CosinorAge.get_predictions" title="Link to this definition">¶</a></dt>
+<dd><p>Return the processed records with CosinorAge predictions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The records list containing the original data and predictions.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>List[dict]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosinorage.bioages.CosinorAge.plot_predictions">
+<span class="sig-name descname"><span class="pre">plot_predictions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/bioages/cosinorage.html#CosinorAge.plot_predictions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.bioages.CosinorAge.plot_predictions" title="Link to this definition">¶</a></dt>
+<dd><p>Generate visualization plots comparing chronological age vs CosinorAge.</p>
+<dl class="simple">
+<dt>Creates a plot for each record showing:</dt><dd><ul class="simple">
+<li><p>Chronological age and CosinorAge as points on a timeline</p></li>
+<li><p>Color-coded difference between ages (red for advanced, green for younger)</p></li>
+<li><p>Numerical values for both ages</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 </section>
 
@@ -263,23 +321,23 @@ multiple methods including the novel proposed CosinorAge method.</p>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="cosinorage.DataHandlers.html">
+          <a class="next-page" href="theoretical_background.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">cosinorage.DataHandlers module</div>
+                <div class="title">Detailed References and Descriptions of Package Functionality</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="cosinorage.html">
+          <a class="prev-page" href="cosinorage.features.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">cosinorage package</div>
+                <div class="title">cosinorage.features Module</div>
                 
               </div>
             </a>
@@ -288,7 +346,11 @@ multiple methods including the novel proposed CosinorAge method.</p>
           <div class="left-details">
             <div class="copyright">
                 Copyright &#169; 2025, Jacob Leo Oskar Hunecke
-            </div>      
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
           </div>
           <div class="right-details">
             
@@ -309,8 +371,17 @@ multiple methods including the novel proposed CosinorAge method.</p>
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">cosinorage.bioages module</a><ul>
-<li><a class="reference internal" href="#module-cosinorage.bioages">module contents</a></li>
+<li><a class="reference internal" href="#">cosinorage.bioages Module</a><ul>
+<li><a class="reference internal" href="#module-cosinorage.bioages">Module Contents</a></li>
+<li><a class="reference internal" href="#classes">Classes</a><ul>
+<li><a class="reference internal" href="#cosinorage.bioages.CosinorAge"><code class="docutils literal notranslate"><span class="pre">CosinorAge</span></code></a><ul>
+<li><a class="reference internal" href="#cosinorage.bioages.CosinorAge.__init__"><code class="docutils literal notranslate"><span class="pre">CosinorAge.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#cosinorage.bioages.CosinorAge.get_predictions"><code class="docutils literal notranslate"><span class="pre">CosinorAge.get_predictions()</span></code></a></li>
+<li><a class="reference internal" href="#cosinorage.bioages.CosinorAge.plot_predictions"><code class="docutils literal notranslate"><span class="pre">CosinorAge.plot_predictions()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

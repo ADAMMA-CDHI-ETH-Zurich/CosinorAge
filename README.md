@@ -11,7 +11,7 @@ An open-source Python package for estimating biological age based on circadian r
 ## Getting Started
 
 ### Prerequisites
-- Python >= 3.10
+- Python >= 3.9
 - pip (Python package installer)
 - git
 
@@ -142,6 +142,47 @@ The .csv files containing the ENMO data are expected to be in a common directory
 ```python
 ukb_handler = UKBDataHandler(qa_file_path='../data/ukb/UKB Acc Quality Control.csv', ukb_file_dir='../data/ukb/UKB Sample Data/1_raw5sec_long', eid=1000300, verbose=True)
 ```
+
+#### GenericDataHandler
+
+The GenericDataHandler is a flexible data handler for processing various types of accelerometer and ENMO data from CSV files. It supports multiple data formats and automatically handles data preprocessing, filtering, and ENMO calculation.
+
+The handler supports three main data types:
+- **ENMO data**: Pre-calculated ENMO (Euclidean Norm Minus One) values
+- **Accelerometer data**: Raw 3-axis accelerometer data (x, y, z)
+- **Alternative count data**: Activity count data
+
+Example usage for ENMO data:
+```python
+generic_handler = GenericDataHandler(
+    file_path='data/enmo_data.csv',
+    data_type='enmo',
+    time_column='timestamp',
+    data_columns=['enmo'],
+    preprocess_args=preprocess_args,
+    verbose=True
+)
+```
+
+Example usage for accelerometer data:
+```python
+generic_handler = GenericDataHandler(
+    file_path='data/accel_data.csv',
+    data_type='accelerometer',
+    time_column='time',
+    data_columns=['x', 'y', 'z'],
+    preprocess_args=preprocess_args,
+    verbose=True
+)
+```
+
+The GenericDataHandler automatically:
+- Loads data from CSV files with customizable column names
+- Detects sampling frequency from timestamps
+- Filters incomplete days and selects longest consecutive sequence
+- Resamples data to minute-level
+- Applies preprocessing (wear detection, noise removal, etc.)
+- Calculates minute-level ENMO values
 
 ### Wearable Feature Computation
 

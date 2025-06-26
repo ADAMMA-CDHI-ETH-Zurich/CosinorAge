@@ -23,29 +23,37 @@ Classes
 .. autoclass:: cosinorage.datahandlers.UKBDataHandler
    :members:
 
+.. autoclass:: cosinorage.datahandlers.GenericDataHandler
+   :members:
+
 Utility Functions
 -----------------
+
+Generic Data Functions
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: cosinorage.datahandlers.read_generic_xD()
 
 Galaxy Smartwatch Data Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: cosinorage.datahandlers.read_galaxy_data()
+.. autofunction:: cosinorage.datahandlers.read_galaxy_binary_data()
 
-.. autofunction:: cosinorage.datahandlers.filter_galaxy_data()
+.. autofunction:: cosinorage.datahandlers.filter_galaxy_binary_data()
 
-.. autofunction:: cosinorage.datahandlers.resample_galaxy_data()
+.. autofunction:: cosinorage.datahandlers.resample_galaxy_binary_data()
 
-.. autofunction:: cosinorage.datahandlers.preprocess_galaxy_data()
+.. autofunction:: cosinorage.datahandlers.preprocess_galaxy_binary_data()
 
 .. autofunction:: cosinorage.datahandlers.acceleration_data_to_dataframe()
 
-.. autofunction:: cosinorage.datahandlers.calibrate()
+.. autofunction:: cosinorage.datahandlers.calibrate_binary()
 
-.. autofunction:: cosinorage.datahandlers.remove_noise()
+.. autofunction:: cosinorage.datahandlers.remove_noise_binary()
 
-.. autofunction:: cosinorage.datahandlers.detect_wear()
+.. autofunction:: cosinorage.datahandlers.detect_wear_binary()
 
-.. autofunction:: cosinorage.datahandlers.calc_weartime()
+.. autofunction:: cosinorage.datahandlers.calc_weartime_binary()
 
 UK Biobank Data Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~
