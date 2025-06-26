@@ -8,12 +8,12 @@ CosinorPy==3.1
 cycler==0.12.1
 debugpy==1.8.12
 decorator==5.2.1
-dill==0.3.9
+dill==0.4.0
 exceptiongroup==1.2.2
 executing==2.2.0
 fonttools==4.56.0
 grpcio==1.59.3
-h5py==3.13.0
+h5py==3.14.0
 ipykernel==6.29.5
 ipython==8.32.0
 jedi==0.19.2
@@ -42,10 +42,10 @@ Pygments==2.19.1
 pyparsing==3.2.1
 python-dateutil==2.9.0.post0
 pytz==2025.1
-PyWavelets==1.8.0
+PyWavelets==1.6.0
 PyYAML==6.0.2
 pyzmq==26.2.1
-scikit-digital-health==0.17.3
+scikit-digital-health==0.17.9
 scikit-learn==1.6.1
 scipy==1.15.2
 seaborn==0.13.2

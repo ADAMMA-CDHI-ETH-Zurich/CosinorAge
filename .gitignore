@@ -1,6 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Project specific
 /cosinorage.egg-info/
 /R/
-/.idea/
 /data/
 /examples/ukb_example.ipynb
 /examples/ukb_cosinorage.py
@@ -9,10 +59,18 @@
 cosinor_results*
 /dist/
 
-
+# Data files
 *.pkl
+*.pickle
+*.csv
+*.json
+*.h5
+*.hdf5
 
-.DS_Store
+# Logs
+*.log
+logs/
 
-# VS Code workspace files
-*.code-workspace
+# Temporary files
+*.tmp
+*.temp

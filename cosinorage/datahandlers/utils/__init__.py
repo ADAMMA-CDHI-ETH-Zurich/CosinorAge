@@ -25,4 +25,6 @@ from .visualization import *
 from .ukb import *
 from .nhanes import *
 from .galaxy_csv import *
-from .galaxy import *
+from .galaxy_binary import *
+from .frequency_detection import *
+from .generic import *
