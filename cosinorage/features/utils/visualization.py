@@ -93,7 +93,7 @@ def plot_sleep_predictions(
         plt.legend()
         plt.show()
     else:
-        max_y = max(selected_data["ENMO"]) * 1.25
+        max_y = max(selected_data["enmo"]) * 1.25
         plt.figure(figsize=(30, 6))
         # plot sleep predictions as red bands
         plt.fill_between(
@@ -118,7 +118,7 @@ def plot_sleep_predictions(
                 alpha=0.5,
                 label="Non-wear",
             )
-        plt.plot(selected_data["ENMO"], label="ENMO", color="black")
+        plt.plot(selected_data["enmo"], label="ENMO", color="black")
         # y axis limits
         plt.ylim(0, max_y)
         plt.legend()
@@ -192,7 +192,7 @@ def plot_non_wear(feature_obj, simple=True, start_date=None, end_date=None):
         plt.show()
     else:
         plt.figure(figsize=(30, 6))
-        plt.plot(selected_data["ENMO"], label="ENMO", color="black")
+        plt.plot(selected_data["enmo"], label="ENMO", color="black")
         # plot sleep predictions as red bands
         plt.fill_between(
             selected_data.index,
@@ -209,7 +209,7 @@ def plot_non_wear(feature_obj, simple=True, start_date=None, end_date=None):
             label="Wear",
         )
         # y axis limits
-        plt.ylim(0, max(selected_data["ENMO"]) * 1.25)
+        plt.ylim(0, max(selected_data["enmo"]) * 1.25)
         plt.legend()
         plt.xlabel("Time")
         plt.ylabel("ENMO")
@@ -266,9 +266,9 @@ def plot_cosinor(feature_obj):
     np.arange(0, len(feature_obj.ml_data))
     timestamps = feature_obj.ml_data.index
     plt.figure(figsize=(20, 10))
-    plt.plot(timestamps, feature_obj.ml_data["ENMO"], "r-")
+    plt.plot(timestamps, feature_obj.ml_data["enmo"], "r-")
     plt.plot(timestamps, feature_obj.ml_data["cosinor_fitted"], "b-")
-    plt.ylim(0, max(feature_obj.ml_data["ENMO"]) * 1.5)
+    plt.ylim(0, max(feature_obj.ml_data["enmo"]) * 1.5)
     cosinor_keys = ["mesor", "amplitude", "acrophase", "acrophase_time"]
     if all(
         key in feature_obj.feature_dict["cosinor"].keys()

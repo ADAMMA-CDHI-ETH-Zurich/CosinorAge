@@ -132,8 +132,8 @@ def read_generic_xD_data(
                 "n_dimensions must be equal to the number of data columns"
             )
 
-    if time_format not in ["unix", "datetime"]:
-        raise ValueError("time_format must be either 'unix' or 'datetime'")
+    if time_format not in ["unix-ms", "unix-s", "datetime"]:
+        raise ValueError("time_format must be either 'unix-ms', 'unix-s' or 'datetime'")
 
     data = pd.read_csv(file_path)
 
@@ -152,7 +152,7 @@ def read_generic_xD_data(
     # Rename columns to standard format
     column_mapping = {time_column: "timestamp"}
     if n_dimensions == 1:
-        column_mapping[data_columns[0]] = "ENMO"
+        column_mapping[data_columns[0]] = "enmo"
     elif n_dimensions == 3:
         column_mapping[data_columns[0]] = "x"
         column_mapping[data_columns[1]] = "y"
@@ -161,23 +161,20 @@ def read_generic_xD_data(
         raise ValueError("n_dimensions must be either 1 or 3")
 
     data = data.rename(columns=column_mapping)
-
-    if time_format == "unix":
-        try:
-            data["timestamp"] = pd.to_datetime(
-                data["timestamp"], unit="s"
-            ).dt.tz_localize(None)
-        except (ValueError, TypeError):
-            # Fallback: try parsing as string-formatted datetime
-            data["timestamp"] = pd.to_datetime(
-                data["timestamp"]
-            ).dt.tz_localize(None)
+    if time_format == "unix-s":
+        data["timestamp"] = pd.to_datetime(
+            data["timestamp"], unit="s"
+        ).dt.tz_localize(None)
+    elif time_format == "unix-ms":
+        data["timestamp"] = pd.to_datetime(
+            data["timestamp"], unit="ms"
+        ).dt.tz_localize(None)
     elif time_format == "datetime":
-        data["timestamp"] = pd.to_datetime(data["timestamp"]).dt.tz_localize(
-            None
-        )
+        data["timestamp"] = pd.to_datetime(
+            data["timestamp"]
+        ).dt.tz_localize(None)
     else:
-        raise ValueError("time_format must be either 'unix' or 'datetime'")
+        raise ValueError("time_format must be either 'unix-s', 'unix-ms' or 'datetime'")
 
     data.set_index("timestamp", inplace=True)
 
@@ -190,7 +187,7 @@ def read_generic_xD_data(
     meta_dict["raw_n_datapoints"] = data.shape[0]
     meta_dict["raw_start_datetime"] = data.index.min()
     meta_dict["raw_end_datetime"] = data.index.max()
-    meta_dict["sf"] = detect_frequency_from_timestamps(data.index)
+    meta_dict["sf"] = detect_frequency_from_timestamps(pd.Series(data.index))
     meta_dict["raw_data_frequency"] = f'{meta_dict["sf"]:.1f}Hz'
     meta_dict["raw_data_unit"] = (
         "counts" if data_type == "alternative_count" else "mg"
@@ -271,16 +268,16 @@ def filter_generic_data(
     ]
     if verbose:
         print(
-            f"Filtered out {n_old - _data.shape[0]}/{_data.shape[0]} {data_type} records due to filtering out first and last day"
+            f"Filtered out {n_old - _data.shape[0]}/{n_old} {data_type} records due to filtering out first and last day"
         )
 
-    # filter out incomplete days
+    # filter out sparse days
     required_points_per_day = (
-        preprocess_args.get("required_daily_coverage", 0.5)
-        * meta_dict["sf"]
-        * 60
-        * 60
-        * 24
+        preprocess_args.get("required_daily_coverage", 0.5) # required daily coverage (0.5 = 50%)
+        * meta_dict["sf"] # sampling frequency in Hz (points per second)
+        * 60 # seconds per minute
+        * 60 # minutes per hour
+        * 24 # hours per day
     )
     n_old = _data.shape[0]
     _data = filter_incomplete_days(
@@ -368,6 +365,44 @@ def resample_generic_data(
     """
     _data = data.copy()
 
+    # Ensure first day starts at 00:00 and last day ends at 23:59 by extrapolating if needed
+    n_old = _data.shape[0]
+    
+    # Get the first and last dates and ensure proper day boundaries
+    first_datetime = _data.index.min()
+    last_datetime = _data.index.max()
+    
+    # Create day boundaries: first day starts at 00:00, last day ends at 23:59
+    first_day_start = first_datetime.replace(hour=0, minute=0, second=0, microsecond=0)
+    last_day_end = last_datetime.replace(hour=23, minute=59, second=59, microsecond=999999)
+    
+    # Check if we need to extrapolate at the beginning
+    if first_datetime > first_day_start:
+        # Create a complete day range from 00:00 to 23:59
+        complete_day_range = pd.date_range(
+            start=first_day_start,
+            end=last_day_end,
+            freq='1min'
+        )
+        
+        # Reindex the data to include the complete day range and forward fill
+        _data = _data.resample("1min").mean()
+        _data = _data.reindex(complete_day_range)
+        _data = _data.interpolate(method="linear").ffill().bfill()
+        
+        if verbose:
+            print(f"Extrapolated data to ensure first day starts at 00:00 and last day ends at 23:59: {_data.shape[0] - n_old} records added")
+    else:
+        # Filter to ensure first day starts at 00:00 and last day ends at 23:59
+        _data = _data.loc[
+            (_data.index >= first_day_start) &
+            (_data.index <= last_day_end)
+        ]
+        
+        if verbose:
+            print(f"Filtered to ensure first day starts at 00:00 and last day ends at 23:59: {n_old - _data.shape[0]}/{n_old} records removed")
+    
+    # Resample to minute level
     n_old = _data.shape[0]
     _data = _data.resample("1min").interpolate(method="linear").bfill()
     if verbose:
@@ -426,7 +461,7 @@ def preprocess_generic_data(
 
     Notes
     -----
-    - Calibration is only applied to accelerometer data (data_type='accelerometer')
+    - Calibration is only applied to accelerometer data (data_type='accelerometer-mg', 'accelerometer-g', 'accelerometer-ms2')
     - Noise removal uses a Butterworth low-pass filter
     - Wear detection adds a binary 'wear' column (1=worn, 0=not worn)
     - The function skips preprocessing steps that are not enabled in preprocess_args
@@ -461,18 +496,18 @@ def preprocess_generic_data(
     """
     _data = data.copy()
 
-    if data_type in ["enmo", "alternative_count"]:
+    if data_type in ["enmo-mg", "enmo-g", "alternative_count"]:
         # wear detection - not implemented for enmo and alternative_count data yet (current algorithm relies on accelerometer data)
         _data["wear"] = -1
 
-        if verbose:
-            print(f"Preprocessed ENMO data")
-
-    elif data_type == "accelerometer":
+    elif data_type in ["accelerometer-mg", "accelerometer-g", "accelerometer-ms2"]:
         _data[["x_raw", "y_raw", "z_raw"]] = _data[["x", "y", "z"]]
 
         # recaling of accelerometer data to g
-        _data[["x", "y", "z"]] = _data[["x", "y", "z"]] / 1000
+        if data_type == "accelerometer-mg":
+            _data[["x", "y", "z"]] = _data[["x", "y", "z"]] / 1000
+        elif data_type == "accelerometer-ms2":
+            _data[["x", "y", "z"]] = _data[["x", "y", "z"]] / 9.81
 
         # calibration
         sphere_crit = preprocess_args.get("autocalib_sphere_crit", 1)
@@ -517,14 +552,14 @@ def preprocess_generic_data(
             _data, sf=meta_dict["sf"], meta_dict=meta_dict, verbose=verbose
         )
 
-        _data["ENMO"] = calculate_enmo(_data, verbose=verbose) * 1000
-
-        if verbose:
-            print(f"Preprocessed accelerometer data")
+        _data["enmo"] = calculate_enmo(_data, verbose=verbose) * 1000
 
     else:
         raise ValueError(
-            "Data type must be either 'enmo', 'accelerometer' or 'alternative_count'"
+            "Data type must be either 'enmo-mg', 'enmo-g', 'accelerometer-mg', 'accelerometer-g', 'accelerometer-ms2' or 'alternative_count'"
         )
+    
+    if verbose:
+        print(f"Preprocessed {data_type} data")
 
     return _data

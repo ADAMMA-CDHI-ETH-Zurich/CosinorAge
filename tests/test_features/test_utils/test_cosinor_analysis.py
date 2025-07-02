@@ -17,7 +17,7 @@ def create_test_data(days=1, amplitude=1, mesor=0, phase_shift=0):
     # Create perfect cosine wave with known parameters
     enmo = mesor + amplitude * np.cos(2 * np.pi * time / 1440 + phase_shift)
 
-    return pd.DataFrame({"ENMO": enmo}, index=pd.DatetimeIndex(timestamps))
+    return pd.DataFrame({"enmo": enmo}, index=pd.DatetimeIndex(timestamps))
 
 
 def test_cosinor_multiday_basic_functionality():
@@ -74,7 +74,7 @@ def test_invalid_input_no_enmo():
 
 def test_invalid_input_no_datetime_index():
     """Test error handling for missing datetime index"""
-    df = pd.DataFrame({"ENMO": [1, 2, 3]})
+    df = pd.DataFrame({"enmo": [1, 2, 3]})
 
     with pytest.raises(ValueError, match="must have a Timestamp index"):
         cosinor_multiday(df)
@@ -86,7 +86,7 @@ def test_invalid_input_wrong_length():
         datetime(2024, 1, 1) + timedelta(minutes=i) for i in range(1000)
     ]
     df = pd.DataFrame(
-        {"ENMO": np.random.random(1000)}, index=pd.DatetimeIndex(timestamps)
+        {"enmo": np.random.random(1000)}, index=pd.DatetimeIndex(timestamps)
     )
 
     with pytest.raises(
@@ -119,7 +119,7 @@ def test_cosinor_multiday_noise_robustness():
     # Create data with noise
     test_df = create_test_data(days=1, amplitude=1, mesor=2)
     noise = np.random.normal(0, 0.1, size=1440)
-    test_df["ENMO"] += noise
+    test_df["enmo"] += noise
 
     params, _ = cosinor_multiday(test_df)
 

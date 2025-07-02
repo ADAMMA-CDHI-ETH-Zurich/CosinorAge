@@ -50,7 +50,7 @@ def cosinor_multiday(df: pd.DataFrame) -> pd.DataFrame:
         If data length is not a multiple of 1440 (minutes in a day)
     """
     # Ensure the DataFrame contains the required columns
-    if "ENMO" not in df.columns or not pd.api.types.is_datetime64_any_dtype(
+    if "enmo" not in df.columns or not pd.api.types.is_datetime64_any_dtype(
         df.index
     ):
         raise ValueError(
@@ -68,7 +68,7 @@ def cosinor_multiday(df: pd.DataFrame) -> pd.DataFrame:
     time_minutes = np.arange(1, total_minutes + 1)
     df["time"] = time_minutes
 
-    results = fit_cosinor(df["time"], df["ENMO"], period=1440)
+    results = fit_cosinor(df["time"], df["enmo"], period=1440)
 
     mesor = results["MESOR"]
     amplitude = results["amplitude"]

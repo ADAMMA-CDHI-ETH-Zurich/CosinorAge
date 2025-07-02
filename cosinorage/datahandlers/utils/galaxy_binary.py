@@ -260,7 +260,7 @@ def preprocess_galaxy_binary_data(
         _data, sf=meta_dict["sf"], meta_dict=meta_dict, verbose=verbose
     )
 
-    _data["ENMO"] = calculate_enmo(_data, verbose=verbose) * 1000
+    _data["enmo"] = calculate_enmo(_data, verbose=verbose) * 1000
 
     if verbose:
         print(f"Preprocessed accelerometer data")

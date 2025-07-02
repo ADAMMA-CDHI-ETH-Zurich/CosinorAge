@@ -69,7 +69,7 @@ def test_calculate_minute_level_enmo_normal_case():
 def test_calculate_minute_level_enmo_empty():
     # Test with empty DataFrame
     empty_df = pd.DataFrame(
-        {"timestamp": pd.DatetimeIndex([]), "ENMO": []}
+        {"timestamp": pd.DatetimeIndex([]), "enmo": []}
     ).set_index("timestamp")
 
     meta_dict = {"sf": 25}  # Provide sampling frequency

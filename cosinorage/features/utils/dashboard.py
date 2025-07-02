@@ -87,10 +87,10 @@ def dashboard(features):
     timestamps = data.index
     plt.figure(figsize=(22.5, 5))
     plt.plot(
-        timestamps, data["ENMO"], "-", color="grey", alpha=0.8, label="ENMO"
+        timestamps, data["enmo"], "-", color="grey", alpha=0.8, label="ENMO"
     )
     plt.plot(timestamps, data["cosinor_fitted"], "b-", label="Cosinor Fit")
-    plt.ylim(0, max(data["ENMO"]) * 1.05)
+    plt.ylim(0, max(data["enmo"]) * 1.05)
     plt.axhline(mesor, color="green", linestyle="--", label="MESOR")
     plt.axvline(
         timestamps.min() + timedelta(minutes=acrophase_time),
@@ -100,7 +100,7 @@ def dashboard(features):
     )
     plt.text(
         timestamps.min() + timedelta(minutes=acrophase_time),
-        0.95 * max(data["ENMO"]),
+        0.95 * max(data["enmo"]),
         f"{acrophase_time:.1f} minutes ({acrophase:.1f}°)",
         color="purple",
         horizontalalignment="center",
@@ -167,14 +167,14 @@ def dashboard(features):
     )
 
     # Define fixed y-range for ENMO plots
-    enmo_y_range = (-20, data["ENMO"].max())
+    enmo_y_range = (-20, data["enmo"].max())
 
     for i, (day, day_data) in enumerate(days):
         # Lineplot of ENMO
         sns.lineplot(
             data=day_data,
             x=day_data.index,
-            y="ENMO",
+            y="enmo",
             ax=axes[i, 0],
             linewidth=0.8,
             color="grey",
@@ -377,7 +377,7 @@ def dashboard(features):
         sns.lineplot(
             data=day_data,
             x=day_data.index,
-            y="ENMO",
+            y="enmo",
             ax=axes[i],
             linewidth=0.8,
             color="grey",

@@ -155,7 +155,7 @@ def test_preprocess_galaxy_binary_data(
 
     assert isinstance(result, pd.DataFrame)
     assert "wear" in result.columns
-    assert "ENMO" in result.columns
+    assert "enmo" in result.columns
     assert all(col + "_raw" in result.columns for col in ["x", "y", "z"])
 
 

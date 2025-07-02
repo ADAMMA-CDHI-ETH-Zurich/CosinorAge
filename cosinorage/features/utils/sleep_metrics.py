@@ -85,7 +85,7 @@ def apply_sleep_wake_predictions(
     >>> sleep_predictions = apply_sleep_wake_predictions(data, sleep_params)
     >>> print(f"Sleep time: {sleep_predictions.sum()} minutes")
     """
-    if "ENMO" not in data.columns:
+    if "enmo" not in data.columns:
         raise ValueError(f"Column ENMO not found in the DataFrame.")
 
     data_ = data.copy()
@@ -93,7 +93,7 @@ def apply_sleep_wake_predictions(
     sf = sleep_params.get("sleep_ck_sf", 0.0025)
     rescore = sleep_params.get("sleep_rescore", True)
 
-    result = compute_sleep_predictions(data_["ENMO"], sf=sf, rescore=rescore)
+    result = compute_sleep_predictions(data_["enmo"], sf=sf, rescore=rescore)
     data_["sleep"] = pd.DataFrame(result, columns=["sleep"]).set_index(
         data_.index
     )["sleep"]

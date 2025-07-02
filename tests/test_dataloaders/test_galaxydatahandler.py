@@ -234,7 +234,7 @@ class TestGalaxyDataHandler:
                 "2024-01-01", periods=4 * 1440, freq="1min"
             )
             df = pd.DataFrame(
-                {"timestamp": timestamps, "ENMO": [1, 2, 3, 4] * (1440)}
+                {"timestamp": timestamps, "enmo": [1, 2, 3, 4] * (1440)}
             )
             df = df.set_index("timestamp")
             mock_pd_read_csv.return_value = df.reset_index().copy()

@@ -20,11 +20,11 @@ def sample_data():
         else:
             activity.append(1 + np.random.normal(0, 0.1))  # Rest hours
 
-    return pd.DataFrame({"ENMO": activity}, index=dates)
+    return pd.DataFrame({"enmo": activity}, index=dates)
 
 
 def test_IS_empty_data():
-    empty_data = pd.DataFrame({"ENMO": []})
+    empty_data = pd.DataFrame({"enmo": []})
     assert np.isnan(IS(empty_data))
 
 
@@ -35,7 +35,7 @@ def test_IS_normal_data(sample_data):
 
 
 def test_IV_empty_data():
-    empty_data = pd.DataFrame({"ENMO": []})
+    empty_data = pd.DataFrame({"enmo": []})
     assert np.isnan(IV(empty_data))
 
 
@@ -46,7 +46,7 @@ def test_IV_normal_data(sample_data):
 
 
 def test_M10_empty_data():
-    empty_data = pd.DataFrame({"ENMO": []})
+    empty_data = pd.DataFrame({"enmo": []})
     m10_values, m10_starts = M10(empty_data)
     assert len(m10_values) == 0
     assert len(m10_starts) == 0
@@ -60,7 +60,7 @@ def test_M10_normal_data(sample_data):
 
 
 def test_L5_empty_data():
-    empty_data = pd.DataFrame({"ENMO": []})
+    empty_data = pd.DataFrame({"enmo": []})
     l5_values, l5_starts = L5(empty_data)
     assert len(l5_values) == 0
     assert len(l5_starts) == 0
@@ -94,7 +94,7 @@ def test_RA_mismatched_lengths():
 def test_constant_data():
     # Create constant data to test edge cases
     dates = pd.date_range(start="2024-01-01", end="2024-01-02", freq="1min")
-    constant_data = pd.DataFrame({"ENMO": [1] * len(dates)}, index=dates)
+    constant_data = pd.DataFrame({"enmo": [1] * len(dates)}, index=dates)
 
     # Test IS with constant data
     assert np.isnan(IS(constant_data))  # Should return nan for constant data
@@ -120,7 +120,7 @@ def test_data_validation():
         IV(invalid_df)
 
     # Test with DataFrame but no datetime index
-    invalid_df = pd.DataFrame({"ENMO": [1, 2, 3]})
+    invalid_df = pd.DataFrame({"enmo": [1, 2, 3]})
     with pytest.raises(
         TypeError,
         match="Only valid with DatetimeIndex, TimedeltaIndex or PeriodIndex",
@@ -137,7 +137,7 @@ def test_data_validation():
     dates = pd.date_range(
         start="2024-01-01", periods=3, freq="1h"
     )  # Changed from '1H' to '1h'
-    invalid_df = pd.DataFrame({"ENMO": ["a", "b", "c"]}, index=dates)
+    invalid_df = pd.DataFrame({"enmo": ["a", "b", "c"]}, index=dates)
     with pytest.raises(TypeError):
         IS(invalid_df)
 

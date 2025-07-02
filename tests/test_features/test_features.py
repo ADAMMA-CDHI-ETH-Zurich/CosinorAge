@@ -29,7 +29,7 @@ def sample_data():
     # Create DataFrame with all required columns
     df = pd.DataFrame(
         {
-            "ENMO": enmo,
+            "enmo": enmo,
             "sleep": sleep,
             "date": dates.date,
             "time": range(len(dates)),
@@ -40,7 +40,7 @@ def sample_data():
     )
 
     # Add cosinor_fitted column
-    df["cosinor_fitted"] = df["ENMO"].rolling(window=1440, center=True).mean()
+    df["cosinor_fitted"] = df["enmo"].rolling(window=1440, center=True).mean()
 
     return df
 
@@ -194,7 +194,7 @@ def test_get_ml_data(mock_data_handler):
     ml_data = features.get_ml_data()
 
     assert isinstance(ml_data, pd.DataFrame)
-    assert "ENMO" in ml_data.columns
+    assert "enmo" in ml_data.columns
     assert isinstance(ml_data.index, pd.DatetimeIndex)
     assert len(ml_data) % 1440 == 0  # Check if data length is multiple of 1440
 
@@ -204,8 +204,8 @@ def test_invalid_data_handling():
     # Create data with NaN values
     dates = pd.date_range(start="2024-01-01", end="2024-01-08", freq="1min")
     enmo = np.sin(2 * np.pi * np.arange(len(dates)) / (24 * 60)) + 1
-    invalid_data = pd.DataFrame({"ENMO": enmo}, index=dates)
-    invalid_data.loc[invalid_data.index[0:100], "ENMO"] = np.nan
+    invalid_data = pd.DataFrame({"enmo": enmo}, index=dates)
+    invalid_data.loc[invalid_data.index[0:100], "enmo"] = np.nan
 
     class MockInvalidDataHandler:
         def get_ml_data(self):
