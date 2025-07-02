@@ -196,6 +196,58 @@ def filter_generic_data(
 ) -> pd.DataFrame:
     """
     Filter generic data by removing incomplete days and selecting longest consecutive sequence.
+    
+    This function applies data quality filters to ensure only complete and consecutive
+    days of data are retained for analysis. It removes incomplete days and selects
+    the longest sequence of consecutive days.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Input DataFrame with datetime index containing accelerometer or count data.
+    data_type : str
+        Type of data being processed. Must be one of:
+        - 'enmo': ENMO (Euclidean Norm Minus One) data
+        - 'accelerometer': Raw accelerometer data (x, y, z)
+        - 'alternative_count': Alternative count data
+    meta_dict : dict, default={}
+        Dictionary to store metadata about the filtering process. Will be updated with:
+        - filtered_n_datapoints: Number of data points after filtering
+        - filtered_start_datetime: Start timestamp after filtering
+        - filtered_end_datetime: End timestamp after filtering
+    verbose : bool, default=False
+        Whether to print progress information during filtering.
+    preprocess_args : dict, default={}
+        Additional preprocessing arguments that may affect filtering behavior.
+
+    Returns
+    -------
+    pd.DataFrame
+        Filtered DataFrame containing only complete and consecutive days of data.
+        The DataFrame maintains the same structure as the input.
+
+    Notes
+    -----
+    - Removes days that don't have the expected number of data points
+    - Selects the longest sequence of consecutive days (minimum 4 days required)
+    - Updates metadata with information about the filtered data
+    - The function assumes 24-hour periods for day-based filtering
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> 
+    >>> # Create sample data with some incomplete days
+    >>> dates = pd.date_range('2023-01-01', periods=10000, freq='min')
+    >>> data = pd.DataFrame({'ENMO': np.random.randn(10000)}, index=dates)
+    >>> 
+    >>> # Filter the data
+    >>> meta_dict = {}
+    >>> filtered_data = filter_generic_data(
+    ...     data, data_type='enmo', meta_dict=meta_dict, verbose=True
+    ... )
+    >>> print(f"Original data points: {len(data)}")
+    >>> print(f"Filtered data points: {len(filtered_data)}")
     """
     _data = data.copy()
 
@@ -227,7 +279,60 @@ def resample_generic_data(
     verbose: bool = False
 ) -> pd.DataFrame:
     """
-    Resample generic data to 1 minute intervals.
+    Resample generic data to minute-level resolution.
+    
+    This function resamples high-frequency data to minute-level resolution using
+    mean aggregation. This is a standard preprocessing step for circadian rhythm analysis.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Input DataFrame with datetime index containing high-frequency data.
+    data_type : str
+        Type of data being processed. Must be one of:
+        - 'enmo': ENMO (Euclidean Norm Minus One) data
+        - 'accelerometer': Raw accelerometer data (x, y, z)
+        - 'alternative_count': Alternative count data
+    meta_dict : dict, default={}
+        Dictionary to store metadata about the resampling process. Will be updated with:
+        - resampled_n_datapoints: Number of data points after resampling
+        - resampled_start_datetime: Start timestamp after resampling
+        - resampled_end_datetime: End timestamp after resampling
+    verbose : bool, default=False
+        Whether to print progress information during resampling.
+
+    Returns
+    -------
+    pd.DataFrame
+        Resampled DataFrame with minute-level resolution. The DataFrame maintains
+        the same column structure as the input but with reduced temporal resolution.
+
+    Notes
+    -----
+    - Uses pandas resample('min').mean() for minute-level aggregation
+    - The function assumes the input data has a datetime index
+    - All columns are resampled using mean aggregation
+    - Updates metadata with information about the resampled data
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> 
+    >>> # Create sample high-frequency data (every 10 seconds)
+    >>> dates = pd.date_range('2023-01-01', periods=8640, freq='10S')  # 24 hours
+    >>> data = pd.DataFrame({
+    ...     'ENMO': np.random.randn(8640),
+    ...     'wear': np.ones(8640)
+    ... }, index=dates)
+    >>> 
+    >>> # Resample to minute level
+    >>> meta_dict = {}
+    >>> resampled_data = resample_generic_data(
+    ...     data, data_type='enmo', meta_dict=meta_dict, verbose=True
+    ... )
+    >>> print(f"Original frequency: {len(data)} points")
+    >>> print(f"Resampled frequency: {len(resampled_data)} points")
     """
     _data = data.copy()
 
@@ -247,7 +352,80 @@ def preprocess_generic_data(
     verbose: bool = False
 ) -> pd.DataFrame:
     """
-    Preprocess generic data by filtering and resampling.
+    Preprocess generic accelerometer data with calibration, noise removal, and wear detection.
+    
+    This function applies a comprehensive preprocessing pipeline to accelerometer data,
+    including calibration, noise filtering, and wear detection. The preprocessing steps
+    are applied based on the data type and preprocessing arguments.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Input DataFrame with datetime index containing accelerometer data.
+        For accelerometer data, must have columns ['x', 'y', 'z'].
+    data_type : str
+        Type of data being processed. Must be one of:
+        - 'enmo': ENMO (Euclidean Norm Minus One) data
+        - 'accelerometer': Raw accelerometer data (x, y, z)
+        - 'alternative_count': Alternative count data
+    preprocess_args : dict, default={}
+        Dictionary containing preprocessing parameters:
+        - 'calibrate': Whether to apply accelerometer calibration (default: False)
+        - 'sphere_crit': Sphere fitting criterion for calibration (default: 0.3)
+        - 'sd_criteria': Standard deviation criterion for calibration (default: 0.1)
+        - 'remove_noise': Whether to apply noise filtering (default: False)
+        - 'filter_cutoff': Cutoff frequency for noise filter in Hz (default: 2)
+        - 'detect_wear': Whether to apply wear detection (default: False)
+        - 'sd_crit': Standard deviation criterion for wear detection (default: 0.013)
+        - 'range_crit': Range criterion for wear detection (default: 0.05)
+        - 'window_length': Window length for wear detection in seconds (default: 60)
+        - 'window_skip': Window skip for wear detection in seconds (default: 30)
+    meta_dict : dict, default={}
+        Dictionary to store metadata about the preprocessing process.
+    verbose : bool, default=False
+        Whether to print progress information during preprocessing.
+
+    Returns
+    -------
+    pd.DataFrame
+        Preprocessed DataFrame with the same structure as input but with applied
+        preprocessing steps. May include additional columns like 'wear' if wear
+        detection is enabled.
+
+    Notes
+    -----
+    - Calibration is only applied to accelerometer data (data_type='accelerometer')
+    - Noise removal uses a Butterworth low-pass filter
+    - Wear detection adds a binary 'wear' column (1=worn, 0=not worn)
+    - The function skips preprocessing steps that are not enabled in preprocess_args
+    - All preprocessing steps are applied in sequence: calibration → noise removal → wear detection
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> 
+    >>> # Create sample accelerometer data
+    >>> dates = pd.date_range('2023-01-01', periods=1440, freq='min')
+    >>> data = pd.DataFrame({
+    ...     'x': np.random.randn(1440),
+    ...     'y': np.random.randn(1440),
+    ...     'z': np.random.randn(1440) + 1  # Add gravity component
+    ... }, index=dates)
+    >>> 
+    >>> # Apply preprocessing with wear detection
+    >>> preprocess_args = {
+    ...     'calibrate': True,
+    ...     'remove_noise': True,
+    ...     'detect_wear': True
+    ... }
+    >>> meta_dict = {}
+    >>> processed_data = preprocess_generic_data(
+    ...     data, data_type='accelerometer', 
+    ...     preprocess_args=preprocess_args, meta_dict=meta_dict, verbose=True
+    ... )
+    >>> print(f"Processed data shape: {processed_data.shape}")
+    >>> print(f"Wear column present: {'wear' in processed_data.columns}")
     """
     _data = data.copy()
 

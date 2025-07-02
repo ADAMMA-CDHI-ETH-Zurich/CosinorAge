@@ -43,8 +43,8 @@ def dashboard(features):
 
     Parameters
     ----------
-    features : Features
-        A Features object containing all extracted features and raw data.
+    features : WearableFeatures
+        A WearableFeatures object containing all extracted features and raw data.
         Expected to have the following attributes:
         - feature_dict: Dictionary containing cosinor, nonparam, sleep, and physical_activity features
         - get_ml_data(): Method returning DataFrame with ENMO and cosinor_fitted data
@@ -54,6 +54,25 @@ def dashboard(features):
     -------
     None
         Displays multiple matplotlib figures using plt.show()
+
+    Notes
+    -----
+    - Creates 7 different visualization panels covering all major analysis aspects
+    - Each panel is optimized for the specific metrics being displayed
+    - The dashboard provides a comprehensive overview of circadian rhythm analysis
+    - All plots use consistent color schemes and formatting
+
+    Examples
+    --------
+    >>> from cosinorage.features import WearableFeatures
+    >>> from cosinorage.datahandlers import GenericDataHandler
+    >>> 
+    >>> # Load data and compute features
+    >>> handler = GenericDataHandler('data.csv')
+    >>> features = WearableFeatures(handler)
+    >>> 
+    >>> # Generate comprehensive dashboard
+    >>> dashboard(features)
     """
     
     data = features.get_ml_data()

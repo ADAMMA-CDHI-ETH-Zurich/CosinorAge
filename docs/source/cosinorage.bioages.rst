@@ -12,6 +12,6 @@ Module Contents
 Classes
 -------
 
-.. autoclass:: cosinorage.bioages.CosinorAge
+.. autoclass:: cosinorage.bioages.cosinorage.CosinorAge
    :members:
 

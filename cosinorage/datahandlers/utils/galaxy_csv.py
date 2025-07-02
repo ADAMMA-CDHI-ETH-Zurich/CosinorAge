@@ -34,16 +34,61 @@ def read_galaxy_csv_data(
     verbose: bool = False
 ) -> pd.DataFrame:
     """
-    Read ENMO data from Galaxy Watch csv file.
+    Read ENMO data from Galaxy Watch CSV file.
 
-    Args:
-        galaxy_file_path (str): Path to the Galaxy Watch data file
-        meta_dict (dict): Dictionary to store metadata about the loaded data
-        time_column (str): Name of the timestamp column in the CSV file
-        data_columns (list): Names of the data columns in the CSV file
-        verbose (bool): Whether to print progress information
-    Returns:
-        pd.DataFrame: DataFrame containing ENMO data with columns ['timestamp', 'ENMO']
+    This function loads ENMO (Euclidean Norm Minus One) data from Samsung Galaxy Watch
+    CSV files and standardizes the format for further processing.
+
+    Parameters
+    ----------
+    galaxy_file_path : str
+        Path to the Galaxy Watch CSV data file containing ENMO values.
+    meta_dict : dict
+        Dictionary to store metadata about the loaded data. Will be populated with:
+        - raw_n_datapoints: Number of data points
+        - raw_start_datetime: Start timestamp
+        - raw_end_datetime: End timestamp
+        - sf: Sampling frequency in Hz
+        - raw_data_frequency: Sampling frequency as string
+        - raw_data_type: Type of data ('ENMO')
+        - raw_data_unit: Unit of data ('mg')
+    time_column : str, default='timestamp'
+        Name of the timestamp column in the CSV file.
+    data_columns : list, optional
+        Names of the data columns in the CSV file. If not provided, defaults to ['enmo'].
+    verbose : bool, default=False
+        Whether to print progress information during loading.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame containing ENMO data with standardized column names:
+        - 'ENMO': ENMO values in mg units
+        The DataFrame has a datetime index from the timestamp column.
+
+    Notes
+    -----
+    - The function automatically converts UTC timestamps to local time
+    - Missing values are filled with 0
+    - Data is sorted by timestamp
+    - Sampling frequency is automatically detected from timestamps
+    - Column names are standardized to 'ENMO' for consistency
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> 
+    >>> # Load ENMO data from Galaxy Watch CSV file
+    >>> meta_dict = {}
+    >>> data = read_galaxy_csv_data(
+    ...     galaxy_file_path='data/galaxy_enmo.csv',
+    ...     meta_dict=meta_dict,
+    ...     time_column='time',
+    ...     data_columns=['enmo_mg'],
+    ...     verbose=True
+    ... )
+    >>> print(f"Loaded {len(data)} ENMO records")
+    >>> print(f"Sampling frequency: {meta_dict['sf']:.1f} Hz")
     """
 
     data = pd.read_csv(galaxy_file_path)
@@ -76,7 +121,7 @@ def read_galaxy_csv_data(
     meta_dict['raw_n_datapoints'] = data.shape[0]
     meta_dict['raw_start_datetime'] = data.index.min()
     meta_dict['raw_end_datetime'] = data.index.max()
-    meta_dict['sf'] = detect_frequency_from_timestamps(data.index)
+    meta_dict['sf'] = detect_frequency_from_timestamps(pd.Series(data.index))
     meta_dict['raw_data_frequency'] = f'{meta_dict["sf"]:.1f}Hz'
     meta_dict['raw_data_type'] = 'ENMO'
     meta_dict['raw_data_unit'] = 'mg'
@@ -93,13 +138,52 @@ def filter_galaxy_csv_data(
     """
     Filter Galaxy Watch ENMO data by removing incomplete days and selecting longest consecutive sequence.
 
-    Args:
-        data (pd.DataFrame): Raw ENMO data
-        meta_dict (dict): Dictionary to store metadata about the filtering process
-        verbose (bool): Whether to print progress information
+    This function applies data quality filters to Galaxy Watch ENMO data, including
+    removal of incomplete days and selection of the longest consecutive sequence of days.
 
-    Returns:
-        pd.DataFrame: Filtered ENMO data
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Raw ENMO data with datetime index and 'ENMO' column.
+    meta_dict : dict, default={}
+        Dictionary to store metadata about the filtering process. Should contain:
+        - sf: Sampling frequency in Hz
+    verbose : bool, default=False
+        Whether to print progress information during filtering.
+    preprocess_args : dict, default={}
+        Dictionary containing filtering parameters:
+        - required_daily_coverage: Minimum fraction of daily data required (default: 0.5)
+
+    Returns
+    -------
+    pd.DataFrame
+        Filtered ENMO data containing only complete and consecutive days.
+        The DataFrame maintains the same structure as the input.
+
+    Notes
+    -----
+    - Removes days that don't meet the required daily coverage threshold
+    - Selects the longest sequence of consecutive days (minimum 4 days required)
+    - Resamples data to minute-level resolution
+    - Removes incomplete first and last days
+    - Updates metadata with information about the filtering process
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> 
+    >>> # Create sample ENMO data
+    >>> dates = pd.date_range('2023-01-01', periods=10000, freq='min')
+    >>> data = pd.DataFrame({'ENMO': np.random.randn(10000)}, index=dates)
+    >>> 
+    >>> # Filter the data
+    >>> meta_dict = {'sf': 1/60}  # 1 sample per minute
+    >>> preprocess_args = {'required_daily_coverage': 0.8}
+    >>> filtered_data = filter_galaxy_csv_data(
+    ...     data, meta_dict=meta_dict, preprocess_args=preprocess_args, verbose=True
+    ... )
+    >>> print(f"Original data points: {len(data)}")
+    >>> print(f"Filtered data points: {len(filtered_data)}")
     """
     _data = data.copy()
 
@@ -149,15 +233,47 @@ def resample_galaxy_csv_data(
     verbose: bool = False
 ) -> pd.DataFrame:
     """
-    Ensure we have minute-level data across the whole timeseries. 
+    Ensure we have minute-level data across the whole timeseries.
 
-    Args:
-        data (pd.DataFrame): Filtered ENMO data
-        meta_dict (dict): Dictionary to store metadata about the resampling process
-        verbose (bool): Whether to print progress information
+    This function resamples Galaxy Watch ENMO data to ensure consistent
+    minute-level resolution across the entire time series.
 
-    Returns:
-        pd.DataFrame: Resampled ENMO data to minute-level.
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Filtered ENMO data with datetime index and 'ENMO' column.
+    meta_dict : dict, default={}
+        Dictionary to store metadata about the resampling process.
+    verbose : bool, default=False
+        Whether to print progress information during resampling.
+
+    Returns
+    -------
+    pd.DataFrame
+        Resampled ENMO data with consistent minute-level resolution.
+        The DataFrame maintains the same structure as the input.
+
+    Notes
+    -----
+    - Uses pandas resample('1min') with linear interpolation
+    - Forward fills any remaining gaps with bfill()
+    - Ensures consistent temporal resolution for analysis
+    - Updates metadata with information about the resampling process
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> 
+    >>> # Create sample ENMO data with irregular intervals
+    >>> dates = pd.to_datetime(['2023-01-01 00:00:00', '2023-01-01 00:01:30', 
+    ...                         '2023-01-01 00:03:00', '2023-01-01 00:04:30'])
+    >>> data = pd.DataFrame({'ENMO': [0.1, 0.2, 0.3, 0.4]}, index=dates)
+    >>> 
+    >>> # Resample to minute level
+    >>> meta_dict = {}
+    >>> resampled_data = resample_galaxy_csv_data(data, meta_dict=meta_dict, verbose=True)
+    >>> print(f"Original data points: {len(data)}")
+    >>> print(f"Resampled data points: {len(resampled_data)}")
     """
     _data = data.copy()
 
@@ -178,14 +294,51 @@ def preprocess_galaxy_csv_data(
     """
     Preprocess Galaxy Watch ENMO data including rescaling, calibration, noise removal, and wear detection.
 
-    Args:
-        data (pd.DataFrame): Resampled ENMO data
-        preprocess_args (dict): Dictionary containing preprocessing parameters
-        meta_dict (dict): Dictionary to store metadata about the preprocessing
-        verbose (bool): Whether to print progress information
+    This function applies preprocessing steps to Galaxy Watch ENMO data. Currently,
+    wear detection is not implemented for ENMO data as the algorithm relies on
+    raw accelerometer data.
 
-    Returns:
-        pd.DataFrame: Preprocessed ENMO data with additional columns for raw values and wear detection
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Resampled ENMO data with datetime index and 'ENMO' column.
+    preprocess_args : dict, default={}
+        Dictionary containing preprocessing parameters (currently not used for ENMO data).
+    meta_dict : dict, default={}
+        Dictionary to store metadata about the preprocessing process.
+    verbose : bool, default=False
+        Whether to print progress information during preprocessing.
+
+    Returns
+    -------
+    pd.DataFrame
+        Preprocessed ENMO data with additional columns:
+        - 'ENMO': Original ENMO values
+        - 'wear': Wear detection column (set to -1 for ENMO data)
+
+    Notes
+    -----
+    - Wear detection is not implemented for ENMO data
+    - The 'wear' column is set to -1 to indicate no wear detection
+    - Future implementations may add wear detection for ENMO data
+    - The function maintains the original ENMO values
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> 
+    >>> # Create sample ENMO data
+    >>> dates = pd.date_range('2023-01-01', periods=1440, freq='min')
+    >>> data = pd.DataFrame({'ENMO': np.random.uniform(0, 0.1, 1440)}, index=dates)
+    >>> 
+    >>> # Preprocess the data
+    >>> meta_dict = {}
+    >>> preprocess_args = {}
+    >>> processed_data = preprocess_galaxy_csv_data(
+    ...     data, preprocess_args=preprocess_args, meta_dict=meta_dict, verbose=True
+    ... )
+    >>> print(f"Processed data shape: {processed_data.shape}")
+    >>> print(f"Wear column present: {'wear' in processed_data.columns}")
     """
     _data = data.copy()
 

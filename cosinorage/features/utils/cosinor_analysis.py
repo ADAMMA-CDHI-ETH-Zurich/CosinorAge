@@ -105,20 +105,51 @@ def cosinor_model(t, M, A, phi, tau):
     """
     Cosinor model function with counterclockwise acrophase.
     
-    Parameters:
+    This function implements the standard cosinor model for fitting periodic data.
+    The model assumes a cosine function with adjustable amplitude, phase, and period.
+
+    Parameters
+    ----------
     t : array-like
-        Time points
+        Time points at which to evaluate the model.
     M : float
-        MESOR (Midline Statistic of Rhythm)
+        MESOR (Midline Statistic of Rhythm) - the rhythm-adjusted mean.
     A : float
-        Amplitude (always positive)
+        Amplitude - half the peak-to-trough difference (always positive).
     phi : float
-        Acrophase in radians (counterclockwise)
+        Acrophase in radians (counterclockwise orientation).
     tau : float
-        Period
+        Period of the rhythm in the same units as t.
         
-    Returns:
-    array-like: Fitted values
+    Returns
+    -------
+    array-like
+        Fitted values at the specified time points.
+
+    Notes
+    -----
+    - The model uses counterclockwise acrophase orientation (negative sign before phi)
+    - The function implements: M + A * cos(2π * t / τ + φ)
+    - Amplitude A should always be positive
+    - The acrophase φ represents the time of peak activity
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> 
+    >>> # Create time points (24 hours in minutes)
+    >>> t = np.arange(0, 1440, 1)  # 0 to 1440 minutes
+    >>> 
+    >>> # Define cosinor parameters
+    >>> M = 0.5    # MESOR
+    >>> A = 0.3    # Amplitude
+    >>> phi = 0    # Acrophase (peak at midnight)
+    >>> tau = 1440 # Period (24 hours in minutes)
+    >>> 
+    >>> # Generate fitted values
+    >>> fitted = cosinor_model(t, M, A, phi, tau)
+    >>> print(f"Peak value: {fitted.max():.3f}")
+    >>> print(f"Trough value: {fitted.min():.3f}")
     """
     # Note the negative sign before phi for counterclockwise orientation
     return M + A * np.cos(2 * np.pi * t / tau + phi)
@@ -127,16 +158,50 @@ def fit_cosinor(time, data, period=24):
     """
     Fit cosinor model to time series data.
     
-    Parameters:
+    This function fits a cosinor model to time series data using the CosinorPy library.
+    It estimates the MESOR, amplitude, and acrophase parameters that best describe
+    the periodic pattern in the data.
+
+    Parameters
+    ----------
     time : array-like
-        Time points
+        Time points corresponding to the data values.
     data : array-like
-        Observed values
-    period : float, optional
-        Known period (default=24)
+        Observed values to fit the cosinor model to.
+    period : float, default=24
+        Known period of the rhythm in the same units as time.
+        For circadian rhythms, typically 24 hours or 1440 minutes.
         
-    Returns:
-    dict: Dictionary containing fitted parameters and statistics
+    Returns
+    -------
+    dict
+        Dictionary containing fitted parameters and statistics:
+        - 'MESOR': Midline Estimating Statistic Of Rhythm (rhythm-adjusted mean)
+        - 'amplitude': Half the peak-to-trough difference
+        - 'acrophase': Time of peak relative to the period in radians
+        - 'fitted_values': Array of fitted values at each time point
+
+    Notes
+    -----
+    - Uses CosinorPy.cosinor1.fit_cosinor for the core fitting algorithm
+    - The period is converted to minutes (period * 60) for internal processing
+    - The function returns both the fitted parameters and the fitted values
+    - The acrophase is returned in radians and represents the timing of peak activity
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> 
+    >>> # Create sample circadian data
+    >>> time = np.arange(0, 1440, 1)  # 24 hours in minutes
+    >>> data = 0.5 + 0.3 * np.cos(2 * np.pi * time / 1440 + np.pi/4) + 0.1 * np.random.randn(1440)
+    >>> 
+    >>> # Fit cosinor model
+    >>> results = fit_cosinor(time, data, period=24)
+    >>> print(f"MESOR: {results['MESOR']:.3f}")
+    >>> print(f"Amplitude: {results['amplitude']:.3f}")
+    >>> print(f"Acrophase: {results['acrophase']:.3f} radians")
     """
 
     fit, _, _, statistics = cosinor1.fit_cosinor(time, data, period=24*60, plot_on=False)

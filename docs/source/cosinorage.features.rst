@@ -12,7 +12,7 @@ Module Contents
 Classes
 -------
 
-.. autoclass:: cosinorage.features.WearableFeatures
+.. autoclass:: cosinorage.features.features.WearableFeatures
    :members:
 
 Utility Functions
@@ -21,55 +21,63 @@ Utility Functions
 Cosinor (Circadian Rhythm Analysis) Analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: cosinorage.features.cosinor_by_day()
+.. autofunction:: cosinorage.features.utils.cosinor_analysis.cosinor_multiday
 
-.. autofunction:: cosinorage.features.cosinor_multiday()
+.. autofunction:: cosinorage.features.utils.cosinor_analysis.cosinor_model
 
+.. autofunction:: cosinorage.features.utils.cosinor_analysis.fit_cosinor
 
 Non-parametric (Circadian Rhythm Analysis) Analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: cosinorage.features.IV()
+.. autofunction:: cosinorage.features.utils.nonparam_analysis.IV
 
-.. autofunction:: cosinorage.features.IS()
+.. autofunction:: cosinorage.features.utils.nonparam_analysis.IS
 
-.. autofunction:: cosinorage.features.RA()
+.. autofunction:: cosinorage.features.utils.nonparam_analysis.RA
 
-.. autofunction:: cosinorage.features.M10()
+.. autofunction:: cosinorage.features.utils.nonparam_analysis.M10
 
-.. autofunction:: cosinorage.features.L5()
+.. autofunction:: cosinorage.features.utils.nonparam_analysis.L5
 
 Physical Activity Metrics
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: cosinorage.features.activity_metrics()
+.. autofunction:: cosinorage.features.utils.physical_activity_metrics.activity_metrics
 
 Sleep Metrics
 ~~~~~~~~~~~~~
 
-.. autofunction:: cosinorage.features.apply_sleep_wake_predictions()
+.. autofunction:: cosinorage.features.utils.sleep_metrics.apply_sleep_wake_predictions
 
-.. autofunction:: cosinorage.features.waso()
+.. autofunction:: cosinorage.features.utils.sleep_metrics.WASO
 
-.. autofunction:: cosinorage.features.tst()
+.. autofunction:: cosinorage.features.utils.sleep_metrics.TST
 
-.. autofunction:: cosinorage.features.pta()
+.. autofunction:: cosinorage.features.utils.sleep_metrics.PTA
 
-.. autofunction:: cosinorage.features.sri()
+.. autofunction:: cosinorage.features.utils.sleep_metrics.NWB
 
+.. autofunction:: cosinorage.features.utils.sleep_metrics.SOL
+
+.. autofunction:: cosinorage.features.utils.sleep_metrics.SRI
 
 Rescaling Functions
 ~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: cosinorage.features.utils.rescaling.min_max_scaling_exclude_outliers()
-
+.. autofunction:: cosinorage.features.utils.rescaling.min_max_scaling_exclude_outliers
 
 Visualization Functions
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: cosinorage.features.utils.visualization.plot_sleep_predictions()
+.. autofunction:: cosinorage.features.utils.visualization.plot_sleep_predictions
 
-.. autofunction:: cosinorage.features.utils.visualization.plot_non_wear()
+.. autofunction:: cosinorage.features.utils.visualization.plot_non_wear
 
-.. autofunction:: cosinorage.features.utils.visualization.plot_cosinor()
+.. autofunction:: cosinorage.features.utils.visualization.plot_cosinor
+
+Dashboard Functions
+~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: cosinorage.features.utils.dashboard.dashboard
 

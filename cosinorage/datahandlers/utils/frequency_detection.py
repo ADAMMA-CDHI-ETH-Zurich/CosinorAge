@@ -29,11 +29,59 @@ def detect_frequency_from_timestamps(
     """
     Detect sampling frequency by finding the most common time delta.
     
-    Args:
-        timestamps: Series or array of datetime objects
+    This function analyzes a series of timestamps to determine the sampling frequency
+    of the data by calculating the time differences between consecutive samples and
+    finding the most frequently occurring interval.
     
-    Returns:
-        float: Sampling frequency in Hz
+    Parameters
+    ----------
+    timestamps : pd.Series
+        Series or array of datetime objects representing the timestamps of data points.
+        Can be pandas datetime objects, numpy datetime64, or string timestamps that
+        can be converted to datetime.
+    
+    Returns
+    -------
+    float
+        Sampling frequency in Hz (samples per second).
+    
+    Raises
+    ------
+    ValueError
+        If less than two timestamps are provided.
+        If no time deltas can be calculated.
+        If the most common time delta is zero.
+        If the mode cannot be determined.
+    
+    Notes
+    -----
+    - The function converts all timestamps to pandas datetime format
+    - Time deltas are calculated in seconds
+    - The most common (mode) time delta is used to determine frequency
+    - Frequency is calculated as 1.0 / most_common_delta
+    
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> 
+    >>> # Regular 25 Hz sampling
+    >>> timestamps = pd.date_range('2023-01-01', periods=100, freq='40ms')
+    >>> freq = detect_frequency_from_timestamps(timestamps)
+    >>> print(f"Detected frequency: {freq:.1f} Hz")
+    Detected frequency: 25.0 Hz
+    >>> 
+    >>> # Irregular sampling with some missing points
+    >>> irregular_times = pd.to_datetime([
+    ...     '2023-01-01 00:00:00',
+    ...     '2023-01-01 00:00:00.040',
+    ...     '2023-01-01 00:00:00.080',
+    ...     '2023-01-01 00:00:00.120',
+    ...     '2023-01-01 00:00:00.200',  # Gap here
+    ...     '2023-01-01 00:00:00.240'
+    ... ])
+    >>> freq = detect_frequency_from_timestamps(irregular_times)
+    >>> print(f"Detected frequency: {freq:.1f} Hz")
+    Detected frequency: 25.0 Hz
     """
     # Convert to datetime if needed
     if not pd.api.types.is_datetime64_any_dtype(timestamps):

@@ -31,13 +31,47 @@ def plot_orig_enmo(
     """
     Plot the original ENMO values resampled at a specified interval.
 
-    Args:
-        acc_handler: Accelerometer data handler object containing the raw data
-        resample (str): The resampling interval (default is '15min')
-        wear (bool): Whether to add color bands for wear and non-wear periods (default is True)
+    This function creates a time series plot of ENMO (Euclidean Norm Minus One) values
+    with optional highlighting of wear and non-wear periods. The data is resampled
+    to reduce noise and improve visualization clarity.
 
-    Returns:
-        None: Displays a matplotlib plot
+    Parameters
+    ----------
+    acc_handler : DataHandler
+        Accelerometer data handler object containing the raw data. Must have:
+        - get_sf_data(): Method returning DataFrame with 'ENMO' and 'wear' columns
+    resample : str, default='15min'
+        The resampling interval for the plot. Can be any pandas time frequency string
+        (e.g., '5min', '1H', '1D').
+    wear : bool, default=True
+        Whether to add color bands for wear and non-wear periods.
+        - True: Shows red bands for non-wear periods
+        - False: Shows only the ENMO time series
+
+    Returns
+    -------
+    None
+        Displays a matplotlib plot.
+
+    Notes
+    -----
+    - The function resamples the data using mean aggregation
+    - Non-wear periods are highlighted with red bands when wear=True
+    - The plot uses a progress bar (tqdm) when processing wear data
+    - The figure size is set to 12x6 inches
+
+    Examples
+    --------
+    >>> from cosinorage.datahandlers import GenericDataHandler
+    >>> 
+    >>> # Load data
+    >>> handler = GenericDataHandler('data.csv')
+    >>> 
+    >>> # Plot with wear periods highlighted
+    >>> plot_orig_enmo(handler, resample='30min', wear=True)
+    >>> 
+    >>> # Plot without wear highlighting
+    >>> plot_orig_enmo(handler, resample='1H', wear=False)
     """
     #_data = self.acc_df.resample('5min').mean().reset_index(inplace=False)
     _data = acc_handler.get_sf_data().resample(f'{resample}').mean().reset_index(inplace=False)
@@ -65,12 +99,39 @@ def plot_enmo(
     """
     Plot minute-level ENMO values with optional wear/non-wear period highlighting.
 
-    Args:
-        handler: Data handler object containing the minute-level ENMO data
+    This function creates a time series plot of minute-level ENMO values with
+    automatic highlighting of wear and non-wear periods using colored bands.
 
-    Returns:
-        None: Displays a matplotlib plot showing ENMO values over time with optional
-            wear/non-wear period highlighting in green/red
+    Parameters
+    ----------
+    handler : DataHandler
+        Data handler object containing the minute-level ENMO data. Must have:
+        - get_ml_data(): Method returning DataFrame with 'ENMO' column
+        - Optional 'wear' column for wear/non-wear periods
+
+    Returns
+    -------
+    None
+        Displays a matplotlib plot showing ENMO values over time with optional
+        wear/non-wear period highlighting in green/red.
+
+    Notes
+    -----
+    - Wear periods are highlighted in green
+    - Non-wear periods are highlighted in red
+    - The plot automatically adjusts Y-axis limits to show the full range
+    - If no 'wear' column is present, only the ENMO time series is shown
+    - The figure size is set to 12x6 inches
+
+    Examples
+    --------
+    >>> from cosinorage.datahandlers import GenericDataHandler
+    >>> 
+    >>> # Load data
+    >>> handler = GenericDataHandler('data.csv')
+    >>> 
+    >>> # Plot minute-level ENMO with wear highlighting
+    >>> plot_enmo(handler)
     """
     _data = handler.get_ml_data().reset_index(inplace=False)
 
@@ -91,12 +152,38 @@ def plot_orig_enmo_freq(
     """
     Plot the frequency domain representation of the original ENMO signal using Welch's method.
 
-    Args:
-        acc_handler: Accelerometer data handler object containing the raw ENMO data
+    This function computes and displays the power spectral density (PSD) of the ENMO signal
+    using Welch's method, which provides a smoothed estimate of the signal's frequency content.
 
-    Returns:
-        None: Displays a matplotlib plot showing the power spectral density of the ENMO signal
-            computed using Welch's method with a sampling frequency of 80Hz and segment length of 1024
+    Parameters
+    ----------
+    acc_handler : DataHandler
+        Accelerometer data handler object containing the raw ENMO data. Must have:
+        - get_sf_data(): Method returning DataFrame with 'ENMO' column
+
+    Returns
+    -------
+    None
+        Displays a matplotlib plot showing the power spectral density of the ENMO signal
+        computed using Welch's method.
+
+    Notes
+    -----
+    - Uses scipy.signal.welch for power spectral density estimation
+    - Sampling frequency is set to 80 Hz
+    - Segment length is set to 1024 samples for frequency resolution
+    - The plot shows frequency (Hz) on the x-axis and power spectral density on the y-axis
+    - The figure size is set to 20x5 inches
+
+    Examples
+    --------
+    >>> from cosinorage.datahandlers import GenericDataHandler
+    >>> 
+    >>> # Load data
+    >>> handler = GenericDataHandler('data.csv')
+    >>> 
+    >>> # Plot frequency domain representation
+    >>> plot_orig_enmo_freq(handler)
     """
     # convert to frequency domain
     f, Pxx = welch(acc_handler.get_sf_data()['ENMO'], fs=80, nperseg=1024)

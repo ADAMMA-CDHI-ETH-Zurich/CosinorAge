@@ -260,8 +260,8 @@ multiple methods including the novel proposed CosinorAge method.</p>
 <section id="classes">
 <h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">¶</a></h2>
 <dl class="py class">
-<dt class="sig sig-object py" id="cosinorage.bioages.CosinorAge">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">CosinorAge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">records</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/bioages/cosinorage.html#CosinorAge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.bioages.CosinorAge" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="cosinorage.bioages.cosinorage.CosinorAge">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">CosinorAge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">records</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/bioages/cosinorage.html#CosinorAge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.bioages.cosinorage.CosinorAge" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A class to compute biological age predictions using the CosinorAge method.</p>
 <p>This class implements the CosinorAge method proposed by Shim, Fleisch and Barata
@@ -274,8 +274,8 @@ Optionally, records can include a ‘gender’ key with values ‘male’, ‘fe
 </dd>
 </dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="cosinorage.bioages.CosinorAge.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">records</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/bioages/cosinorage.html#CosinorAge.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.bioages.CosinorAge.__init__" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="cosinorage.bioages.cosinorage.CosinorAge.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">records</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/bioages/cosinorage.html#CosinorAge.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.bioages.cosinorage.CosinorAge.__init__" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>records</strong> (<em>List</em><em>[</em><em>dict</em><em>]</em>)</p>
@@ -284,8 +284,8 @@ Optionally, records can include a ‘gender’ key with values ‘male’, ‘fe
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="cosinorage.bioages.CosinorAge.get_predictions">
-<span class="sig-name descname"><span class="pre">get_predictions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/bioages/cosinorage.html#CosinorAge.get_predictions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.bioages.CosinorAge.get_predictions" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="cosinorage.bioages.cosinorage.CosinorAge.get_predictions">
+<span class="sig-name descname"><span class="pre">get_predictions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/bioages/cosinorage.html#CosinorAge.get_predictions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.bioages.cosinorage.CosinorAge.get_predictions" title="Link to this definition">¶</a></dt>
 <dd><p>Return the processed records with CosinorAge predictions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -298,8 +298,8 @@ Optionally, records can include a ‘gender’ key with values ‘male’, ‘fe
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="cosinorage.bioages.CosinorAge.plot_predictions">
-<span class="sig-name descname"><span class="pre">plot_predictions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/bioages/cosinorage.html#CosinorAge.plot_predictions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.bioages.CosinorAge.plot_predictions" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="cosinorage.bioages.cosinorage.CosinorAge.plot_predictions">
+<span class="sig-name descname"><span class="pre">plot_predictions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosinorage/bioages/cosinorage.html#CosinorAge.plot_predictions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosinorage.bioages.cosinorage.CosinorAge.plot_predictions" title="Link to this definition">¶</a></dt>
 <dd><p>Generate visualization plots comparing chronological age vs CosinorAge.</p>
 <dl class="simple">
 <dt>Creates a plot for each record showing:</dt><dd><ul class="simple">
@@ -374,10 +374,10 @@ Optionally, records can include a ‘gender’ key with values ‘male’, ‘fe
 <li><a class="reference internal" href="#">cosinorage.bioages Module</a><ul>
 <li><a class="reference internal" href="#module-cosinorage.bioages">Module Contents</a></li>
 <li><a class="reference internal" href="#classes">Classes</a><ul>
-<li><a class="reference internal" href="#cosinorage.bioages.CosinorAge"><code class="docutils literal notranslate"><span class="pre">CosinorAge</span></code></a><ul>
-<li><a class="reference internal" href="#cosinorage.bioages.CosinorAge.__init__"><code class="docutils literal notranslate"><span class="pre">CosinorAge.__init__()</span></code></a></li>
-<li><a class="reference internal" href="#cosinorage.bioages.CosinorAge.get_predictions"><code class="docutils literal notranslate"><span class="pre">CosinorAge.get_predictions()</span></code></a></li>
-<li><a class="reference internal" href="#cosinorage.bioages.CosinorAge.plot_predictions"><code class="docutils literal notranslate"><span class="pre">CosinorAge.plot_predictions()</span></code></a></li>
+<li><a class="reference internal" href="#cosinorage.bioages.cosinorage.CosinorAge"><code class="docutils literal notranslate"><span class="pre">CosinorAge</span></code></a><ul>
+<li><a class="reference internal" href="#cosinorage.bioages.cosinorage.CosinorAge.__init__"><code class="docutils literal notranslate"><span class="pre">CosinorAge.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#cosinorage.bioages.cosinorage.CosinorAge.get_predictions"><code class="docutils literal notranslate"><span class="pre">CosinorAge.get_predictions()</span></code></a></li>
+<li><a class="reference internal" href="#cosinorage.bioages.cosinorage.CosinorAge.plot_predictions"><code class="docutils literal notranslate"><span class="pre">CosinorAge.plot_predictions()</span></code></a></li>
 </ul>
 </li>
 </ul>

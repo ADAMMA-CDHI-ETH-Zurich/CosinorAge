@@ -38,21 +38,70 @@ def read_ukb_data(
     """
     Read and process UK Biobank accelerometer data for a specific participant.
 
-    Args:
-        qc_file_path (str): Path to the quality control CSV file containing participant metadata.
-        enmo_file_dir (str): Directory containing the ENMO data files.
-        eid (int): Participant ID to process.
-        meta_dict (dict, optional): Additional metadata dictionary. Defaults to {}.
-        verbose (bool, optional): Whether to print processing information. Defaults to False.
+    This function loads and processes UK Biobank accelerometer data for a specific participant,
+    applying quality control checks and converting the data to a standardized format.
 
-    Returns:
-        pd.DataFrame: DataFrame containing processed ENMO data with timestamps as index.
-            Columns:
-            - ENMO: Euclidean Norm Minus One values in milligravity units
+    Parameters
+    ----------
+    qc_file_path : str
+        Path to the quality control CSV file containing participant metadata.
+        Must contain columns: eid, acc_data_problem, acc_weartime, acc_calibration,
+        acc_owndata, acc_interrupt_period.
+    enmo_file_dir : str
+        Directory containing the ENMO data files (OUT_*.csv format).
+    eid : int
+        Participant ID to process.
+    meta_dict : dict, default={}
+        Dictionary to store metadata about the loaded data. Will be populated with:
+        - raw_n_datapoints: Number of data points
+        - raw_start_datetime: Start timestamp
+        - raw_end_datetime: End timestamp
+        - raw_data_frequency: Sampling frequency ('minute-level')
+        - raw_data_type: Type of data ('ENMO')
+        - raw_data_unit: Unit of data ('mg')
+    verbose : bool, default=False
+        Whether to print processing information and progress.
 
-    Raises:
-        FileNotFoundError: If QC file or ENMO directory doesn't exist
-        ValueError: If participant data is invalid or fails quality control checks
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame containing processed ENMO data with columns:
+        - 'ENMO': Euclidean Norm Minus One values in milligravity units
+        The DataFrame has a datetime index.
+
+    Raises
+    ------
+    FileNotFoundError
+        If QC file or ENMO directory doesn't exist.
+    ValueError
+        If participant data is invalid or fails quality control checks.
+
+    Notes
+    -----
+    - Applies multiple quality control filters from the QC file
+    - Processes ENMO data from CSV files with acceleration headers
+    - Converts timestamps to proper datetime format
+    - Filters ENMO values >= 0.1, sets others to 0
+    - Sorts data by timestamp for consistency
+
+    Examples
+    --------
+    >>> import os
+    >>> 
+    >>> # Load UK Biobank data for a specific participant
+    >>> qc_file_path = '/path/to/ukb_qc.csv'
+    >>> enmo_file_dir = '/path/to/enmo/files'
+    >>> eid = 12345  # Participant ID
+    >>> meta_dict = {}
+    >>> data = read_ukb_data(
+    ...     qc_file_path=qc_file_path,
+    ...     enmo_file_dir=enmo_file_dir,
+    ...     eid=eid,
+    ...     meta_dict=meta_dict,
+    ...     verbose=True
+    ... )
+    >>> print(f"Loaded {len(data)} ENMO records for participant {eid}")
+    >>> print(f"Data range: {data.index.min()} to {data.index.max()}")
     """
     # check if qa_file_path and acc_file_path exist
     if not os.path.exists(qc_file_path):
@@ -183,14 +232,44 @@ def filter_ukb_data(
     """
     Filter UK Biobank accelerometer data to ensure data quality.
 
-    Args:
-        data (pd.DataFrame): Input DataFrame containing ENMO data with timestamps as index.
-        meta_dict (dict, optional): Additional metadata dictionary. Defaults to {}.
-        verbose (bool, optional): Whether to print filtering information. Defaults to False.
+    This function applies data quality filters to UK Biobank ENMO data, including
+    removal of incomplete days and selection of the longest consecutive sequence.
 
-    Returns:
-        pd.DataFrame: Filtered DataFrame containing only complete and consecutive days of data.
-            Maintains same structure as input DataFrame.
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Input DataFrame containing ENMO data with datetime index and 'ENMO' column.
+    meta_dict : dict, default={}
+        Dictionary to store metadata about the filtering process.
+    verbose : bool, default=False
+        Whether to print filtering information and progress.
+
+    Returns
+    -------
+    pd.DataFrame
+        Filtered DataFrame containing only complete and consecutive days of data.
+        Maintains same structure as input DataFrame.
+
+    Notes
+    -----
+    - Removes incomplete days using filter_incomplete_days (requires 1440 points per day)
+    - Selects longest consecutive sequence using filter_consecutive_days
+    - Assumes minute-level data (1/60 Hz sampling frequency)
+    - Updates metadata with information about the filtering process
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> 
+    >>> # Create sample UK Biobank data
+    >>> dates = pd.date_range('2023-01-01', periods=10000, freq='min')
+    >>> data = pd.DataFrame({'ENMO': np.random.uniform(0, 0.1, 10000)}, index=dates)
+    >>> 
+    >>> # Filter the data
+    >>> meta_dict = {}
+    >>> filtered_data = filter_ukb_data(data, meta_dict=meta_dict, verbose=True)
+    >>> print(f"Original data points: {len(data)}")
+    >>> print(f"Filtered data points: {len(filtered_data)}")
     """
     _data = data.copy()
 
@@ -214,15 +293,46 @@ def resample_ukb_data(
     """
     Resample UK Biobank accelerometer data to ensure consistent 1-minute intervals.
 
-    Args:
-        data (pd.DataFrame): Input DataFrame containing ENMO data with timestamps as index.
-        meta_dict (dict, optional): Additional metadata dictionary. Defaults to {}.
-        verbose (bool, optional): Whether to print resampling information. Defaults to False.
+    This function ensures consistent minute-level resolution for UK Biobank ENMO data
+    by resampling to 1-minute intervals and handling any gaps in the data.
 
-    Returns:
-        pd.DataFrame: Resampled DataFrame with consistent 1-minute intervals.
-            Missing values are interpolated linearly and any remaining gaps are
-            filled using backward fill.
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Input DataFrame containing ENMO data with datetime index and 'ENMO' column.
+    meta_dict : dict, default={}
+        Dictionary to store metadata about the resampling process.
+    verbose : bool, default=False
+        Whether to print resampling information and progress.
+
+    Returns
+    -------
+    pd.DataFrame
+        Resampled DataFrame with consistent 1-minute intervals.
+        Missing values are interpolated linearly and any remaining gaps are
+        filled using backward fill.
+
+    Notes
+    -----
+    - Uses pandas resample('1min') with linear interpolation
+    - Applies backward fill (bfill) to handle any remaining gaps
+    - Ensures consistent temporal resolution for analysis
+    - Maintains data integrity and structure
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> 
+    >>> # Create sample UK Biobank data with irregular intervals
+    >>> dates = pd.to_datetime(['2023-01-01 00:00:00', '2023-01-01 00:01:30', 
+    ...                         '2023-01-01 00:03:00', '2023-01-01 00:04:30'])
+    >>> data = pd.DataFrame({'ENMO': [0.1, 0.2, 0.3, 0.4]}, index=dates)
+    >>> 
+    >>> # Resample to minute level
+    >>> meta_dict = {}
+    >>> resampled_data = resample_ukb_data(data, meta_dict=meta_dict, verbose=True)
+    >>> print(f"Original data points: {len(data)}")
+    >>> print(f"Resampled data points: {len(resampled_data)}")
     """
     _data = data.copy()
 

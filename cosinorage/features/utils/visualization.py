@@ -23,20 +23,53 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 def plot_sleep_predictions(feature_obj, simple=True, start_date=None, end_date=None):
-    """Plot sleep predictions over time.
+    """
+    Plot sleep predictions over time.
     
     Creates visualization of sleep/wake predictions, optionally including non-wear periods.
     Simple mode shows a binary plot with dots, while detailed mode shows ENMO data
     with colored bands for sleep/wake states.
 
-    Args:
-        feature_obj: Feature object containing ml_data with sleep predictions
-        simple (bool, optional): If True, shows simple binary plot. If False, shows detailed plot. Defaults to True.
-        start_date (datetime, optional): Start date for plotting. Defaults to None (earliest date).
-        end_date (datetime, optional): End date for plotting. Defaults to None (latest date).
+    Parameters
+    ----------
+    feature_obj : WearableFeatures
+        Feature object containing ml_data with sleep predictions. Must have:
+        - ml_data: DataFrame with 'sleep' column (1=sleep, 0=wake)
+        - Optional 'wear' column for non-wear periods
+        - 'ENMO' column for detailed plotting
+    simple : bool, default=True
+        If True, shows simple binary plot with dots for sleep/wake states.
+        If False, shows detailed plot with ENMO data and colored bands.
+    start_date : datetime, optional
+        Start date for plotting. If None, uses the earliest date in the data.
+    end_date : datetime, optional
+        End date for plotting. If None, uses the latest date in the data.
 
-    Returns:
-        None: Displays the plot using matplotlib
+    Returns
+    -------
+    None
+        Displays the plot using matplotlib.
+
+    Notes
+    -----
+    - Simple mode: Shows binary sleep/wake states as colored dots
+    - Detailed mode: Shows ENMO activity data with colored bands for sleep/wake
+    - Non-wear periods are shown in red if 'wear' column is available
+    - The function automatically handles date range selection
+
+    Examples
+    --------
+    >>> from cosinorage.features import WearableFeatures
+    >>> from cosinorage.datahandlers import GenericDataHandler
+    >>> 
+    >>> # Load data and compute features
+    >>> handler = GenericDataHandler('data.csv')
+    >>> features = WearableFeatures(handler)
+    >>> 
+    >>> # Plot sleep predictions
+    >>> plot_sleep_predictions(features, simple=True)
+    >>> plot_sleep_predictions(features, simple=False, 
+    ...                       start_date='2023-01-01', end_date='2023-01-02')
     """
     if start_date is None:
         start_date = feature_obj.ml_data.index[0]
@@ -70,19 +103,51 @@ def plot_sleep_predictions(feature_obj, simple=True, start_date=None, end_date=N
         plt.show()
 
 def plot_non_wear(feature_obj, simple=True, start_date=None, end_date=None):
-    """Plot non-wear periods over time.
+    """
+    Plot non-wear periods over time.
     
     Creates visualization of wear/non-wear periods. Simple mode shows a binary plot
     with dots, while detailed mode shows ENMO data with colored bands for wear states.
 
-    Args:
-        feature_obj: Feature object containing ml_data with wear/non-wear predictions
-        simple (bool, optional): If True, shows simple binary plot. If False, shows detailed plot. Defaults to True.
-        start_date (datetime, optional): Start date for plotting. Defaults to None (earliest date).
-        end_date (datetime, optional): End date for plotting. Defaults to None (latest date).
+    Parameters
+    ----------
+    feature_obj : WearableFeatures
+        Feature object containing ml_data with wear/non-wear predictions. Must have:
+        - ml_data: DataFrame with 'wear' column (1=worn, 0=not worn)
+        - 'ENMO' column for detailed plotting
+    simple : bool, default=True
+        If True, shows simple binary plot with dots for wear/non-wear states.
+        If False, shows detailed plot with ENMO data and colored bands.
+    start_date : datetime, optional
+        Start date for plotting. If None, uses the earliest date in the data.
+    end_date : datetime, optional
+        End date for plotting. If None, uses the latest date in the data.
 
-    Returns:
-        None: Displays the plot using matplotlib
+    Returns
+    -------
+    None
+        Displays the plot using matplotlib.
+
+    Notes
+    -----
+    - Simple mode: Shows binary wear/non-wear states as colored dots
+    - Detailed mode: Shows ENMO activity data with colored bands for wear states
+    - Non-wear periods are highlighted in red, wear periods in green
+    - The function automatically handles date range selection
+
+    Examples
+    --------
+    >>> from cosinorage.features import WearableFeatures
+    >>> from cosinorage.datahandlers import GenericDataHandler
+    >>> 
+    >>> # Load data and compute features
+    >>> handler = GenericDataHandler('data.csv')
+    >>> features = WearableFeatures(handler)
+    >>> 
+    >>> # Plot wear/non-wear periods
+    >>> plot_non_wear(features, simple=True)
+    >>> plot_non_wear(features, simple=False, 
+    ...               start_date='2023-01-01', end_date='2023-01-02')
     """
     if start_date is None:
         start_date = feature_obj.ml_data.index[0]
@@ -111,22 +176,49 @@ def plot_non_wear(feature_obj, simple=True, start_date=None, end_date=None):
         plt.show()
 
 def plot_cosinor(feature_obj):
-    """Plot cosinor analysis results for activity rhythm analysis.
+    """
+    Plot cosinor analysis results for activity rhythm analysis.
     
     Creates detailed visualizations of circadian rhythm analysis showing raw activity data (ENMO)
     overlaid with fitted cosinor curves. Includes markers for key circadian parameters:
     MESOR (rhythm-adjusted mean), amplitude, and acrophase (peak timing).
 
-    Args:
-        feature_obj: Feature object containing cosinor analysis results and ENMO data
-        multiday (bool, optional): If True, shows analysis across all days combined. 
-            If False, shows individual daily plots. Defaults to True.
+    Parameters
+    ----------
+    feature_obj : WearableFeatures
+        Feature object containing cosinor analysis results and ENMO data.
+        The ml_data DataFrame must contain 'ENMO' and 'cosinor_fitted' columns.
+        The feature_dict must contain a 'cosinor' key with mesor, amplitude,
+        acrophase, and acrophase_time values.
 
-    Returns:
-        None: Displays the plot(s) using matplotlib
+    Returns
+    -------
+    None
+        Displays the plot using matplotlib.
 
-    Raises:
-        ValueError: If cosinor features haven't been computed (either multiday or by-day)
+    Raises
+    ------
+    ValueError
+        If cosinor features haven't been computed (missing 'cosinor_fitted' column).
+
+    Notes
+    -----
+    - Shows raw ENMO data in red and fitted cosinor curve in blue
+    - MESOR is displayed as a horizontal green dashed line
+    - The plot provides visual validation of the cosinor fit quality
+    - Y-axis limits are automatically adjusted to show the full range of data
+
+    Examples
+    --------
+    >>> from cosinorage.features import WearableFeatures
+    >>> from cosinorage.datahandlers import GenericDataHandler
+    >>> 
+    >>> # Load data and compute features
+    >>> handler = GenericDataHandler('data.csv')
+    >>> features = WearableFeatures(handler)
+    >>> 
+    >>> # Plot cosinor analysis results
+    >>> plot_cosinor(features)
     """
     if "cosinor_fitted" not in feature_obj.ml_data.columns:
         raise ValueError("Cosinor fitted values not computed.")
