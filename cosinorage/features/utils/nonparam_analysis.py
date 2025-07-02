@@ -73,23 +73,23 @@ def IS(data: pd.Series) -> float:
     if len(data) == 0:
         return np.nan
 
-    data_ = data.copy()[["ENMO"]]
+    data_ = data.copy()[["enmo"]]
     data_ = data_.resample("h").mean()
     data_["hour"] = data_.index.hour
 
     # Calculate key values
     H = 24  # Hours per day
     D = len(pd.unique(data_.index.date))  # Number of days
-    z_mean = data_["ENMO"].mean()  # Overall mean
+    z_mean = data_["enmo"].mean()  # Overall mean
 
     # Calculate hourly means across days
-    hourly_means = data_.groupby("hour")["ENMO"].mean()
+    hourly_means = data_.groupby("hour")["enmo"].mean()
 
     # Calculate numerator
     numerator = D * np.sum(np.power(hourly_means - z_mean, 2), axis=0)
 
     # Calculate denominator
-    denominator = np.sum(np.power(data_["ENMO"] - z_mean, 2), axis=0)
+    denominator = np.sum(np.power(data_["enmo"] - z_mean, 2), axis=0)
 
     if denominator == 0:
         return np.nan
@@ -147,7 +147,7 @@ def IV(data: pd.Series) -> float:
     if len(data) == 0:
         return np.nan
 
-    data_ = data.copy()[["ENMO"]]
+    data_ = data.copy()[["enmo"]]
     P = len(data_)
 
     # resample to hourly data
@@ -224,7 +224,7 @@ def M10(data: pd.Series) -> List[float]:
     if len(data) == 0:
         return [], []
 
-    data_ = data.copy()[["ENMO"]]
+    data_ = data.copy()[["enmo"]]
     daily_groups = data_.groupby(data_.index.date)
 
     m10 = []
@@ -301,7 +301,7 @@ def L5(data: pd.Series) -> List[float]:
     if len(data) == 0:
         return [], []
 
-    data_ = data.copy()[["ENMO"]]
+    data_ = data.copy()[["enmo"]]
     daily_groups = data_.groupby(data_.index.date)
 
     l5 = []

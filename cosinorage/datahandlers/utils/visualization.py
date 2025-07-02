@@ -81,7 +81,7 @@ def plot_orig_enmo(
     )
 
     plt.figure(figsize=(12, 6))
-    plt.plot(_data["timestamp"], _data["ENMO"], label="ENMO", color="black")
+    plt.plot(_data["timestamp"], _data["enmo"], label="ENMO", color="black")
 
     if wear:
         # Add color bands for wear and non-wear periods
@@ -136,28 +136,31 @@ def plot_enmo(handler) -> None:
     >>> plot_enmo(handler)
     """
     _data = handler.get_ml_data().reset_index(inplace=False)
+    
+    if "index" in _data.columns:
+        _data.rename(columns={"index": "timestamp"}, inplace=True)
 
     plt.figure(figsize=(12, 6))
-    plt.plot(_data["timestamp"], _data["ENMO"], label="ENMO", color="black")
+    plt.plot(_data["timestamp"], _data["enmo"], label="ENMO", color="black")
 
     if "wear" in _data.columns and _data["wear"].max() != -1:
         plt.fill_between(
             _data["timestamp"],
-            _data["wear"] * max(_data["ENMO"]) * 1.25,
+            _data["wear"] * max(_data["enmo"]) * 1.25,
             color="green",
             alpha=0.5,
             label="wear",
         )
         plt.fill_between(
             _data["timestamp"],
-            (1 - _data["wear"]) * max(_data["ENMO"]) * 1.25,
+            (1 - _data["wear"]) * max(_data["enmo"]) * 1.25,
             color="red",
             alpha=0.5,
             label="non-wear",
         )
         plt.legend()
 
-    plt.ylim(0, max(_data["ENMO"]) * 1.25)
+    plt.ylim(0, max(_data["enmo"]) * 1.25)
     plt.show()
 
 
@@ -199,7 +202,7 @@ def plot_orig_enmo_freq(acc_handler) -> None:
     >>> plot_orig_enmo_freq(handler)
     """
     # convert to frequency domain
-    f, Pxx = welch(acc_handler.get_sf_data()["ENMO"], fs=80, nperseg=1024)
+    f, Pxx = welch(acc_handler.get_sf_data()["enmo"], fs=80, nperseg=1024)
 
     plt.figure(figsize=(20, 5))
     plt.plot(f, Pxx)

@@ -354,7 +354,7 @@ def filter_and_preprocess_nhanes_data(
     _data[["x", "y", "z"]] = (
         _data[["x", "y", "z"]] / 9.81
     )  # convert from MIMS to aprrox. mg
-    _data["ENMO"] = (
+    _data["enmo"] = (
         calculate_enmo(_data) * 257
     )  # factor of 257 as a result of parameter tuning for making cosinorage predictions match
 

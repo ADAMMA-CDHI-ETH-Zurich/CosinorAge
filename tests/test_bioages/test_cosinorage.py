@@ -14,7 +14,7 @@ def create_mock_handler():
             time = np.linspace(0, 24, 1440)
             activity = 0.5 + 0.3 * np.cos(2 * np.pi * (time - 2) / 24)
             # Create DataFrame with required format
-            df = pd.DataFrame({"ENMO": activity}, index=index)
+            df = pd.DataFrame({"enmo": activity}, index=index)
             return df
 
     return MockHandler()

@@ -68,7 +68,7 @@ def test_filter_ukb_data():
         start="2020-01-01", end="2020-01-07 23:59:00", freq="1min"
     )
     data = pd.DataFrame(
-        index=dates, data={"ENMO": np.random.random(len(dates))}
+        index=dates, data={"enmo": np.random.random(len(dates))}
     )
 
     # Keep all data points to ensure we have complete days
@@ -87,7 +87,7 @@ def test_resample_ukb_data():
     # Create sample data with irregular timestamps
     dates = pd.date_range(start="2020-01-01", periods=100, freq="90s")
     data = pd.DataFrame(
-        index=dates, data={"ENMO": np.random.random(len(dates))}
+        index=dates, data={"enmo": np.random.random(len(dates))}
     )
 
     resampled_data = resample_ukb_data(data)
@@ -105,7 +105,7 @@ def test_filter_ukb_data_consecutive_days():
         start="2020-01-01", end="2020-01-07 23:59:00", freq="1min"
     )
     data = pd.DataFrame(
-        index=dates, data={"ENMO": np.random.random(len(dates))}
+        index=dates, data={"enmo": np.random.random(len(dates))}
     )
 
     filtered_data = filter_ukb_data(data)
@@ -123,9 +123,9 @@ def test_resample_ukb_data_missing_values():
     # Create sample data with missing values
     dates = pd.date_range(start="2020-01-01", periods=100, freq="1min")
     data = pd.DataFrame(
-        index=dates, data={"ENMO": np.random.random(len(dates))}
+        index=dates, data={"enmo": np.random.random(len(dates))}
     )
-    data.loc[data.index[10:20], "ENMO"] = np.nan
+    data.loc[data.index[10:20], "enmo"] = np.nan
 
     resampled_data = resample_ukb_data(data)
 

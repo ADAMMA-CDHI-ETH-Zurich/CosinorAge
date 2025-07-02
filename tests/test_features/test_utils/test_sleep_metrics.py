@@ -15,7 +15,7 @@ def sample_data():
     )
 
     df = pd.DataFrame(index=dates)
-    df["ENMO"] = np.random.random(len(dates)) * 0.1  # Random ENMO values
+    df["enmo"] = np.random.random(len(dates)) * 0.1  # Random ENMO values
     return df
 
 

@@ -8,7 +8,7 @@ from cosinorage.features.utils.physical_activity_metrics import \
 
 def test_activity_metrics_empty_data():
     """Test behavior with empty input data"""
-    empty_df = pd.DataFrame(columns=["ENMO"])
+    empty_df = pd.DataFrame(columns=["enmo"])
     result = activity_metrics(empty_df)
     assert result == ([], [], [], [])
 
@@ -24,7 +24,7 @@ def test_activity_metrics_single_day():
     values[720:1080] = 0.5  # Vigorous activity (x > 0.4)
     values[1080:] = 0.02  # Sedentary (x ≤ 0.03)
 
-    data = pd.DataFrame({"ENMO": values}, index=dates)
+    data = pd.DataFrame({"enmo": values}, index=dates)
 
     sed, light, mod, vig = activity_metrics(data)
 
@@ -38,7 +38,7 @@ def test_activity_metrics_multiple_days():
     """Test calculation for multiple days"""
     dates = pd.date_range("2023-01-01", periods=4320, freq="min")  # 3 days
     values = np.ones(4320) * 0.05  # All light activity
-    data = pd.DataFrame({"ENMO": values}, index=dates)
+    data = pd.DataFrame({"enmo": values}, index=dates)
 
     sed, light, mod, vig = activity_metrics(data)
 
@@ -56,7 +56,7 @@ def test_activity_metrics_custom_cutpoints():
     """Test with custom cutpoint values"""
     dates = pd.date_range("2023-01-01", periods=1440, freq="min")
     values = np.ones(1440) * 0.2
-    data = pd.DataFrame({"ENMO": values}, index=dates)
+    data = pd.DataFrame({"enmo": values}, index=dates)
 
     custom_cutpoints = {"sl": 0.1, "lm": 0.3, "mv": 0.5}
 
@@ -74,7 +74,7 @@ def test_activity_metrics_cutpoints_behavior():
     """Test behavior with different cutpoint configurations"""
     dates = pd.date_range("2023-01-01", periods=1440, freq="min")
     values = np.ones(1440) * 0.2
-    data = pd.DataFrame({"ENMO": values}, index=dates)
+    data = pd.DataFrame({"enmo": values}, index=dates)
 
     # Test with empty cutpoints - should use defaults
     empty_cutpoints = {}
@@ -125,7 +125,7 @@ def test_activity_metrics_invalid_data_format():
     """Test behavior with invalid data format"""
     dates = pd.date_range("2023-01-01", periods=1440, freq="min")
     values = np.ones(1440) * 0.2
-    data = pd.DataFrame({"wrong_name": values}, index=dates)
+    data = pd.DataFrame({"enmo": values}, index=dates)
 
     with pytest.raises(KeyError):
         activity_metrics(data)

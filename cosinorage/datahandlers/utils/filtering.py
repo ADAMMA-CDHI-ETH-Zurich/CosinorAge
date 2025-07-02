@@ -126,13 +126,13 @@ def filter_consecutive_days(df: pd.DataFrame) -> pd.DataFrame:
     Raises
     ------
     ValueError
-        If less than 4 consecutive days are found in the data.
+        If less than 2 consecutive days are found in the data.
 
     Notes
     -----
     - Extracts unique dates from the datetime index
     - Finds the longest consecutive sequence using largest_consecutive_sequence
-    - Requires at least 4 consecutive days for valid analysis
+    - Requires at least 2 consecutive days for valid analysis
     - Filters the DataFrame to include only data from consecutive days
     - Important for circadian rhythm analysis which requires continuous data
 
@@ -153,8 +153,8 @@ def filter_consecutive_days(df: pd.DataFrame) -> pd.DataFrame:
     days = np.unique(df.index.date)
     days = largest_consecutive_sequence(days)
 
-    if len(days) < 4:
-        raise ValueError("Less than 4 consecutive days found")
+    if len(days) < 2:
+        raise ValueError("Less than 2 consecutive days found")
 
     df = df[pd.Index(df.index.date).isin(days)]
     return df

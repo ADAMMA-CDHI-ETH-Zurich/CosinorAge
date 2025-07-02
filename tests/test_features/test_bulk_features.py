@@ -71,20 +71,20 @@ class TestBulkWearableFeatures(unittest.TestCase):
             0.01, circadian_pattern + activity_burst + noise
         )  # avoid zeros/NaNs
 
-        self.sample_data = pd.DataFrame({"ENMO": enmo}, index=timestamps)
+        self.sample_data = pd.DataFrame({"enmo": enmo}, index=timestamps)
 
         # Create multiple handlers
         self.handlers = []
         for i in range(3):
             # Create slightly different data for each handler
             data = self.sample_data.copy()
-            data["ENMO"] = data["ENMO"] * (0.9 + 0.2 * np.random.random())
+            data["enmo"] = data["enmo"] * (0.9 + 0.2 * np.random.random())
             handler = MockDataHandler(data)
             self.handlers.append(handler)
         # Patch apply_sleep_wake_predictions to return a valid binary array
         patcher = patch(
             "cosinorage.features.utils.sleep_metrics.apply_sleep_wake_predictions",
-            lambda df, sleep_params=None: (df["ENMO"] < 0.4).astype(int),
+            lambda df, sleep_params=None: (df["enmo"] < 0.4).astype(int),
         )
         self.sleep_patch = patcher.start()
         self.addCleanup(patcher.stop)

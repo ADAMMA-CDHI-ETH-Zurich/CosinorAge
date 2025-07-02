@@ -105,7 +105,7 @@ def read_galaxy_csv_data(
     column_mapping = {time_column: "timestamp"}
     for i, col in enumerate(data_columns):
         if i == 0:  # First column should be ENMO
-            column_mapping[col] = "ENMO"
+            column_mapping[col] = "enmo"
 
     data = data.rename(columns=column_mapping)
 

@@ -64,7 +64,7 @@ class TestGenericUtils:
 
             # Check that the result is a DataFrame with correct structure
             assert isinstance(result, pd.DataFrame)
-            assert "ENMO" in result.columns
+            assert "enmo" in result.columns
             assert result.index.name == "timestamp"
             assert len(result) == 100
 
@@ -124,7 +124,7 @@ class TestGenericUtils:
 
             # Check that the result is a DataFrame with correct structure
             assert isinstance(result, pd.DataFrame)
-            assert "ENMO" in result.columns
+            assert "enmo" in result.columns
             assert result.index.name == "timestamp"
             assert len(result) == 100
 
@@ -147,7 +147,7 @@ class TestGenericUtils:
 
             # Check that the result is a DataFrame with correct structure
             assert isinstance(result, pd.DataFrame)
-            assert "ENMO" in result.columns
+            assert "enmo" in result.columns
             assert result.index.name == "timestamp"
             assert len(result) == 100
 
@@ -233,8 +233,8 @@ class TestGenericUtils:
             )
 
             # Check that missing values were filled with 0
-            assert not result["ENMO"].isna().any()
-            assert (result["ENMO"] == 0).sum() == 2
+            assert not result["enmo"].isna().any()
+            assert (result["enmo"] == 0).sum() == 2
 
     def test_read_generic_xD_timestamp_processing(self, tmp_path):
         """Test read_generic_xD correctly processes timestamps"""
@@ -329,7 +329,7 @@ class TestGenericUtils:
             )
 
             # Check that columns were correctly mapped
-            assert "ENMO" in result.columns
+            assert "enmo" in result.columns
             assert result.index.name == "timestamp"
             assert len(result) == 10
 

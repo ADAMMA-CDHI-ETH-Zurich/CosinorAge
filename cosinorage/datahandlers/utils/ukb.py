@@ -255,16 +255,16 @@ def read_ukb_data(
 
     data = data[["date_time", "enmo_mg"]]
     data.rename(
-        columns={"enmo_mg": "ENMO", "date_time": "timestamp"}, inplace=True
+        columns={"enmo_mg": "enmo", "date_time": "timestamp"}, inplace=True
     )
     data.set_index("timestamp", inplace=True)
     data.sort_index(inplace=True)
 
     # rescale ENMO to g - should be /1000 however value range suggests that /100 is better to make it comparable with other sources
-    data["ENMO"] = data["ENMO"]
+    data["enmo"] = data["enmo"]
 
     # only keep ENMO >= 0.1 else 0
-    data["ENMO"] = data["ENMO"].apply(lambda x: x if x >= 0.1 else 0)
+    data["enmo"] = data["enmo"].apply(lambda x: x if x >= 0.1 else 0)
 
     meta_dict["raw_n_datapoints"] = data.shape[0]
     meta_dict["raw_start_datetime"] = data.index.min()
@@ -278,7 +278,7 @@ def read_ukb_data(
             f"Loaded {data.shape[0]} minute-level ENMO records from {enmo_file_dir}"
         )
 
-    return data[["ENMO"]]
+    return data[["enmo"]]
 
 
 def filter_ukb_data(
@@ -385,7 +385,8 @@ def resample_ukb_data(
     >>> # Create sample UK Biobank data with irregular intervals
     >>> dates = pd.to_datetime(['2023-01-01 00:00:00', '2023-01-01 00:01:30',
     ...                         '2023-01-01 00:03:00', '2023-01-01 00:04:30'])
-    >>> data = pd.DataFrame({'ENMO': [0.1, 0.2, 0.3, 0.4]}, index=dates)
+    >>> data = pd.DataFrame({
+    : [0.1, 0.2, 0.3, 0.4]}, index=dates)
     >>>
     >>> # Resample to minute level
     >>> meta_dict = {}

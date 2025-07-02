@@ -160,7 +160,7 @@ def calculate_minute_level_enmo(
 
     try:
         minute_level_enmo_df = (
-            data["ENMO"].resample("min").mean().to_frame(name="ENMO")
+            data["enmo"].resample("min").mean().to_frame(name="enmo")
         )
         # check if data has a wear column
         if "wear" in data.columns:

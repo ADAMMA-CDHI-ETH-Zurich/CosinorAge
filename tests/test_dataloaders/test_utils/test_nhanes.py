@@ -25,7 +25,7 @@ def sample_nhanes_df():
         "wear": np.ones(len(index)),
         "sleep": np.zeros(len(index)),
         "paxpredm": np.ones(len(index)),
-        "ENMO": np.random.uniform(0, 1, len(index)),
+        "enmo": np.random.uniform(0, 1, len(index)),
     }
     return pd.DataFrame(data, index=index)
 
@@ -168,7 +168,7 @@ def test_filter_and_preprocess_nhanes_data(sample_nhanes_df):
     )
 
     assert isinstance(result, pd.DataFrame)
-    assert "ENMO" in result.columns
+    assert "enmo" in result.columns
     assert "n_days" in meta_dict
     assert all(col in result.columns for col in ["x_raw", "y_raw", "z_raw"])
     # Check MIMS to mg conversion

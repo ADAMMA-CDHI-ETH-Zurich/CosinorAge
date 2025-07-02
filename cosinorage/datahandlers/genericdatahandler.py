@@ -110,8 +110,8 @@ class GenericDataHandler(DataHandler):
         self,
         file_path: str,
         data_format: str = "csv",
-        data_type: str = "accelerometer",
-        time_format: str = "unix",
+        data_type: str = "accelerometer-mg",
+        time_format: str = "unix-ms",
         time_column: str = "timestamp",
         data_columns: Optional[list] = None,
         preprocess_args: dict = {},
@@ -123,23 +123,23 @@ class GenericDataHandler(DataHandler):
         if data_format not in ["csv"]:
             raise ValueError("Data format must be either 'csv'")
 
-        if data_type not in ["enmo", "accelerometer", "alternative_count"]:
+        if data_type not in ["enmo-mg", "enmo-g", "accelerometer-mg", "accelerometer-g", "accelerometer-ms2", "alternative_count"]:
             raise ValueError(
-                "Data type must be either 'enmo', 'accelerometer' or 'alternative_count'"
+                "Data type must be either 'enmo-mg', 'enmo-g', 'accelerometer-mg', 'accelerometer-g', 'accelerometer-ms2' or 'alternative_count'"
             )
 
-        if time_format not in ["unix", "datetime"]:
-            raise ValueError("time_format must be either 'unix' or 'datetime'")
+        if time_format not in ["unix-ms", "unix-s", "datetime"]:
+            raise ValueError("time_format must be either 'unix-ms', 'unix-s' or 'datetime'")
 
-        if data_type == "enmo":
+        if data_type in ["enmo-mg", "enmo-g"]:
             default_data_columns = ["enmo"]
-        elif data_type == "accelerometer":
+        elif data_type in ["accelerometer-mg", "accelerometer-g", "accelerometer-ms2"]:
             default_data_columns = ["x", "y", "z"]
         elif data_type == "alternative_count":
             default_data_columns = ["counts"]
         else:
             raise ValueError(
-                "Data type must be either 'enmo', 'accelerometer' or 'alternative_count'"
+                "Data type must be either 'enmo-mg', 'enmo-g', 'accelerometer-mg', 'accelerometer-g', 'accelerometer-ms2' or 'alternative_count'"
             )
 
         self.file_path = file_path
@@ -157,10 +157,10 @@ class GenericDataHandler(DataHandler):
         self.meta_dict["time_format"] = time_format
         self.meta_dict["raw_data_type"] = (
             "ENMO"
-            if data_type == "enmo"
+            if data_type in ["enmo-mg", "enmo-g"]
             else (
                 "Accelerometer"
-                if data_type == "accelerometer"
+                if data_type in ["accelerometer-mg", "accelerometer-g", "accelerometer-ms2"]
                 else (
                     "Alternative Count"
                     if data_type == "alternative_count"
@@ -177,7 +177,7 @@ class GenericDataHandler(DataHandler):
     def __load_data(self, verbose: bool = False):
         if self.data_format == "csv":
             # Determine number of dimensions based on data type
-            n_dimensions = 3 if self.data_type == "accelerometer" else 1
+            n_dimensions = 3 if self.data_type in ["accelerometer-mg", "accelerometer-g", "accelerometer-ms2"] else 1
 
             # Load and process data
             self.raw_data = read_generic_xD_data(
@@ -197,18 +197,15 @@ class GenericDataHandler(DataHandler):
                 verbose=verbose,
                 preprocess_args=self.preprocess_args,
             )
-            self.sf_data = resample_generic_data(
+            self.ml_data = resample_generic_data(
                 self.sf_data, self.data_type, self.meta_dict, verbose=verbose
             )
-            self.sf_data = preprocess_generic_data(
-                self.sf_data,
+            self.ml_data = preprocess_generic_data(
+                self.ml_data,
                 self.data_type,
                 preprocess_args=self.preprocess_args,
                 meta_dict=self.meta_dict,
                 verbose=verbose,
-            )
-            self.ml_data = calculate_minute_level_enmo(
-                self.sf_data, self.meta_dict, verbose=verbose
             )
         else:
             raise ValueError("Data format must be either 'csv'")

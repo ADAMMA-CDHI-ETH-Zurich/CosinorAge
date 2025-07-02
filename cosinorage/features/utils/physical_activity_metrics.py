@@ -101,7 +101,7 @@ def activity_metrics(
     if data.empty:
         return [], [], [], []
 
-    data_ = data.copy()[["ENMO"]]
+    data_ = data.copy()[["enmo"]]
 
     if "sl" not in cutpoints and "pa_cutpoint_sl" not in cutpoints:
         raise ValueError(
@@ -129,13 +129,13 @@ def activity_metrics(
     mv = pa_params.get("pa_cutpoint_mv", cutpoints.get("mv"))
 
     for date, day_data in daily_groups:
-        sedentary_minutes.append(int((day_data["ENMO"] <= sl).sum()))
+        sedentary_minutes.append(int((day_data["enmo"] <= sl).sum()))
         light_minutes.append(
-            int(((day_data["ENMO"] > sl) & (day_data["ENMO"] <= lm)).sum())
+            int(((day_data["enmo"] > sl) & (day_data["enmo"] <= lm)).sum())
         )
         moderate_minutes.append(
-            int(((day_data["ENMO"] > lm) & (day_data["ENMO"] <= mv)).sum())
+            int(((day_data["enmo"] > lm) & (day_data["enmo"] <= mv)).sum())
         )
-        vigorous_minutes.append(int((day_data["ENMO"] > mv).sum()))
+        vigorous_minutes.append(int((day_data["enmo"] > mv).sum()))
 
     return sedentary_minutes, light_minutes, moderate_minutes, vigorous_minutes
