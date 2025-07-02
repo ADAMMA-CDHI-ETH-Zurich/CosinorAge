@@ -12,123 +12,108 @@ class TestGenericDataHandler:
 
     def test_init_enmo_data_type(self):
         """Test initialization with ENMO data type."""
-        with patch('cosinorage.datahandlers.genericdatahandler.read_generic_xD') as mock_read:
-            with patch('cosinorage.datahandlers.genericdatahandler.filter_galaxy_csv_data', side_effect=lambda df, *a, **kw: df) as mock_filter:
-                with patch('cosinorage.datahandlers.genericdatahandler.resample_galaxy_csv_data') as mock_resample:
-                    with patch('cosinorage.datahandlers.genericdatahandler.preprocess_galaxy_csv_data') as mock_preprocess:
-                        with patch('cosinorage.datahandlers.genericdatahandler.calculate_minute_level_enmo') as mock_calc:
-                            mock_df = pd.DataFrame({
-                                'TIMESTAMP': pd.date_range('2024-01-01', periods=4*1440, freq='1min'),
-                                'ENMO': np.random.rand(4*1440)
-                            }).set_index('TIMESTAMP')
-                            mock_read.return_value = mock_df
-                            mock_resample.return_value = mock_df
-                            mock_preprocess.return_value = mock_df
-                            mock_calc.return_value = mock_df
+        with patch('cosinorage.datahandlers.genericdatahandler.read_generic_xD_data') as mock_read:
+            with patch('cosinorage.datahandlers.genericdatahandler.filter_generic_data', side_effect=lambda df, *a, **kw: df) as mock_filter:
+                with patch('cosinorage.datahandlers.genericdatahandler.resample_generic_data') as mock_resample:
+                    with patch('cosinorage.datahandlers.genericdatahandler.preprocess_generic_data') as mock_preprocess:
+                        with patch('cosinorage.datahandlers.genericdatahandler.calculate_minute_level_enmo') as mock_enmo:
+                            mock_read.return_value = pd.DataFrame({'enmo': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            mock_resample.return_value = pd.DataFrame({'enmo': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            mock_preprocess.return_value = pd.DataFrame({'enmo': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            mock_enmo.return_value = pd.DataFrame({'enmo': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            
                             handler = GenericDataHandler(
                                 file_path='/dummy/path.csv',
-                                data_format='csv',
-                                data_type='enmo',
-                                data_columns=['enmo']
+                                data_type='enmo'
                             )
+                            
+                            assert handler.data_type == 'enmo'
+                            assert handler.data_columns == ['enmo']
                             mock_read.assert_called_once()
                             mock_filter.assert_called_once()
                             mock_resample.assert_called_once()
                             mock_preprocess.assert_called_once()
-                            mock_calc.assert_called_once()
-                            assert handler.raw_data is not None
-                            assert handler.sf_data is not None
-                            assert handler.ml_data is not None
+                            mock_enmo.assert_called_once()
 
     def test_init_accelerometer_data_type(self):
         """Test initialization with accelerometer data type."""
-        with patch('cosinorage.datahandlers.genericdatahandler.read_generic_xD') as mock_read:
-            with patch('cosinorage.datahandlers.genericdatahandler.filter_galaxy_binary_data', side_effect=lambda df, *a, **kw: df) as mock_filter:
-                with patch('cosinorage.datahandlers.genericdatahandler.resample_galaxy_binary_data') as mock_resample:
-                    with patch('cosinorage.datahandlers.genericdatahandler.preprocess_galaxy_binary_data') as mock_preprocess:
-                        with patch('cosinorage.datahandlers.genericdatahandler.calculate_minute_level_enmo') as mock_calc:
-                            mock_df = pd.DataFrame({
-                                'TIMESTAMP': pd.date_range('2024-01-01', periods=4*1440, freq='1min'),
-                                'ENMO': np.random.rand(4*1440)
-                            }).set_index('TIMESTAMP')
-                            mock_read.return_value = mock_df
-                            mock_resample.return_value = mock_df
-                            mock_preprocess.return_value = mock_df
-                            mock_calc.return_value = mock_df
+        with patch('cosinorage.datahandlers.genericdatahandler.read_generic_xD_data') as mock_read:
+            with patch('cosinorage.datahandlers.genericdatahandler.filter_generic_data', side_effect=lambda df, *a, **kw: df) as mock_filter:
+                with patch('cosinorage.datahandlers.genericdatahandler.resample_generic_data') as mock_resample:
+                    with patch('cosinorage.datahandlers.genericdatahandler.preprocess_generic_data') as mock_preprocess:
+                        with patch('cosinorage.datahandlers.genericdatahandler.calculate_minute_level_enmo') as mock_enmo:
+                            mock_read.return_value = pd.DataFrame({'x': [1, 2, 3], 'y': [1, 2, 3], 'z': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            mock_resample.return_value = pd.DataFrame({'x': [1, 2, 3], 'y': [1, 2, 3], 'z': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            mock_preprocess.return_value = pd.DataFrame({'x': [1, 2, 3], 'y': [1, 2, 3], 'z': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            mock_enmo.return_value = pd.DataFrame({'enmo': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            
                             handler = GenericDataHandler(
                                 file_path='/dummy/path.csv',
-                                data_format='csv',
-                                data_type='accelerometer',
-                                data_columns=['x', 'y', 'z']
+                                data_type='accelerometer'
                             )
+                            
+                            assert handler.data_type == 'accelerometer'
+                            assert handler.data_columns == ['x', 'y', 'z']
                             mock_read.assert_called_once()
                             mock_filter.assert_called_once()
                             mock_resample.assert_called_once()
                             mock_preprocess.assert_called_once()
-                            mock_calc.assert_called_once()
-                            assert handler.raw_data is not None
-                            assert handler.sf_data is not None
-                            assert handler.ml_data is not None
+                            mock_enmo.assert_called_once()
 
     def test_init_alternative_count_data_type(self):
         """Test initialization with alternative count data type."""
-        with patch('cosinorage.datahandlers.genericdatahandler.read_generic_xD') as mock_read:
-            with patch('cosinorage.datahandlers.genericdatahandler.filter_galaxy_csv_data', side_effect=lambda df, *a, **kw: df) as mock_filter:
-                with patch('cosinorage.datahandlers.genericdatahandler.resample_galaxy_csv_data') as mock_resample:
-                    with patch('cosinorage.datahandlers.genericdatahandler.preprocess_galaxy_csv_data') as mock_preprocess:
-                        with patch('cosinorage.datahandlers.genericdatahandler.calculate_minute_level_enmo') as mock_calc:
-                            mock_df = pd.DataFrame({
-                                'TIMESTAMP': pd.date_range('2024-01-01', periods=4*1440, freq='1min'),
-                                'ENMO': np.random.rand(4*1440)
-                            }).set_index('TIMESTAMP')
-                            mock_read.return_value = mock_df
-                            mock_resample.return_value = mock_df
-                            mock_preprocess.return_value = mock_df
-                            mock_calc.return_value = mock_df
+        with patch('cosinorage.datahandlers.genericdatahandler.read_generic_xD_data') as mock_read:
+            with patch('cosinorage.datahandlers.genericdatahandler.filter_generic_data', side_effect=lambda df, *a, **kw: df) as mock_filter:
+                with patch('cosinorage.datahandlers.genericdatahandler.resample_generic_data') as mock_resample:
+                    with patch('cosinorage.datahandlers.genericdatahandler.preprocess_generic_data') as mock_preprocess:
+                        with patch('cosinorage.datahandlers.genericdatahandler.calculate_minute_level_enmo') as mock_enmo:
+                            mock_read.return_value = pd.DataFrame({'counts': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            mock_resample.return_value = pd.DataFrame({'counts': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            mock_preprocess.return_value = pd.DataFrame({'counts': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            mock_enmo.return_value = pd.DataFrame({'enmo': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            
                             handler = GenericDataHandler(
                                 file_path='/dummy/path.csv',
-                                data_format='csv',
-                                data_type='alternative_count',
-                                data_columns=['counts']
+                                data_type='alternative_count'
                             )
+                            
+                            assert handler.data_type == 'alternative_count'
+                            assert handler.data_columns == ['counts']
                             mock_read.assert_called_once()
                             mock_filter.assert_called_once()
                             mock_resample.assert_called_once()
                             mock_preprocess.assert_called_once()
-                            mock_calc.assert_called_once()
-                            assert handler.raw_data is not None
-                            assert handler.sf_data is not None
-                            assert handler.ml_data is not None
+                            mock_enmo.assert_called_once()
 
     def test_init_custom_parameters(self):
         """Test initialization with custom parameters."""
-        with patch('cosinorage.datahandlers.genericdatahandler.read_generic_xD') as mock_read:
-            with patch('cosinorage.datahandlers.genericdatahandler.filter_galaxy_csv_data', side_effect=lambda df, *a, **kw: df) as mock_filter:
-                with patch('cosinorage.datahandlers.genericdatahandler.resample_galaxy_csv_data') as mock_resample:
-                    with patch('cosinorage.datahandlers.genericdatahandler.preprocess_galaxy_csv_data') as mock_preprocess:
-                        with patch('cosinorage.datahandlers.genericdatahandler.calculate_minute_level_enmo') as mock_calc:
-                            mock_df = pd.DataFrame({
-                                'TIMESTAMP': pd.date_range('2024-01-01', periods=4*1440, freq='1min'),
-                                'ENMO': np.random.rand(4*1440)
-                            }).set_index('TIMESTAMP')
-                            mock_read.return_value = mock_df
-                            mock_resample.return_value = mock_df
-                            mock_preprocess.return_value = mock_df
-                            mock_calc.return_value = mock_df
+        with patch('cosinorage.datahandlers.genericdatahandler.read_generic_xD_data') as mock_read:
+            with patch('cosinorage.datahandlers.genericdatahandler.filter_generic_data', side_effect=lambda df, *a, **kw: df) as mock_filter:
+                with patch('cosinorage.datahandlers.genericdatahandler.resample_generic_data') as mock_resample:
+                    with patch('cosinorage.datahandlers.genericdatahandler.preprocess_generic_data') as mock_preprocess:
+                        with patch('cosinorage.datahandlers.genericdatahandler.calculate_minute_level_enmo') as mock_enmo:
+                            mock_read.return_value = pd.DataFrame({'enmo': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            mock_resample.return_value = pd.DataFrame({'enmo': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            mock_preprocess.return_value = pd.DataFrame({'enmo': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            mock_enmo.return_value = pd.DataFrame({'enmo': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            
                             handler = GenericDataHandler(
-                                file_path='/custom/path.csv',
-                                data_format='csv',
+                                file_path='/dummy/path.csv',
                                 data_type='enmo',
                                 time_column='custom_time',
                                 data_columns=['custom_enmo'],
-                                preprocess_args={'custom_param': 'value'}
+                                preprocess_args={'test_param': 'test_value'},
+                                verbose=True
                             )
-                            assert handler.file_path == '/custom/path.csv'
-                            assert handler.data_format == 'csv'
-                            assert handler.data_type == 'enmo'
+                            
                             assert handler.time_column == 'custom_time'
                             assert handler.data_columns == ['custom_enmo']
-                            assert handler.preprocess_args == {'custom_param': 'value'}
+                            assert handler.preprocess_args == {'test_param': 'test_value'}
+                            mock_read.assert_called_once()
+                            mock_filter.assert_called_once()
+                            mock_resample.assert_called_once()
+                            mock_preprocess.assert_called_once()
+                            mock_enmo.assert_called_once()
 
     def test_init_invalid_data_format(self):
         """Test initialization with invalid data format."""
@@ -160,135 +145,110 @@ class TestGenericDataHandler:
 
     def test_load_data_enmo_flow(self):
         """Test the complete data loading flow for ENMO data."""
-        with patch('cosinorage.datahandlers.genericdatahandler.read_generic_xD') as mock_read:
-            with patch('cosinorage.datahandlers.genericdatahandler.filter_galaxy_csv_data', side_effect=lambda df, *a, **kw: df) as mock_filter:
-                with patch('cosinorage.datahandlers.genericdatahandler.resample_galaxy_csv_data') as mock_resample:
-                    with patch('cosinorage.datahandlers.genericdatahandler.preprocess_galaxy_csv_data') as mock_preprocess:
-                        with patch('cosinorage.datahandlers.genericdatahandler.calculate_minute_level_enmo') as mock_calc:
-                            mock_df = pd.DataFrame({
-                                'TIMESTAMP': pd.date_range('2024-01-01', periods=4*1440, freq='1min'),
-                                'ENMO': np.random.rand(4*1440)
-                            }).set_index('TIMESTAMP')
-                            mock_read.return_value = mock_df
-                            mock_resample.return_value = mock_df
-                            mock_preprocess.return_value = mock_df
-                            mock_calc.return_value = mock_df
+        with patch('cosinorage.datahandlers.genericdatahandler.read_generic_xD_data') as mock_read:
+            with patch('cosinorage.datahandlers.genericdatahandler.filter_generic_data', side_effect=lambda df, *a, **kw: df) as mock_filter:
+                with patch('cosinorage.datahandlers.genericdatahandler.resample_generic_data') as mock_resample:
+                    with patch('cosinorage.datahandlers.genericdatahandler.preprocess_generic_data') as mock_preprocess:
+                        with patch('cosinorage.datahandlers.genericdatahandler.calculate_minute_level_enmo') as mock_enmo:
+                            mock_read.return_value = pd.DataFrame({'enmo': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            mock_resample.return_value = pd.DataFrame({'enmo': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            mock_preprocess.return_value = pd.DataFrame({'enmo': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            mock_enmo.return_value = pd.DataFrame({'enmo': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            
                             handler = GenericDataHandler(
                                 file_path='/dummy/path.csv',
-                                data_format='csv',
-                                data_type='enmo',
-                                data_columns=['enmo']
+                                data_type='enmo'
                             )
-                            assert mock_read.called
-                            assert mock_filter.called
-                            assert mock_resample.called
-                            assert mock_preprocess.called
-                            assert mock_calc.called
+                            
+                            # Check that all processing steps were called
+                            mock_read.assert_called_once()
+                            mock_filter.assert_called_once()
+                            mock_resample.assert_called_once()
+                            mock_preprocess.assert_called_once()
+                            mock_enmo.assert_called_once()
+                            
+                            # Check that data was properly set
                             assert handler.raw_data is not None
                             assert handler.sf_data is not None
                             assert handler.ml_data is not None
 
     def test_load_data_accelerometer_flow(self):
         """Test the complete data loading flow for accelerometer data."""
-        with patch('cosinorage.datahandlers.genericdatahandler.read_generic_xD') as mock_read:
-            with patch('cosinorage.datahandlers.genericdatahandler.filter_galaxy_binary_data', side_effect=lambda df, *a, **kw: df) as mock_filter:
-                with patch('cosinorage.datahandlers.genericdatahandler.resample_galaxy_binary_data') as mock_resample:
-                    with patch('cosinorage.datahandlers.genericdatahandler.preprocess_galaxy_binary_data') as mock_preprocess:
-                        with patch('cosinorage.datahandlers.genericdatahandler.calculate_minute_level_enmo') as mock_calc:
-                            mock_df = pd.DataFrame({
-                                'TIMESTAMP': pd.date_range('2024-01-01', periods=4*1440, freq='1min'),
-                                'ENMO': np.random.rand(4*1440)
-                            }).set_index('TIMESTAMP')
-                            mock_read.return_value = mock_df
-                            mock_resample.return_value = mock_df
-                            mock_preprocess.return_value = mock_df
-                            mock_calc.return_value = mock_df
+        with patch('cosinorage.datahandlers.genericdatahandler.read_generic_xD_data') as mock_read:
+            with patch('cosinorage.datahandlers.genericdatahandler.filter_generic_data', side_effect=lambda df, *a, **kw: df) as mock_filter:
+                with patch('cosinorage.datahandlers.genericdatahandler.resample_generic_data') as mock_resample:
+                    with patch('cosinorage.datahandlers.genericdatahandler.preprocess_generic_data') as mock_preprocess:
+                        with patch('cosinorage.datahandlers.genericdatahandler.calculate_minute_level_enmo') as mock_enmo:
+                            mock_read.return_value = pd.DataFrame({'x': [1, 2, 3], 'y': [1, 2, 3], 'z': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            mock_resample.return_value = pd.DataFrame({'x': [1, 2, 3], 'y': [1, 2, 3], 'z': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            mock_preprocess.return_value = pd.DataFrame({'x': [1, 2, 3], 'y': [1, 2, 3], 'z': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            mock_enmo.return_value = pd.DataFrame({'enmo': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            
                             handler = GenericDataHandler(
                                 file_path='/dummy/path.csv',
-                                data_format='csv',
-                                data_type='accelerometer',
-                                data_columns=['x', 'y', 'z']
+                                data_type='accelerometer'
                             )
-                            assert mock_read.called
-                            assert mock_filter.called
-                            assert mock_resample.called
-                            assert mock_preprocess.called
-                            assert mock_calc.called
+                            
+                            # Check that all processing steps were called
+                            mock_read.assert_called_once()
+                            mock_filter.assert_called_once()
+                            mock_resample.assert_called_once()
+                            mock_preprocess.assert_called_once()
+                            mock_enmo.assert_called_once()
+                            
+                            # Check that data was properly set
                             assert handler.raw_data is not None
                             assert handler.sf_data is not None
                             assert handler.ml_data is not None
 
     def test_inheritance_from_datahandler(self):
         """Test that GenericDataHandler properly inherits from DataHandler."""
-        with patch('cosinorage.datahandlers.genericdatahandler.read_generic_xD') as mock_read:
-            with patch('cosinorage.datahandlers.genericdatahandler.filter_galaxy_csv_data', side_effect=lambda df, *a, **kw: df) as mock_filter:
-                with patch('cosinorage.datahandlers.genericdatahandler.resample_galaxy_csv_data') as mock_resample:
-                    with patch('cosinorage.datahandlers.genericdatahandler.preprocess_galaxy_csv_data') as mock_preprocess:
-                        with patch('cosinorage.datahandlers.genericdatahandler.calculate_minute_level_enmo') as mock_calc:
-                            mock_df = pd.DataFrame({
-                                'TIMESTAMP': pd.date_range('2024-01-01', periods=4*1440, freq='1min'),
-                                'ENMO': np.random.rand(4*1440)
-                            }).set_index('TIMESTAMP')
-                            mock_read.return_value = mock_df
-                            mock_resample.return_value = mock_df
-                            mock_preprocess.return_value = mock_df
-                            mock_calc.return_value = mock_df
+        with patch('cosinorage.datahandlers.genericdatahandler.read_generic_xD_data') as mock_read:
+            with patch('cosinorage.datahandlers.genericdatahandler.filter_generic_data', side_effect=lambda df, *a, **kw: df) as mock_filter:
+                with patch('cosinorage.datahandlers.genericdatahandler.resample_generic_data') as mock_resample:
+                    with patch('cosinorage.datahandlers.genericdatahandler.preprocess_generic_data') as mock_preprocess:
+                        with patch('cosinorage.datahandlers.genericdatahandler.calculate_minute_level_enmo') as mock_enmo:
+                            mock_read.return_value = pd.DataFrame({'enmo': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            mock_resample.return_value = pd.DataFrame({'enmo': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            mock_preprocess.return_value = pd.DataFrame({'enmo': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            mock_enmo.return_value = pd.DataFrame({'enmo': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            
                             handler = GenericDataHandler(
                                 file_path='/dummy/path.csv',
-                                data_format='csv',
-                                data_type='enmo',
-                                data_columns=['enmo']
+                                data_type='enmo'
                             )
+                            
+                            # Check inheritance
+                            from cosinorage.datahandlers.datahandler import DataHandler
+                            assert isinstance(handler, DataHandler)
+                            
+                            # Check that DataHandler methods are available
                             assert hasattr(handler, 'get_raw_data')
                             assert hasattr(handler, 'get_sf_data')
                             assert hasattr(handler, 'get_ml_data')
-                            assert hasattr(handler, 'get_meta_data')
-                            raw_data = handler.get_raw_data()
-                            sf_data = handler.get_sf_data()
-                            ml_data = handler.get_ml_data()
-                            meta_data = handler.get_meta_data()
-                            assert raw_data is not None
-                            assert sf_data is not None
-                            assert ml_data is not None
-                            assert meta_data is not None
 
     def test_metadata_population(self):
         """Test that metadata is properly populated during data loading."""
-        with patch('cosinorage.datahandlers.genericdatahandler.read_generic_xD') as mock_read:
-            with patch('cosinorage.datahandlers.genericdatahandler.filter_galaxy_csv_data', side_effect=lambda df, *a, **kw: df) as mock_filter:
-                with patch('cosinorage.datahandlers.genericdatahandler.resample_galaxy_csv_data') as mock_resample:
-                    with patch('cosinorage.datahandlers.genericdatahandler.preprocess_galaxy_csv_data') as mock_preprocess:
-                        with patch('cosinorage.datahandlers.genericdatahandler.calculate_minute_level_enmo') as mock_calc:
-                            mock_df = pd.DataFrame({
-                                'TIMESTAMP': pd.date_range('2024-01-01', periods=4*1440, freq='1min'),
-                                'ENMO': np.random.rand(4*1440)
-                            }).set_index('TIMESTAMP')
+        with patch('cosinorage.datahandlers.genericdatahandler.read_generic_xD_data') as mock_read:
+            with patch('cosinorage.datahandlers.genericdatahandler.filter_generic_data', side_effect=lambda df, *a, **kw: df) as mock_filter:
+                with patch('cosinorage.datahandlers.genericdatahandler.resample_generic_data') as mock_resample:
+                    with patch('cosinorage.datahandlers.genericdatahandler.preprocess_generic_data') as mock_preprocess:
+                        with patch('cosinorage.datahandlers.genericdatahandler.calculate_minute_level_enmo') as mock_enmo:
+                            mock_read.return_value = pd.DataFrame({'enmo': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            mock_resample.return_value = pd.DataFrame({'enmo': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            mock_preprocess.return_value = pd.DataFrame({'enmo': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
+                            mock_enmo.return_value = pd.DataFrame({'enmo': [1, 2, 3]}, index=pd.date_range('2024-01-01', periods=3, freq='1min'))
                             
-                            def mock_read_with_metadata(file_path, meta_dict, *args, **kwargs):
-                                meta_dict['raw_n_datapoints'] = mock_df.shape[0]
-                                meta_dict['raw_start_datetime'] = mock_df.index.min()
-                                meta_dict['raw_end_datetime'] = mock_df.index.max()
-                                meta_dict['sf'] = 1
-                                meta_dict['raw_data_frequency'] = '1Hz'
-                                meta_dict['raw_data_type'] = 'Counts'
-                                meta_dict['raw_data_unit'] = 'counts'
-                                return mock_df
-                            
-                            mock_read.side_effect = mock_read_with_metadata
-                            mock_resample.return_value = mock_df
-                            mock_preprocess.return_value = mock_df
-                            mock_calc.return_value = mock_df
                             handler = GenericDataHandler(
                                 file_path='/dummy/path.csv',
-                                data_format='csv',
                                 data_type='enmo',
                                 time_column='custom_time',
                                 data_columns=['custom_enmo']
                             )
-                            meta_data = handler.get_meta_data()
-                            assert 'raw_n_datapoints' in meta_data
-                            assert 'raw_start_datetime' in meta_data
-                            assert 'raw_end_datetime' in meta_data
-                            assert 'raw_data_frequency' in meta_data
-                            assert 'raw_data_type' in meta_data
-                            assert 'raw_data_unit' in meta_data 
+                            
+                            # Check metadata
+                            assert handler.meta_dict['datasource'] == 'Generic'
+                            assert handler.meta_dict['data_format'] == 'CSV'
+                            assert handler.meta_dict['raw_data_type'] == 'ENMO'
+                            assert handler.meta_dict['time_column'] == 'custom_time'
+                            assert handler.meta_dict['data_columns'] == ['custom_enmo'] 

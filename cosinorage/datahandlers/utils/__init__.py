@@ -21,6 +21,9 @@
 
 from .calc_enmo import *
 from .filtering import *
+from .calibration import *
+from .noise_removal import *
+from .wear_detection import *
 from .visualization import *
 from .ukb import *
 from .nhanes import *

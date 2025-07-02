@@ -23,13 +23,16 @@ import numpy as np
 import pandas as pd
 
 
-def calculate_enmo(data: pd.DataFrame, verbose: bool = False) -> pd.DataFrame:
+def calculate_enmo(
+    data: pd.DataFrame, 
+    verbose: bool = False
+) -> pd.DataFrame:
     """
     Calculate the Euclidean Norm Minus One (ENMO) metric from accelerometer data.
 
     Args:
         data (pd.DataFrame): DataFrame containing accelerometer data with columns
-            'X', 'Y', and 'Z' for accelerometer readings along the three axes.
+            'x', 'y', and 'z' for accelerometer readings along the three axes.
         verbose (bool, optional): If True, prints processing information. Defaults to False.
 
     Returns:
@@ -46,7 +49,7 @@ def calculate_enmo(data: pd.DataFrame, verbose: bool = False) -> pd.DataFrame:
         return pd.DataFrame()
 
     try:
-        _acc_vectors = data[['X', 'Y', 'Z']].values
+        _acc_vectors = data[['x', 'y', 'z']].values
         _enmo_vals = np.linalg.norm(_acc_vectors, axis=1) - 1
         _enmo_vals = np.maximum(_enmo_vals, 0)
     except Exception as e:
@@ -59,12 +62,16 @@ def calculate_enmo(data: pd.DataFrame, verbose: bool = False) -> pd.DataFrame:
     return _enmo_vals
 
 
-def calculate_minute_level_enmo(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+def calculate_minute_level_enmo(
+    data: pd.DataFrame, 
+    meta_dict: dict = {}, 
+    verbose: bool = False
+) -> pd.DataFrame:
     """
     Resample high-frequency ENMO data to minute-level by averaging over each minute.
 
     Args:
-        data (pd.DataFrame): DataFrame with 'TIMESTAMP' as index and 'ENMO' column 
+        data (pd.DataFrame): DataFrame with 'timestamp' as index and 'ENMO' column 
             containing high-frequency ENMO data. Optional 'wear' column for wear time.
 
     Returns:

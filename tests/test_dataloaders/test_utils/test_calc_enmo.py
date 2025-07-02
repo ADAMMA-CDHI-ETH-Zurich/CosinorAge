@@ -18,11 +18,11 @@ def test_calculate_enmo_normal_case():
     z_values = np.tile([0.8, 1.1, 0.6, -0.3, 1.2], 36)
     
     acc_data = pd.DataFrame({
-        'TIMESTAMP': timestamps,
-        'X': x_values,
-        'Y': y_values,
-        'Z': z_values
-    }).set_index('TIMESTAMP')
+        'timestamp': timestamps,
+        'x': x_values,
+        'y': y_values,
+        'z': z_values
+    }).set_index('timestamp')
     
     result = calculate_enmo(acc_data)
     
@@ -33,9 +33,9 @@ def test_calculate_enmo_normal_case():
 def test_calculate_enmo_all_zeros():
     # Test with all zeros (should return all zeros as ENMO)
     acc_data = pd.DataFrame({
-        'X': [0.0, 0.0, 0.0],
-        'Y': [0.0, 0.0, 0.0],
-        'Z': [0.0, 0.0, 0.0]
+        'x': [0.0, 0.0, 0.0],
+        'y': [0.0, 0.0, 0.0],
+        'z': [0.0, 0.0, 0.0]
     })
     result = calculate_enmo(acc_data)
     expected = np.array([0.0, 0.0, 0.0])
@@ -44,7 +44,7 @@ def test_calculate_enmo_all_zeros():
 def test_calculate_enmo_missing_columns():
     # Test error handling when columns are missing
     acc_data = pd.DataFrame({
-        'X': [0.5, 1.0],
+        'x': [0.5, 1.0],
         'Wrong_Column': [0.5, 0.0]
     })
     result = calculate_enmo(acc_data)
@@ -64,11 +64,11 @@ def test_calculate_minute_level_enmo_normal_case():
     z_values = np.tile([0.8, 1.1, 0.6, -0.3, 1.2], 36)
     
     acc_data = pd.DataFrame({
-        'TIMESTAMP': timestamps,
-        'X': x_values,
-        'Y': y_values,
-        'Z': z_values
-    }).set_index('TIMESTAMP')
+        'timestamp': timestamps,
+        'x': x_values,
+        'y': y_values,
+        'z': z_values
+    }).set_index('timestamp')
     
     result = calculate_enmo(acc_data)
     
@@ -79,9 +79,9 @@ def test_calculate_minute_level_enmo_normal_case():
 def test_calculate_minute_level_enmo_empty():
     # Test with empty DataFrame
     empty_df = pd.DataFrame({
-        'TIMESTAMP': pd.DatetimeIndex([]),
+        'timestamp': pd.DatetimeIndex([]),
         'ENMO': []
-    }).set_index('TIMESTAMP')
+    }).set_index('timestamp')
     
     meta_dict = {'sf': 25}  # Provide sampling frequency
     result = calculate_minute_level_enmo(empty_df, meta_dict=meta_dict)

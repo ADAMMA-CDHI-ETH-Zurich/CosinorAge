@@ -24,12 +24,18 @@ import os
 import numpy as np
 from datetime import datetime, timedelta
 from tqdm import tqdm
+from typing import Optional
 
 from .calc_enmo import calculate_enmo
 from .filtering import filter_incomplete_days, filter_consecutive_days
 
 
-def read_nhanes_data(file_dir: str, seqn: str = None, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+def read_nhanes_data(
+    file_dir: str, 
+    seqn: Optional[str] = None, 
+    meta_dict: dict = {}, 
+    verbose: bool = False
+) -> pd.DataFrame:
     """
     Read and process NHANES accelerometer data files for a specific person.
 
@@ -62,7 +68,7 @@ def read_nhanes_data(file_dir: str, seqn: str = None, meta_dict: dict = {}, verb
                     versions.append(version)
 
     if verbose:
-        print(f"Found {len(versions)} versions of NHANES data")
+        print(f"Found {len(versions)} versions of NHANES data: {versions}")
 
     if len(versions) == 0:
         raise ValueError(f"No valid versions of NHANES data found - this might be due to missing files. For each version we expect to find PAXDAY, PAXHD and PAXMIN files.")
@@ -153,7 +159,7 @@ def read_nhanes_data(file_dir: str, seqn: str = None, meta_dict: dict = {}, verb
     min_x = min_x[min_x['seqn'].isin(valid_days['seqn'])]
 
     min_x = min_x.rename(columns={
-        'paxmxm': 'X', 'paxmym': 'Y', 'paxmzm': 'Z', 'measure_time': 'TIMESTAMP', 
+        'paxmxm': 'x', 'paxmym': 'y', 'paxmzm': 'z', 'measure_time': 'timestamp', 
     })
 
     if verbose:
@@ -163,8 +169,8 @@ def read_nhanes_data(file_dir: str, seqn: str = None, meta_dict: dict = {}, verb
     min_x['wear'] = min_x['paxpredm'].astype(int).isin([1, 2]).astype(int)
     min_x['sleep'] = min_x['paxpredm'].astype(int).isin([2]).astype(int)
 
-    min_x.set_index('TIMESTAMP', inplace=True)
-    min_x = min_x[['X', 'Y', 'Z', 'wear', 'sleep', 'paxpredm']]
+    min_x.set_index('timestamp', inplace=True)
+    min_x = min_x[['x', 'y', 'z', 'wear', 'sleep', 'paxpredm']]
 
 
     meta_dict['raw_n_datapoints'] = min_x.shape[0]
@@ -179,7 +185,11 @@ def read_nhanes_data(file_dir: str, seqn: str = None, meta_dict: dict = {}, verb
 
     return min_x
 
-def filter_and_preprocess_nhanes_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+def filter_and_preprocess_nhanes_data(
+    data: pd.DataFrame, 
+    meta_dict: dict = {}, 
+    verbose: bool = False
+) -> pd.DataFrame:
     """
     Filter NHANES accelerometer data for incomplete days and non-consecutive sequences.
 
@@ -207,8 +217,8 @@ def filter_and_preprocess_nhanes_data(data: pd.DataFrame, meta_dict: dict = {}, 
 
     meta_dict['n_days'] = len(np.unique(_data.index.date))
 
-    _data[['X_raw', 'Y_raw', 'Z_raw']] = _data[['X', 'Y', 'Z']]
-    _data[['X', 'Y', 'Z']] = _data[['X', 'Y', 'Z']] / 9.81 # convert from MIMS to aprrox. mg 
+    _data[['x_raw', 'y_raw', 'z_raw']] = _data[['x', 'y', 'z']]
+    _data[['x', 'y', 'z']] = _data[['x', 'y', 'z']] / 9.81 # convert from MIMS to aprrox. mg 
     _data['ENMO'] = calculate_enmo(_data) * 257 # factor of 257 as a result of parameter tuning for making cosinorage predictions match
 
     if verbose:
@@ -216,7 +226,11 @@ def filter_and_preprocess_nhanes_data(data: pd.DataFrame, meta_dict: dict = {}, 
 
     return _data
 
-def resample_nhanes_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+def resample_nhanes_data(
+    data: pd.DataFrame, 
+    meta_dict: dict = {}, 
+    verbose: bool = False
+) -> pd.DataFrame:
     """
     Resample NHANES accelerometer data to 1-minute intervals using linear interpolation.
 
@@ -239,7 +253,9 @@ def resample_nhanes_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool
 
     return _data
 
-def remove_bytes(df: pd.DataFrame) -> pd.DataFrame:
+def remove_bytes(
+    df: pd.DataFrame
+) -> pd.DataFrame:
     """
     Convert byte string columns to regular strings in a DataFrame.
 
@@ -253,7 +269,10 @@ def remove_bytes(df: pd.DataFrame) -> pd.DataFrame:
         df[col] = df[col].apply(lambda x: x.decode('utf-8') if isinstance(x, bytes) else x)
     return df
 
-def clean_data(df: pd.DataFrame, days: pd.DataFrame) -> pd.DataFrame:
+def clean_data(
+    df: pd.DataFrame, 
+    days: pd.DataFrame
+) -> pd.DataFrame:
     """
     Clean NHANES minute-level data by applying quality filters.
 
@@ -270,7 +289,9 @@ def clean_data(df: pd.DataFrame, days: pd.DataFrame) -> pd.DataFrame:
     df = df[df['PAXQFM'] < 1]
     return df
 
-def calculate_measure_time(row):
+def calculate_measure_time(
+    row
+):
     """
     Calculate the measurement timestamp for a row of NHANES data.
 

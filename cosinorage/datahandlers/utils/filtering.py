@@ -21,11 +21,15 @@
 
 import pandas as pd
 import numpy as np
-from typing import List
+from typing import List, Optional
 from datetime import datetime, timedelta
 
 
-def filter_incomplete_days(df: pd.DataFrame, data_freq: float, expected_points_per_day: int = None) -> pd.DataFrame:
+def filter_incomplete_days(
+    df: pd.DataFrame, 
+    data_freq: float, 
+    expected_points_per_day: Optional[int] = None
+) -> pd.DataFrame:
     """
     Filter out data from incomplete days to ensure 24-hour data periods.
 
@@ -75,7 +79,9 @@ def filter_incomplete_days(df: pd.DataFrame, data_freq: float, expected_points_p
         return pd.DataFrame()
 
 
-def filter_consecutive_days(df: pd.DataFrame) -> pd.DataFrame:
+def filter_consecutive_days(
+    df: pd.DataFrame
+) -> pd.DataFrame:
     """
     Filter DataFrame to retain only the longest sequence of consecutive days.
 
@@ -98,7 +104,9 @@ def filter_consecutive_days(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def largest_consecutive_sequence(dates: List[datetime]) -> List[datetime]:
+def largest_consecutive_sequence(
+    dates: List[datetime]
+) -> List[datetime]:
     """
     Find the longest sequence of consecutive dates in a list.
 

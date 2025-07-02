@@ -23,7 +23,11 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from scipy.signal import welch
 
-def plot_orig_enmo(acc_handler, resample: str = '15min', wear: bool = True):
+def plot_orig_enmo(
+    acc_handler, 
+    resample: str = '15min', 
+    wear: bool = True
+) -> None:
     """
     Plot the original ENMO values resampled at a specified interval.
 
@@ -40,7 +44,7 @@ def plot_orig_enmo(acc_handler, resample: str = '15min', wear: bool = True):
     
 
     plt.figure(figsize=(12, 6))
-    plt.plot(_data['TIMESTAMP'], _data['ENMO'], label='ENMO', color='black')
+    plt.plot(_data['timestamp'], _data['ENMO'], label='ENMO', color='black')
 
     if wear:
         # Add color bands for wear and non-wear periods
@@ -48,14 +52,16 @@ def plot_orig_enmo(acc_handler, resample: str = '15min', wear: bool = True):
 
         for i in tqdm(range(len(_data) - 1)):
             if _data['wear'].iloc[i] != 1:
-                start_time = _data['TIMESTAMP'].iloc[i]
-                end_time = _data['TIMESTAMP'].iloc[i + 1]
+                start_time = _data['timestamp'].iloc[i]
+                end_time = _data['timestamp'].iloc[i + 1]
                 color = 'red'
                 plt.axvspan(start_time, end_time, color=color, alpha=0.3)
 
     plt.show()
 
-def plot_enmo(handler):
+def plot_enmo(
+    handler
+) -> None:
     """
     Plot minute-level ENMO values with optional wear/non-wear period highlighting.
 
@@ -69,17 +75,19 @@ def plot_enmo(handler):
     _data = handler.get_ml_data().reset_index(inplace=False)
 
     plt.figure(figsize=(12, 6))
-    plt.plot(_data['TIMESTAMP'], _data['ENMO'], label='ENMO', color='black')
+    plt.plot(_data['timestamp'], _data['ENMO'], label='ENMO', color='black')
 
     if 'wear' in _data.columns and _data['wear'].max() != -1:
-        plt.fill_between(_data['TIMESTAMP'], _data['wear']*max(_data['ENMO'])*1.25, color='green', alpha=0.5, label='wear')
-        plt.fill_between(_data['TIMESTAMP'], (1-_data['wear'])*max(_data['ENMO'])*1.25, color='red', alpha=0.5, label='non-wear')
+        plt.fill_between(_data['timestamp'], _data['wear']*max(_data['ENMO'])*1.25, color='green', alpha=0.5, label='wear')
+        plt.fill_between(_data['timestamp'], (1-_data['wear'])*max(_data['ENMO'])*1.25, color='red', alpha=0.5, label='non-wear')
         plt.legend()
         
     plt.ylim(0, max(_data['ENMO'])*1.25)
     plt.show()
 
-def plot_orig_enmo_freq(acc_handler):
+def plot_orig_enmo_freq(
+    acc_handler
+) -> None:
     """
     Plot the frequency domain representation of the original ENMO signal using Welch's method.
 

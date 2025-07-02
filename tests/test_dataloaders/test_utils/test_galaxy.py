@@ -9,10 +9,10 @@ from cosinorage.datahandlers.utils.galaxy_binary import (
     resample_galaxy_binary_data,
     preprocess_galaxy_binary_data,
     acceleration_data_to_dataframe,
-    calibrate_binary,
-    remove_noise_binary,
-    detect_wear_binary,
-    calc_weartime_binary
+    calibrate_accelerometer,
+    remove_noise,
+    detect_wear_periods,
+    calc_weartime
 )
 
 @pytest.fixture
@@ -28,9 +28,9 @@ def sample_acc_data():
     
     # Simulate movement with gravity and noise
     df = pd.DataFrame({
-        'X': np.sin(2*np.pi*0.5*t) * 0.1 * gravity + np.random.normal(0, 0.01*gravity, n_samples),
-        'Y': np.cos(2*np.pi*0.5*t) * 0.1 * gravity + np.random.normal(0, 0.01*gravity, n_samples),
-        'Z': np.ones(n_samples) * gravity + np.random.normal(0, 0.01*gravity, n_samples)
+        'x': np.sin(2*np.pi*0.5*t) * 0.1 * gravity + np.random.normal(0, 0.01*gravity, n_samples),
+        'y': np.cos(2*np.pi*0.5*t) * 0.1 * gravity + np.random.normal(0, 0.01*gravity, n_samples),
+        'z': np.ones(n_samples) * gravity + np.random.normal(0, 0.01*gravity, n_samples)
     }, index=dates)
     
     return df
@@ -117,16 +117,16 @@ def test_preprocess_galaxy_binary_data(sample_acc_data, mock_calibrator, mock_we
     }
     meta_dict = {'sf': 25}  # Provide sampling frequency
 
-    with patch('cosinorage.datahandlers.utils.galaxy_binary.CalibrateAccelerometer',
+    with patch('cosinorage.datahandlers.utils.calibration.CalibrateAccelerometer',
               return_value=mock_calibrator):
-        with patch('cosinorage.datahandlers.utils.galaxy_binary.AccelThresholdWearDetection',
+        with patch('cosinorage.datahandlers.utils.wear_detection.AccelThresholdWearDetection',
                   return_value=mock_wear_detector):
             result = preprocess_galaxy_binary_data(sample_acc_data, preprocess_args, meta_dict, verbose=True)
     
     assert isinstance(result, pd.DataFrame)
     assert 'wear' in result.columns
     assert 'ENMO' in result.columns
-    assert all(col + '_raw' in result.columns for col in ['X', 'Y', 'Z'])
+    assert all(col + '_raw' in result.columns for col in ['x', 'y', 'z'])
 
 def test_acceleration_data_to_dataframe(mock_binary_data):
     """Test converting binary acceleration data to DataFrame"""
@@ -167,40 +167,40 @@ def test_calibrate(sample_acc_data, mock_calibrator):
     """Test accelerometer calibration"""
     meta_dict = {'sf': 25}  # Set sampling frequency in meta_dict
 
-    with patch('cosinorage.datahandlers.utils.galaxy_binary.CalibrateAccelerometer',
+    with patch('cosinorage.datahandlers.utils.calibration.CalibrateAccelerometer',
               return_value=mock_calibrator):
-        result = calibrate_binary(sample_acc_data, sphere_crit=1, sd_criteria=0.3,
+        result = calibrate_accelerometer(sample_acc_data, sphere_crit=1, sd_criteria=0.3,
                           meta_dict=meta_dict, verbose=True)
     
     assert isinstance(result, pd.DataFrame)
-    assert all(col in result.columns for col in ['X', 'Y', 'Z'])
+    assert all(col in result.columns for col in ['x', 'y', 'z'])
     assert 'calibration_offset' in meta_dict
     assert 'calibration_scale' in meta_dict
 
 def test_remove_noise(sample_acc_data):
     """Test noise removal from accelerometer data"""
     # Test lowpass filter
-    result_lowpass = remove_noise_binary(sample_acc_data, sf=25, filter_type='lowpass', 
+    result_lowpass = remove_noise(sample_acc_data, sf=25, filter_type='lowpass', 
                                 filter_cutoff=2, verbose=True)
     assert isinstance(result_lowpass, pd.DataFrame)
     
     # Test highpass filter
-    result_highpass = remove_noise_binary(sample_acc_data, sf=25, filter_type='highpass', 
+    result_highpass = remove_noise(sample_acc_data, sf=25, filter_type='highpass', 
                                  filter_cutoff=0.5, verbose=True)
     assert isinstance(result_highpass, pd.DataFrame)
     
     # Test invalid filter type
     with pytest.raises(ValueError):
-        remove_noise_binary(sample_acc_data, sf=25, filter_type='bandpass', 
+        remove_noise(sample_acc_data, sf=25, filter_type='bandpass', 
                     filter_cutoff=2, verbose=True)
 
 def test_detect_wear(sample_acc_data, mock_wear_detector):
     """Test wear detection"""
     meta_dict = {}
     
-    with patch('cosinorage.datahandlers.utils.galaxy_binary.AccelThresholdWearDetection',
+    with patch('cosinorage.datahandlers.utils.wear_detection.AccelThresholdWearDetection',
               return_value=mock_wear_detector):
-        result = detect_wear_binary(sample_acc_data, sf=25, sd_crit=0.00013, range_crit=0.00067,
+        result = detect_wear_periods(sample_acc_data, sf=25, sd_crit=0.00013, range_crit=0.00067,
                             window_length=30, window_skip=7, meta_dict=meta_dict, verbose=True)
     
     assert isinstance(result, pd.DataFrame)
@@ -213,7 +213,7 @@ def test_calc_weartime(sample_acc_data):
     sample_acc_data['wear'] = np.random.choice([0, 1], size=len(sample_acc_data))
     
     meta_dict = {}
-    calc_weartime_binary(sample_acc_data, sf=25, meta_dict=meta_dict, verbose=True)
+    calc_weartime(sample_acc_data, sf=25, meta_dict=meta_dict, verbose=True)
     
     assert 'total_time' in meta_dict
     assert 'wear_time' in meta_dict
