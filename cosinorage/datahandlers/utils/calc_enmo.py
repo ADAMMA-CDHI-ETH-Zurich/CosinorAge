@@ -30,19 +30,50 @@ def calculate_enmo(
     """
     Calculate the Euclidean Norm Minus One (ENMO) metric from accelerometer data.
 
-    Args:
-        data (pd.DataFrame): DataFrame containing accelerometer data with columns
-            'x', 'y', and 'z' for accelerometer readings along the three axes.
-        verbose (bool, optional): If True, prints processing information. Defaults to False.
+    This function computes the ENMO metric, which is a widely used measure in physical
+    activity research for quantifying acceleration while accounting for gravity.
 
-    Returns:
-        numpy.ndarray: Array of ENMO values. Values are truncated at 0, meaning negative
-            values are set to 0. Returns np.nan if calculation fails.
+    Parameters
+    ----------
+    data : pd.DataFrame
+        DataFrame containing accelerometer data with columns:
+        - 'x': X-axis acceleration values
+        - 'y': Y-axis acceleration values  
+        - 'z': Z-axis acceleration values
+        All values should be in g units (1g = 9.81 m/s²).
+    verbose : bool, default=False
+        If True, prints processing information.
 
-    Notes:
-        ENMO is calculated as the Euclidean norm of the acceleration vector minus one
-        gravity unit. This metric is commonly used in physical activity research to
-        quantify acceleration while accounting for gravity.
+    Returns
+    -------
+    numpy.ndarray
+        Array of ENMO values. Values are truncated at 0, meaning negative
+        values are set to 0. Returns np.nan if calculation fails.
+
+    Notes
+    -----
+    - ENMO = sqrt(x² + y² + z²) - 1
+    - Values are truncated at 0 (negative values become 0)
+    - ENMO represents acceleration in excess of 1g (gravity)
+    - Commonly used in physical activity and sleep research
+    - Handles errors gracefully by returning np.nan
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> 
+    >>> # Create sample accelerometer data
+    >>> data = pd.DataFrame({
+    ...     'x': [0.1, 0.2, 0.3],
+    ...     'y': [0.1, 0.2, 0.3],
+    ...     'z': [1.0, 1.1, 1.2]  # Close to 1g (gravity)
+    ... })
+    >>> 
+    >>> # Calculate ENMO
+    >>> enmo_values = calculate_enmo(data, verbose=True)
+    >>> print(f"ENMO values: {enmo_values}")
+    >>> # Output: [0.014, 0.028, 0.042] (approximately)
     """
 
     if data.empty:
@@ -70,22 +101,57 @@ def calculate_minute_level_enmo(
     """
     Resample high-frequency ENMO data to minute-level by averaging over each minute.
 
-    Args:
-        data (pd.DataFrame): DataFrame with 'timestamp' as index and 'ENMO' column 
-            containing high-frequency ENMO data. Optional 'wear' column for wear time.
+    This function aggregates high-frequency ENMO data to minute-level resolution
+    using mean aggregation, which is the standard approach for circadian rhythm analysis.
 
-    Returns:
-        pd.DataFrame: DataFrame containing minute-level aggregated data with:
-            - 'ENMO': Mean ENMO value for each minute
-            - 'wear': Mean wear time for each minute (if wear column exists in input)
-            Index is datetime at minute resolution.
+    Parameters
+    ----------
+    data : pd.DataFrame
+        DataFrame with datetime index and 'ENMO' column containing high-frequency ENMO data.
+        Optional 'wear' column for wear time information.
+    meta_dict : dict, default={}
+        Dictionary containing metadata. Should include:
+        - 'sf': Sampling frequency in Hz (defaults to 25Hz if not specified)
+    verbose : bool, default=False
+        If True, prints processing information.
 
-    Raises:
-        ValueError: If sampling frequency is less than 1/60 Hz (less than one sample per minute).
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame containing minute-level aggregated data with:
+        - 'ENMO': Mean ENMO value for each minute
+        - 'wear': Mean wear time for each minute (if wear column exists in input)
+        Index is datetime at minute resolution.
 
-    Notes:
-        The function resamples the data to minute-level using mean aggregation.
-        Timestamps are converted to datetime format in the output.
+    Raises
+    ------
+    ValueError
+        If sampling frequency is less than 1/60 Hz (less than one sample per minute).
+
+    Notes
+    -----
+    - Uses pandas resample('min').mean() for aggregation
+    - Handles both ENMO and wear columns if present
+    - Converts index to datetime format
+    - Standard preprocessing step for circadian rhythm analysis
+    - Handles errors gracefully by returning empty DataFrame
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> 
+    >>> # Create sample high-frequency ENMO data
+    >>> dates = pd.date_range('2023-01-01 00:00:00', periods=3600, freq='S')  # 1 hour of second-level data
+    >>> data = pd.DataFrame({
+    ...     'ENMO': np.random.uniform(0, 0.1, 3600),
+    ...     'wear': np.random.choice([0, 1], 3600)
+    ... }, index=dates)
+    >>> 
+    >>> # Resample to minute level
+    >>> meta_dict = {'sf': 1}  # 1 Hz sampling frequency
+    >>> minute_data = calculate_minute_level_enmo(data, meta_dict=meta_dict, verbose=True)
+    >>> print(f"Original records: {len(data)}")
+    >>> print(f"Minute-level records: {len(minute_data)}")
     """
 
     # Get sampling frequency from meta_dict or use default

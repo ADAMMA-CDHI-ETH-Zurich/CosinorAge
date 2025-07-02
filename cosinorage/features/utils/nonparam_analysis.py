@@ -25,7 +25,7 @@ import numpy as np
 from typing import List
 
 def IS(data: pd.Series) -> float:
-    r"""Calculate the interdaily stability (IS) for each day separately.
+    r"""Calculate the interdaily stability (IS) for the entire dataset.
 
     Interdaily stability quantifies the strength of coupling between the
     rest-activity rhythm and environmental zeitgebers. It compares the
@@ -35,13 +35,39 @@ def IS(data: pd.Series) -> float:
     ----------
     data : pd.Series
         Time series data containing activity measurements with datetime index
-        and 'ENMO' column
+        and 'ENMO' column. Should contain multiple days of minute-level data.
 
     Returns
     -------
-    pd.DataFrame
-        DataFrame with date index and 'IS' column containing interdaily
-        stability values for each day
+    float
+        Interdaily stability value ranging from 0 to 1, where:
+        - 0 indicates no stability (random activity patterns)
+        - 1 indicates perfect stability (identical daily patterns)
+        Returns np.nan if insufficient data or calculation fails.
+
+    Notes
+    -----
+    - Resamples data to hourly resolution for calculation
+    - IS = (D * sum((hourly_means - overall_mean)²)) / sum((all_values - overall_mean)²)
+    - Higher values indicate more consistent daily activity patterns
+    - Requires multiple days of data for meaningful calculation
+    - Used in circadian rhythm analysis to assess rhythm stability
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> 
+    >>> # Create sample multi-day activity data
+    >>> dates = pd.date_range('2023-01-01', periods=4320, freq='min')  # 3 days
+    >>> # Simulate consistent daily pattern
+    >>> hours = dates.hour
+    >>> enmo = pd.Series(np.sin(hours * np.pi / 12) + 1 + np.random.normal(0, 0.1, 4320), index=dates)
+    >>> 
+    >>> # Calculate interdaily stability
+    >>> is_value = IS(enmo)
+    >>> print(f"Interdaily Stability: {is_value:.3f}")
+    >>> # Higher values indicate more consistent daily patterns
     """
     if len(data) == 0:
         return np.nan
@@ -73,7 +99,7 @@ def IS(data: pd.Series) -> float:
 
 
 def IV(data: pd.Series) -> float:
-    r"""Calculate the intradaily variability for each day separately.
+    r"""Calculate the intradaily variability (IV) for the entire dataset.
 
     Intradaily variability quantifies the fragmentation of rest-activity patterns
     within each 24-hour period. It is calculated as the ratio of the mean squared
@@ -83,13 +109,39 @@ def IV(data: pd.Series) -> float:
     ----------
     data : pd.Series
         Time series data containing activity measurements with datetime index
-        and 'ENMO' column
+        and 'ENMO' column. Should contain multiple days of minute-level data.
 
     Returns
     -------
-    pd.DataFrame
-        DataFrame with date index and 'IV' column containing intradaily
-        variability values for each day
+    float
+        Intradaily variability value, where:
+        - Lower values indicate less fragmented activity patterns
+        - Higher values indicate more fragmented activity patterns
+        Returns np.nan if insufficient data or calculation fails.
+
+    Notes
+    -----
+    - Resamples data to hourly resolution for calculation
+    - IV = (P * sum((z_p - z_{p-1})²)) / ((P-1) * sum((z_p - z_mean)²))
+    - Lower values indicate more consolidated rest-activity periods
+    - Higher values indicate more fragmented sleep and activity patterns
+    - Used in circadian rhythm analysis to assess rhythm fragmentation
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> 
+    >>> # Create sample multi-day activity data
+    >>> dates = pd.date_range('2023-01-01', periods=4320, freq='min')  # 3 days
+    >>> # Simulate fragmented activity pattern
+    >>> hours = dates.hour
+    >>> enmo = pd.Series(np.random.uniform(0, 1, 4320), index=dates)  # Random activity
+    >>> 
+    >>> # Calculate intradaily variability
+    >>> iv_value = IV(enmo)
+    >>> print(f"Intradaily Variability: {iv_value:.3f}")
+    >>> # Higher values indicate more fragmented activity patterns
     """
     if len(data) == 0:
         return np.nan
@@ -127,14 +179,39 @@ def M10(data: pd.Series) -> List[float]:
     ----------
     data : pd.Series
         Time series data containing activity measurements with datetime index
-        and 'ENMO' column
+        and 'ENMO' column. Should contain minute-level data for multiple days.
 
     Returns
     -------
-    pd.DataFrame
-        DataFrame with date index and two columns:
-        - 'M10': Mean activity during the 10 most active hours
-        - 'M10_start': Hour (0-23) when the most active period starts
+    tuple
+        Tuple containing two lists:
+        - m10: List of mean activity values during the 10 most active hours for each day
+        - m10_start: List of start times (datetime) of the 10 most active hours for each day
+        Returns empty lists if insufficient data.
+
+    Notes
+    -----
+    - Uses rolling 10-hour windows (600 minutes) to find the most active period
+    - Calculates mean activity within each window and finds the maximum
+    - Returns both the activity level and start time of the most active period
+    - Used in circadian rhythm analysis to identify the main activity phase
+    - Typically corresponds to daytime activity periods
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> 
+    >>> # Create sample multi-day activity data
+    >>> dates = pd.date_range('2023-01-01', periods=4320, freq='min')  # 3 days
+    >>> # Simulate activity with peak during day
+    >>> hours = dates.hour
+    >>> enmo = pd.Series(np.sin(hours * np.pi / 12) + 1 + np.random.normal(0, 0.1, 4320), index=dates)
+    >>> 
+    >>> # Calculate M10 for each day
+    >>> m10_values, m10_starts = M10(enmo)
+    >>> print(f"M10 values: {m10_values}")
+    >>> print(f"M10 start times: {m10_starts}")
     """
     if len(data) == 0:
         return [], []
@@ -174,14 +251,39 @@ def L5(data: pd.Series) -> List[float]:
     ----------
     data : pd.Series
         Time series data containing activity measurements with datetime index
-        and 'ENMO' column
+        and 'ENMO' column. Should contain minute-level data for multiple days.
 
     Returns
     -------
-    pd.DataFrame
-        DataFrame with date index and two columns:
-        - 'L5': Mean activity during the 5 least active hours
-        - 'L5_start': Hour (0-23) when the least active period starts
+    tuple
+        Tuple containing two lists:
+        - l5: List of mean activity values during the 5 least active hours for each day
+        - l5_start: List of start times (datetime) of the 5 least active hours for each day
+        Returns empty lists if insufficient data.
+
+    Notes
+    -----
+    - Uses rolling 5-hour windows (300 minutes) to find the least active period
+    - Calculates mean activity within each window and finds the minimum
+    - Returns both the activity level and start time of the least active period
+    - Used in circadian rhythm analysis to identify the main rest phase
+    - Typically corresponds to nighttime sleep periods
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> 
+    >>> # Create sample multi-day activity data
+    >>> dates = pd.date_range('2023-01-01', periods=4320, freq='min')  # 3 days
+    >>> # Simulate activity with low during night
+    >>> hours = dates.hour
+    >>> enmo = pd.Series(np.sin(hours * np.pi / 12) + 1 + np.random.normal(0, 0.1, 4320), index=dates)
+    >>> 
+    >>> # Calculate L5 for each day
+    >>> l5_values, l5_starts = L5(enmo)
+    >>> print(f"L5 values: {l5_values}")
+    >>> print(f"L5 start times: {l5_starts}")
     """
     if len(data) == 0:
         return [], []
@@ -211,7 +313,7 @@ def L5(data: pd.Series) -> List[float]:
 
 
 def RA(m10: List[float], l5: List[float]) -> List[float]:
-    r"""Calculate the relative amplitude (RA) for each day separately.
+    r"""Calculate the relative amplitude (RA) for each day.
 
     Relative amplitude is calculated as the difference between the most active
     10-hour period and least active 5-hour period, divided by their sum.
@@ -219,15 +321,48 @@ def RA(m10: List[float], l5: List[float]) -> List[float]:
 
     Parameters
     ----------
-    data : pd.Series
-        Time series data containing activity measurements with datetime index
-        and 'ENMO' column
+    m10 : List[float]
+        List of M10 values (mean activity during 10 most active hours) for each day.
+        Should be output from the M10() function.
+    l5 : List[float]
+        List of L5 values (mean activity during 5 least active hours) for each day.
+        Should be output from the L5() function.
 
     Returns
     -------
-    pd.DataFrame
-        DataFrame with date index and 'RA' column containing relative
-        amplitude values for each day
+    List[float]
+        List of relative amplitude values for each day, where:
+        - Values range from 0 to 1
+        - Higher values indicate stronger daily activity rhythms
+        - Lower values indicate weaker daily activity rhythms
+        Returns empty list if input lists are empty.
+
+    Notes
+    -----
+    - RA = (M10 - L5) / (M10 + L5)
+    - Normalized measure that accounts for overall activity level
+    - Higher values indicate more pronounced rest-activity cycles
+    - Used in circadian rhythm analysis to assess rhythm strength
+    - Requires both M10 and L5 values from the same dataset
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> 
+    >>> # Create sample multi-day activity data
+    >>> dates = pd.date_range('2023-01-01', periods=4320, freq='min')  # 3 days
+    >>> hours = dates.hour
+    >>> enmo = pd.Series(np.sin(hours * np.pi / 12) + 1 + np.random.normal(0, 0.1, 4320), index=dates)
+    >>> 
+    >>> # Calculate M10 and L5 first
+    >>> m10_values, m10_starts = M10(enmo)
+    >>> l5_values, l5_starts = L5(enmo)
+    >>> 
+    >>> # Calculate relative amplitude
+    >>> ra_values = RA(m10_values, l5_values)
+    >>> print(f"Relative Amplitude values: {ra_values}")
+    >>> # Higher values indicate stronger daily activity rhythms
     """
     if len(m10) == 0 or len(l5) == 0:
         return []

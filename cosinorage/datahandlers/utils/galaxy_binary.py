@@ -230,11 +230,50 @@ def acceleration_data_to_dataframe(
     """
     Convert binary acceleration data to pandas DataFrame.
 
-    Args:
-        data: Binary acceleration data object
+    This function converts raw binary acceleration data from Samsung Galaxy Watch
+    into a structured pandas DataFrame format for further processing.
 
-    Returns:
-        pd.DataFrame: DataFrame containing accelerometer data with timestamps and sensor information
+    Parameters
+    ----------
+    data : object
+        Binary acceleration data object containing samples with the following attributes:
+        - acceleration_x: X-axis acceleration value
+        - acceleration_y: Y-axis acceleration value  
+        - acceleration_z: Z-axis acceleration value
+        - sensor_body_location: Location of the sensor on the body
+        - unix_timestamp_in_ms: Timestamp in milliseconds since Unix epoch
+        - effective_time_frame: Effective time frame for the sample
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame containing accelerometer data with columns:
+        - 'acceleration_x': X-axis acceleration values
+        - 'acceleration_y': Y-axis acceleration values
+        - 'acceleration_z': Z-axis acceleration values
+        - 'sensor_body_location': Sensor location information
+        - 'unix_timestamp_in_ms': Timestamps in milliseconds
+        - 'effective_time_frame': Effective time frame information
+
+    Notes
+    -----
+    - This function is used internally by read_galaxy_binary_data
+    - The function iterates through all samples in the binary data object
+    - Each sample is converted to a dictionary and added to the DataFrame
+    - The resulting DataFrame maintains the original data structure from the binary file
+
+    Examples
+    --------
+    >>> # This function is typically called internally by read_galaxy_binary_data
+    >>> # but can be used directly if you have binary data objects:
+    >>> 
+    >>> # Load binary data (example)
+    >>> binary_data = load_acceleration_data("path/to/binary/file")
+    >>> 
+    >>> # Convert to DataFrame
+    >>> df = acceleration_data_to_dataframe(binary_data)
+    >>> print(f"Converted {len(df)} acceleration samples")
+    >>> print(f"Columns: {df.columns.tolist()}")
     """
     rows = []
     for sample in data.samples:
