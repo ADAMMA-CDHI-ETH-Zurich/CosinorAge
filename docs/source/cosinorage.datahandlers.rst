@@ -47,13 +47,13 @@ Galaxy Smartwatch Data Functions
 
 .. autofunction:: cosinorage.datahandlers.acceleration_data_to_dataframe()
 
-.. autofunction:: cosinorage.datahandlers.calibrate_binary()
+.. autofunction:: cosinorage.datahandlers.calibrate_accelerometer()
 
-.. autofunction:: cosinorage.datahandlers.remove_noise_binary()
+.. autofunction:: cosinorage.datahandlers.remove_noise()
 
-.. autofunction:: cosinorage.datahandlers.detect_wear_binary()
+.. autofunction:: cosinorage.datahandlers.detect_wear_periods()
 
-.. autofunction:: cosinorage.datahandlers.calc_weartime_binary()
+.. autofunction:: cosinorage.datahandlers.calc_weartime()
 
 UK Biobank Data Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~

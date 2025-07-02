@@ -26,7 +26,13 @@ from .frequency_detection import detect_frequency_from_timestamps
 from .filtering import filter_incomplete_days, filter_consecutive_days
 
 
-def read_galaxy_csv_data(galaxy_file_path: str, meta_dict: dict, time_column: str = 'timestamp', data_columns: Optional[list] = None, verbose: bool = False):
+def read_galaxy_csv_data(
+    galaxy_file_path: str, 
+    meta_dict: dict, 
+    time_column: str = 'timestamp', 
+    data_columns: Optional[list] = None, 
+    verbose: bool = False
+) -> pd.DataFrame:
     """
     Read ENMO data from Galaxy Watch csv file.
 
@@ -37,7 +43,7 @@ def read_galaxy_csv_data(galaxy_file_path: str, meta_dict: dict, time_column: st
         data_columns (list): Names of the data columns in the CSV file
         verbose (bool): Whether to print progress information
     Returns:
-        pd.DataFrame: DataFrame containing ENMO data with columns ['TIMESTAMP', 'ENMO']
+        pd.DataFrame: DataFrame containing ENMO data with columns ['timestamp', 'ENMO']
     """
 
     data = pd.read_csv(galaxy_file_path)
@@ -50,7 +56,7 @@ def read_galaxy_csv_data(galaxy_file_path: str, meta_dict: dict, time_column: st
         data_columns = ['enmo']
 
     # Rename columns to standard format
-    column_mapping = {time_column: 'TIMESTAMP'}
+    column_mapping = {time_column: 'timestamp'}
     for i, col in enumerate(data_columns):
         if i == 0:  # First column should be ENMO
             column_mapping[col] = 'ENMO'
@@ -58,8 +64,8 @@ def read_galaxy_csv_data(galaxy_file_path: str, meta_dict: dict, time_column: st
     data = data.rename(columns=column_mapping)
     
     # Convert UTC timestamps to local time
-    data['TIMESTAMP'] = pd.to_datetime(data['TIMESTAMP']).dt.tz_localize(None)
-    data.set_index('TIMESTAMP', inplace=True)
+    data['timestamp'] = pd.to_datetime(data['timestamp']).dt.tz_localize(None)
+    data.set_index('timestamp', inplace=True)
 
     data = data.fillna(0)
     data.sort_index(inplace=True)
@@ -71,14 +77,19 @@ def read_galaxy_csv_data(galaxy_file_path: str, meta_dict: dict, time_column: st
     meta_dict['raw_start_datetime'] = data.index.min()
     meta_dict['raw_end_datetime'] = data.index.max()
     meta_dict['sf'] = detect_frequency_from_timestamps(data.index)
-    meta_dict['raw_data_frequency'] = f'{meta_dict["sf"]}Hz'
+    meta_dict['raw_data_frequency'] = f'{meta_dict["sf"]:.1f}Hz'
     meta_dict['raw_data_type'] = 'ENMO'
     meta_dict['raw_data_unit'] = 'mg'
 
     return data
 
 
-def filter_galaxy_csv_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False, preprocess_args: dict = {}) -> pd.DataFrame:
+def filter_galaxy_csv_data(
+    data: pd.DataFrame, 
+    meta_dict: dict = {}, 
+    verbose: bool = False, 
+    preprocess_args: dict = {}
+) -> pd.DataFrame:
     """
     Filter Galaxy Watch ENMO data by removing incomplete days and selecting longest consecutive sequence.
 
@@ -132,7 +143,11 @@ def filter_galaxy_csv_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bo
     return _data
 
 
-def resample_galaxy_csv_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+def resample_galaxy_csv_data(
+    data: pd.DataFrame, 
+    meta_dict: dict = {}, 
+    verbose: bool = False
+) -> pd.DataFrame:
     """
     Ensure we have minute-level data across the whole timeseries. 
 
@@ -154,7 +169,12 @@ def resample_galaxy_csv_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: 
     return _data
 
 
-def preprocess_galaxy_csv_data(data: pd.DataFrame, preprocess_args: dict = {}, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+def preprocess_galaxy_csv_data(
+    data: pd.DataFrame, 
+    preprocess_args: dict = {}, 
+    meta_dict: dict = {}, 
+    verbose: bool = False
+) -> pd.DataFrame:
     """
     Preprocess Galaxy Watch ENMO data including rescaling, calibration, noise removal, and wear detection.
 

@@ -20,12 +20,10 @@
 ##########################################################################
 
 import os
-from typing import Union
+from typing import Union, Optional
 
 from .utils.calc_enmo import calculate_minute_level_enmo
-from .utils.galaxy_csv import filter_galaxy_csv_data, resample_galaxy_csv_data, preprocess_galaxy_csv_data
-from .utils.galaxy_binary import filter_galaxy_binary_data, resample_galaxy_binary_data, preprocess_galaxy_binary_data
-from .utils.generic import read_generic_xD
+from .utils.generic import read_generic_xD_data, filter_generic_data, resample_generic_data, preprocess_generic_data
 from .datahandler import DataHandler, clock
 
 
@@ -110,9 +108,10 @@ class GenericDataHandler(DataHandler):
     def __init__(self, 
                  file_path: str, 
                  data_format: str = 'csv', 
-                 data_type: str = 'accelerometer', 
-                 time_column: str = 'time', 
-                 data_columns: list = ['x', 'y', 'z'],
+                 data_type: str = 'accelerometer',
+                 time_format: str = 'unix',
+                 time_column: str = 'timestamp', 
+                 data_columns: Optional[list] = None,
                  preprocess_args: dict = {},
                  verbose: bool = False):
 
@@ -124,24 +123,29 @@ class GenericDataHandler(DataHandler):
         if data_type not in ['enmo', 'accelerometer', 'alternative_count']:
             raise ValueError("Data type must be either 'enmo', 'accelerometer' or 'alternative_count'")
         
+        if time_format not in ['unix', 'datetime']:
+            raise ValueError("time_format must be either 'unix' or 'datetime'")
+
         if data_type == 'enmo':
-            self.data_columns = ['enmo']
+            default_data_columns = ['enmo']
         elif data_type == 'accelerometer':
-            self.data_columns = ['x', 'y', 'z']
+            default_data_columns = ['x', 'y', 'z']
         elif data_type == 'alternative_count':
-            self.data_columns = ['counts']
+            default_data_columns = ['counts']
         else:
             raise ValueError("Data type must be either 'enmo', 'accelerometer' or 'alternative_count'")
 
         self.file_path = file_path
         self.data_format = data_format
         self.data_type = data_type
+        self.time_format = time_format
         self.time_column = time_column
-        self.data_columns = data_columns
+        self.data_columns = data_columns if data_columns is not None else default_data_columns
         self.preprocess_args = preprocess_args  
 
         self.meta_dict['datasource'] = 'Generic'
         self.meta_dict['data_format'] = 'CSV'
+        self.meta_dict['time_format'] = time_format
         self.meta_dict['raw_data_type'] = 'ENMO' if data_type == 'enmo' else 'Accelerometer' if data_type == 'accelerometer' else 'Alternative Count' if data_type == 'alternative_count' else 'Unknown'
         self.meta_dict['time_column'] = time_column
         self.meta_dict['data_columns'] = data_columns
@@ -152,19 +156,28 @@ class GenericDataHandler(DataHandler):
     @clock
     def __load_data(self, verbose: bool = False):
         if self.data_format == 'csv':
-            if self.data_type in ['enmo', 'alternative_count']:
-                self.raw_data = read_generic_xD(self.file_path, meta_dict=self.meta_dict, n_dimensions=1, time_column=self.time_column, data_columns=self.data_columns, verbose=verbose)
-                self.sf_data = filter_galaxy_csv_data(self.raw_data, self.meta_dict, verbose=verbose, preprocess_args=self.preprocess_args)
-                self.sf_data = resample_galaxy_csv_data(self.sf_data, self.meta_dict, verbose=verbose)
-                self.sf_data = preprocess_galaxy_csv_data(self.sf_data, preprocess_args=self.preprocess_args, meta_dict=self.meta_dict, verbose=verbose)
-                self.ml_data = calculate_minute_level_enmo(self.sf_data, self.meta_dict, verbose=verbose)
-            elif self.data_type == 'accelerometer':
-                self.raw_data = read_generic_xD(self.file_path, meta_dict=self.meta_dict, n_dimensions=3, time_column=self.time_column, data_columns=self.data_columns, verbose=verbose)
-                self.sf_data = filter_galaxy_binary_data(self.raw_data, self.meta_dict, verbose=verbose)
-                self.sf_data = resample_galaxy_binary_data(self.sf_data, self.meta_dict, verbose=verbose)
-                self.sf_data = preprocess_galaxy_binary_data(self.sf_data, self.meta_dict, verbose=verbose)
-                self.ml_data = calculate_minute_level_enmo(self.sf_data, self.meta_dict, verbose=verbose)
-            else:
-                raise ValueError("Data type must be either 'enmo', 'accelerometer' or 'alternative_count'")
+            # Determine number of dimensions based on data type
+            n_dimensions = 3 if self.data_type == 'accelerometer' else 1
+            
+            # Load and process data
+            self.raw_data = read_generic_xD_data(
+                self.file_path, self.data_type, meta_dict=self.meta_dict, n_dimensions=n_dimensions,
+                time_format=self.time_format, time_column=self.time_column, 
+                data_columns=self.data_columns, verbose=verbose
+            )
+            self.sf_data = filter_generic_data(
+                self.raw_data, self.data_type, self.meta_dict, 
+                verbose=verbose, preprocess_args=self.preprocess_args
+            )
+            self.sf_data = resample_generic_data(
+                self.sf_data, self.data_type, self.meta_dict, verbose=verbose
+            )
+            self.sf_data = preprocess_generic_data(
+                self.sf_data, self.data_type, preprocess_args=self.preprocess_args,
+                meta_dict=self.meta_dict, verbose=verbose
+            )
+            self.ml_data = calculate_minute_level_enmo(
+                self.sf_data, self.meta_dict, verbose=verbose
+            )
         else:
             raise ValueError("Data format must be either 'csv'")

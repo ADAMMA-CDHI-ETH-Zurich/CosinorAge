@@ -23,7 +23,9 @@ import pandas as pd
 import numpy as np
 from collections import Counter
 
-def detect_frequency_from_timestamps(timestamps):
+def detect_frequency_from_timestamps(
+    timestamps: pd.Series
+) -> float:
     """
     Detect sampling frequency by finding the most common time delta.
     
@@ -40,7 +42,7 @@ def detect_frequency_from_timestamps(timestamps):
     if len(timestamps) < 2:
         raise ValueError("At least two timestamps are required to detect frequency.")
 
-    # Calculate all time deltas
+    # Calculate all time deltas in ms
     time_deltas = timestamps.diff().dropna()
     # Convert to seconds
     if hasattr(time_deltas, 'dt'):

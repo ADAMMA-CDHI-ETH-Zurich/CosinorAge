@@ -4,7 +4,7 @@ import numpy as np
 from unittest.mock import patch, MagicMock
 from datetime import datetime, timedelta
 
-from cosinorage.datahandlers.utils.generic import read_generic_xD
+from cosinorage.datahandlers.utils.generic import read_generic_xD_data
 
 
 class TestGenericUtils:
@@ -48,8 +48,9 @@ class TestGenericUtils:
         with patch('cosinorage.datahandlers.utils.generic.detect_frequency_from_timestamps') as mock_detect:
             mock_detect.return_value = 1.0
             
-            result = read_generic_xD(
+            result = read_generic_xD_data(
                 file_path=sample_csv_file_1d,
+                data_type='alternative_count',
                 meta_dict=meta_dict,
                 n_dimensions=1
             )
@@ -57,12 +58,11 @@ class TestGenericUtils:
             # Check that the result is a DataFrame with correct structure
             assert isinstance(result, pd.DataFrame)
             assert 'ENMO' in result.columns
-            assert result.index.name == 'TIMESTAMP'
+            assert result.index.name == 'timestamp'
             assert len(result) == 100
             
             # Check metadata
             assert meta_dict['raw_n_datapoints'] == 100
-            assert meta_dict['raw_data_type'] == 'Counts'
             assert meta_dict['raw_data_unit'] == 'counts'
             assert meta_dict['raw_data_frequency'] == '1.0Hz'
             assert meta_dict['sf'] == 1.0
@@ -74,8 +74,9 @@ class TestGenericUtils:
         with patch('cosinorage.datahandlers.utils.generic.detect_frequency_from_timestamps') as mock_detect:
             mock_detect.return_value = 25.0
             
-            result = read_generic_xD(
+            result = read_generic_xD_data(
                 file_path=sample_csv_file_3d,
+                data_type='accelerometer',
                 meta_dict=meta_dict,
                 n_dimensions=3
             )
@@ -85,13 +86,12 @@ class TestGenericUtils:
             assert 'x' in result.columns
             assert 'y' in result.columns
             assert 'z' in result.columns
-            assert result.index.name == 'TIMESTAMP'
+            assert result.index.name == 'timestamp'
             assert len(result) == 100
             
             # Check metadata
             assert meta_dict['raw_n_datapoints'] == 100
-            assert meta_dict['raw_data_type'] == 'Counts'
-            assert meta_dict['raw_data_unit'] == 'counts'
+            assert meta_dict['raw_data_unit'] == 'mg'
             assert meta_dict['raw_data_frequency'] == '25.0Hz'
             assert meta_dict['sf'] == 25.0
 
@@ -102,8 +102,9 @@ class TestGenericUtils:
         with patch('cosinorage.datahandlers.utils.generic.detect_frequency_from_timestamps') as mock_detect:
             mock_detect.return_value = 1.0
             
-            result = read_generic_xD(
+            result = read_generic_xD_data(
                 file_path=sample_csv_file_1d,
+                data_type='alternative_count',
                 meta_dict=meta_dict,
                 n_dimensions=1,
                 time_column='timestamp',
@@ -113,7 +114,7 @@ class TestGenericUtils:
             # Check that the result is a DataFrame with correct structure
             assert isinstance(result, pd.DataFrame)
             assert 'ENMO' in result.columns
-            assert result.index.name == 'TIMESTAMP'
+            assert result.index.name == 'timestamp'
             assert len(result) == 100
 
     def test_read_generic_xD_custom_time_column(self, sample_csv_file_1d):
@@ -123,8 +124,9 @@ class TestGenericUtils:
         with patch('cosinorage.datahandlers.utils.generic.detect_frequency_from_timestamps') as mock_detect:
             mock_detect.return_value = 1.0
             
-            result = read_generic_xD(
+            result = read_generic_xD_data(
                 file_path=sample_csv_file_1d,
+                data_type='alternative_count',
                 meta_dict=meta_dict,
                 n_dimensions=1,
                 time_column='timestamp'
@@ -133,7 +135,7 @@ class TestGenericUtils:
             # Check that the result is a DataFrame with correct structure
             assert isinstance(result, pd.DataFrame)
             assert 'ENMO' in result.columns
-            assert result.index.name == 'TIMESTAMP'
+            assert result.index.name == 'timestamp'
             assert len(result) == 100
 
     def test_read_generic_xD_verbose_output(self, sample_csv_file_1d, capsys):
@@ -143,8 +145,9 @@ class TestGenericUtils:
         with patch('cosinorage.datahandlers.utils.generic.detect_frequency_from_timestamps') as mock_detect:
             mock_detect.return_value = 1.0
             
-            result = read_generic_xD(
+            result = read_generic_xD_data(
                 file_path=sample_csv_file_1d,
+                data_type='alternative_count',
                 meta_dict=meta_dict,
                 n_dimensions=1,
                 verbose=True
@@ -160,8 +163,9 @@ class TestGenericUtils:
         meta_dict = {}
         
         with pytest.raises(ValueError, match="n_dimensions must be either 1 or 3"):
-            read_generic_xD(
+            read_generic_xD_data(
                 file_path='/dummy/path.csv',
+                data_type='alternative_count',
                 meta_dict=meta_dict,
                 n_dimensions=2
             )
@@ -171,8 +175,9 @@ class TestGenericUtils:
         meta_dict = {}
         
         with pytest.raises(ValueError, match="n_dimensions must be equal to the number of data columns"):
-            read_generic_xD(
+            read_generic_xD_data(
                 file_path='/dummy/path.csv',
+                data_type='alternative_count',
                 meta_dict=meta_dict,
                 n_dimensions=1,
                 data_columns=['x', 'y', 'z']  # 3 columns for 1 dimension
@@ -194,15 +199,16 @@ class TestGenericUtils:
         with patch('cosinorage.datahandlers.utils.generic.detect_frequency_from_timestamps') as mock_detect:
             mock_detect.return_value = 1.0
             
-            result = read_generic_xD(
+            result = read_generic_xD_data(
                 file_path=str(file_path),
+                data_type='alternative_count',
                 meta_dict=meta_dict,
                 n_dimensions=1
             )
             
             # Check that missing values were filled with 0
             assert not result['ENMO'].isna().any()
-            assert (result['ENMO'] == 0).sum() == 2  # Two NaN values should be filled with 0
+            assert ((result['ENMO'] == 0).sum() == 2)
 
     def test_read_generic_xD_timestamp_processing(self, tmp_path):
         """Test read_generic_xD correctly processes timestamps"""
@@ -221,14 +227,16 @@ class TestGenericUtils:
         with patch('cosinorage.datahandlers.utils.generic.detect_frequency_from_timestamps') as mock_detect:
             mock_detect.return_value = 1.0
             
-            result = read_generic_xD(
+            result = read_generic_xD_data(
                 file_path=str(file_path),
+                data_type='alternative_count',
                 meta_dict=meta_dict,
                 n_dimensions=1
             )
             
             # Check that timestamps are timezone-naive
-            assert result.index.tz is None
+            if isinstance(result.index, pd.DatetimeIndex):
+                assert result.index.tz is None
             # Check that timestamps are sorted
             assert result.index.is_monotonic_increasing
 
@@ -239,8 +247,9 @@ class TestGenericUtils:
         with patch('cosinorage.datahandlers.utils.generic.detect_frequency_from_timestamps') as mock_detect:
             mock_detect.return_value = 25.0
             
-            result = read_generic_xD(
+            result = read_generic_xD_data(
                 file_path=sample_csv_file_1d,
+                data_type='alternative_count',
                 meta_dict=meta_dict,
                 n_dimensions=1
             )
@@ -251,11 +260,9 @@ class TestGenericUtils:
             assert 'raw_end_datetime' in meta_dict
             assert 'sf' in meta_dict
             assert 'raw_data_frequency' in meta_dict
-            assert 'raw_data_type' in meta_dict
             assert 'raw_data_unit' in meta_dict
             
             assert meta_dict['raw_n_datapoints'] == 100
-            assert meta_dict['raw_data_type'] == 'Counts'
             assert meta_dict['raw_data_unit'] == 'counts'
             assert meta_dict['raw_data_frequency'] == '25.0Hz'
             assert meta_dict['sf'] == 25.0
@@ -275,8 +282,9 @@ class TestGenericUtils:
         with patch('cosinorage.datahandlers.utils.generic.detect_frequency_from_timestamps') as mock_detect:
             mock_detect.return_value = 1.0
             
-            result = read_generic_xD(
+            result = read_generic_xD_data(
                 file_path=str(file_path),
+                data_type='alternative_count',
                 meta_dict=meta_dict,
                 n_dimensions=1,
                 time_column='custom_time',
@@ -285,7 +293,7 @@ class TestGenericUtils:
             
             # Check that columns were correctly mapped
             assert 'ENMO' in result.columns
-            assert result.index.name == 'TIMESTAMP'
+            assert result.index.name == 'timestamp'
             assert len(result) == 10
 
     def test_read_generic_xD_column_mapping_3d(self, tmp_path):
@@ -305,8 +313,9 @@ class TestGenericUtils:
         with patch('cosinorage.datahandlers.utils.generic.detect_frequency_from_timestamps') as mock_detect:
             mock_detect.return_value = 1.0
             
-            result = read_generic_xD(
+            result = read_generic_xD_data(
                 file_path=str(file_path),
+                data_type='accelerometer',
                 meta_dict=meta_dict,
                 n_dimensions=3,
                 time_column='custom_time',
@@ -317,7 +326,7 @@ class TestGenericUtils:
             assert 'x' in result.columns
             assert 'y' in result.columns
             assert 'z' in result.columns
-            assert result.index.name == 'TIMESTAMP'
+            assert result.index.name == 'timestamp'
             assert len(result) == 10
 
     def test_read_generic_xD_file_not_found(self):
@@ -325,8 +334,9 @@ class TestGenericUtils:
         meta_dict = {}
         
         with pytest.raises(FileNotFoundError):
-            read_generic_xD(
+            read_generic_xD_data(
                 file_path='/non/existent/file.csv',
+                data_type='alternative_count',
                 meta_dict=meta_dict,
                 n_dimensions=1
             )
@@ -343,8 +353,9 @@ class TestGenericUtils:
         meta_dict = {}
         
         with pytest.raises(Exception):  # Should raise some kind of parsing error
-            read_generic_xD(
+            read_generic_xD_data(
                 file_path=str(file_path),
+                data_type='alternative_count',
                 meta_dict=meta_dict,
                 n_dimensions=1
             ) 

@@ -28,7 +28,13 @@ from tqdm import tqdm
 
 from .filtering import filter_incomplete_days, filter_consecutive_days
 
-def read_ukb_data(qc_file_path: str, enmo_file_dir: str, eid: int, meta_dict: dict = {}, verbose: bool = False) -> Union[pd.DataFrame, tuple[Any, Union[float, Any]]]:
+def read_ukb_data(
+    qc_file_path: str, 
+    enmo_file_dir: str, 
+    eid: int, 
+    meta_dict: dict = {}, 
+    verbose: bool = False
+) -> Union[pd.DataFrame, tuple[Any, Union[float, Any]]]:
     """
     Read and process UK Biobank accelerometer data for a specific participant.
 
@@ -147,8 +153,8 @@ def read_ukb_data(qc_file_path: str, enmo_file_dir: str, eid: int, meta_dict: di
             data = pd.concat([data, ukb])
 
     data = data[['date_time', 'enmo_mg']]
-    data.rename(columns={'enmo_mg': 'ENMO', 'date_time': 'TIMESTAMP'}, inplace=True)
-    data.set_index('TIMESTAMP', inplace=True)
+    data.rename(columns={'enmo_mg': 'ENMO', 'date_time': 'timestamp'}, inplace=True)
+    data.set_index('timestamp', inplace=True)
     data.sort_index(inplace=True)
 
     # rescale ENMO to g - should be /1000 however value range suggests that /100 is better to make it comparable with other sources
@@ -169,7 +175,11 @@ def read_ukb_data(qc_file_path: str, enmo_file_dir: str, eid: int, meta_dict: di
 
     return data[['ENMO']]
 
-def filter_ukb_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+def filter_ukb_data(
+    data: pd.DataFrame, 
+    meta_dict: dict = {}, 
+    verbose: bool = False
+) -> pd.DataFrame:
     """
     Filter UK Biobank accelerometer data to ensure data quality.
 
@@ -196,7 +206,11 @@ def filter_ukb_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = Fa
     return _data
 
 
-def resample_ukb_data(data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False) -> pd.DataFrame:
+def resample_ukb_data(
+    data: pd.DataFrame, 
+    meta_dict: dict = {}, 
+    verbose: bool = False
+) -> pd.DataFrame:
     """
     Resample UK Biobank accelerometer data to ensure consistent 1-minute intervals.
 

@@ -24,9 +24,21 @@ from typing import Optional
 
 from .frequency_detection import detect_frequency_from_timestamps
 from .filtering import filter_incomplete_days, filter_consecutive_days
+from .calc_enmo import calculate_enmo
+from .galaxy_binary import calibrate_accelerometer, remove_noise, detect_wear_periods, calc_weartime
 
 
-def read_generic_xD(file_path: str, meta_dict: dict, n_dimensions: int, time_column: str = 'timestamp', data_columns: Optional[list] = None, verbose: bool = False):
+
+def read_generic_xD_data(
+    file_path: str, 
+    data_type: str,
+    meta_dict: dict, 
+    n_dimensions: int, 
+    time_format: str = 'unix', 
+    time_column: str = 'timestamp', 
+    data_columns: Optional[list] = None, 
+    verbose: bool = False
+) -> pd.DataFrame:
     """
     Read generic accelerometer or count data from a CSV file.
     
@@ -117,6 +129,9 @@ def read_generic_xD(file_path: str, meta_dict: dict, n_dimensions: int, time_col
         if n_dimensions != len(data_columns):
             raise ValueError("n_dimensions must be equal to the number of data columns")
 
+    if time_format not in ['unix', 'datetime']:
+        raise ValueError("time_format must be either 'unix' or 'datetime'")
+
     data = pd.read_csv(file_path)
 
     if verbose:
@@ -132,7 +147,7 @@ def read_generic_xD(file_path: str, meta_dict: dict, n_dimensions: int, time_col
             raise ValueError("n_dimensions must be either 1 or 3")
 
     # Rename columns to standard format
-    column_mapping = {time_column: 'TIMESTAMP'}
+    column_mapping = {time_column: 'timestamp'}
     if n_dimensions == 1:
         column_mapping[data_columns[0]] = 'ENMO'
     elif n_dimensions == 3:
@@ -144,9 +159,18 @@ def read_generic_xD(file_path: str, meta_dict: dict, n_dimensions: int, time_col
     
     data = data.rename(columns=column_mapping)
     
-    # Convert UTC timestamps to local time
-    data['TIMESTAMP'] = pd.to_datetime(data['TIMESTAMP']).dt.tz_localize(None)
-    data.set_index('TIMESTAMP', inplace=True)
+    if time_format == 'unix':
+        try:
+            data['timestamp'] = pd.to_datetime(data['timestamp'], unit='s').dt.tz_localize(None)
+        except (ValueError, TypeError):
+            # Fallback: try parsing as string-formatted datetime
+            data['timestamp'] = pd.to_datetime(data['timestamp']).dt.tz_localize(None)
+    elif time_format == 'datetime':
+        data['timestamp'] = pd.to_datetime(data['timestamp']).dt.tz_localize(None)
+    else:
+        raise ValueError("time_format must be either 'unix' or 'datetime'")
+
+    data.set_index('timestamp', inplace=True)
 
     data = data.fillna(0)
     data.sort_index(inplace=True)
@@ -158,8 +182,114 @@ def read_generic_xD(file_path: str, meta_dict: dict, n_dimensions: int, time_col
     meta_dict['raw_start_datetime'] = data.index.min()
     meta_dict['raw_end_datetime'] = data.index.max()
     meta_dict['sf'] = detect_frequency_from_timestamps(data.index)
-    meta_dict['raw_data_frequency'] = f'{meta_dict["sf"]}Hz'
-    meta_dict['raw_data_type'] = 'Counts'
-    meta_dict['raw_data_unit'] = 'counts'
-
+    meta_dict['raw_data_frequency'] = f'{meta_dict["sf"]:.1f}Hz'
+    meta_dict['raw_data_unit'] = 'counts' if data_type == 'alternative_count' else 'mg'
+    
     return data
+
+def filter_generic_data(
+    data: pd.DataFrame, 
+    data_type: str, 
+    meta_dict: dict = {}, 
+    verbose: bool = False, 
+    preprocess_args: dict = {}
+) -> pd.DataFrame:
+    """
+    Filter generic data by removing incomplete days and selecting longest consecutive sequence.
+    """
+    _data = data.copy()
+
+    # filter out first and last day
+    n_old = _data.shape[0]
+    _data = _data.loc[(_data.index.date != _data.index.date.min()) & (_data.index.date != _data.index.date.max())]
+    if verbose:
+        print(f"Filtered out {n_old - _data.shape[0]}/{_data.shape[0]} {data_type} records due to filtering out first and last day")
+
+    # filter out incomplete days
+    required_points_per_day = preprocess_args.get('required_daily_coverage', 0.5) * meta_dict['sf'] * 60 * 60 * 24
+    n_old = _data.shape[0]
+    _data = filter_incomplete_days(_data, data_freq=meta_dict['sf'], expected_points_per_day=required_points_per_day)
+    if verbose:
+        print(f"Filtered out {n_old - _data.shape[0]}/{n_old} records due to incomplete daily coverage")
+
+    # filter for longest consecutive sequence of days
+    n_old = _data.shape[0]
+    _data = filter_consecutive_days(_data)
+    if verbose:
+        print(f"Filtered out {n_old - _data.shape[0]}/{n_old} records due to filtering for longest consecutive sequence of days")
+
+    return _data
+
+def resample_generic_data(
+    data: pd.DataFrame, 
+    data_type: str, 
+    meta_dict: dict = {}, 
+    verbose: bool = False
+) -> pd.DataFrame:
+    """
+    Resample generic data to 1 minute intervals.
+    """
+    _data = data.copy()
+
+    n_old = _data.shape[0]
+    _data = _data.resample('1min').interpolate(method='linear').bfill()
+    if verbose:
+        print(f"Resampled {n_old} to {_data.shape[0]} timestamps")
+    
+    return _data
+    
+
+def preprocess_generic_data(
+    data: pd.DataFrame, 
+    data_type: str, 
+    preprocess_args: dict = {}, 
+    meta_dict: dict = {}, 
+    verbose: bool = False
+) -> pd.DataFrame:
+    """
+    Preprocess generic data by filtering and resampling.
+    """
+    _data = data.copy()
+
+    if data_type in ['enmo', 'alternative_count']:
+        # wear detection - not implemented for enmo and alternative_count data yet (current algorithm relies on accelerometer data)
+        _data['wear'] = -1
+
+        if verbose:
+            print(f"Preprocessed ENMO data")
+
+    elif data_type == 'accelerometer':
+        _data[['x_raw', 'y_raw', 'z_raw']] = _data[['x', 'y', 'z']]
+
+        # recaling of accelerometer data to g
+        _data[['x', 'y', 'z']] = _data[['x', 'y', 'z']] / 1000 
+
+        # calibration
+        sphere_crit = preprocess_args.get('autocalib_sphere_crit', 1)
+        sd_criter = preprocess_args.get('autocalib_sd_criter', 0.3)
+        _data[['x', 'y', 'z']] = calibrate_accelerometer(_data, sphere_crit=sphere_crit, sd_criteria=sd_criter, meta_dict=meta_dict, verbose=verbose)
+
+        # noise removal
+        type = preprocess_args.get('filter_type', 'highpass')
+        cutoff = preprocess_args.get('filter_cutoff', 15)
+        _data[['x', 'y', 'z']] = remove_noise(_data, sf=meta_dict['sf'], filter_type=type, filter_cutoff=cutoff, verbose=verbose)
+
+        # wear detection
+        sd_crit = preprocess_args.get('wear_sd_crit', 0.00013)
+        range_crit = preprocess_args.get('wear_range_crit', 0.00067)
+        window_length = preprocess_args.get('wear_window_length', 30)
+        window_skip = preprocess_args.get('wear_window_skip', 7)
+        _data['wear'] = detect_wear_periods(_data, meta_dict['sf'], sd_crit, range_crit, window_length, window_skip, meta_dict=meta_dict, verbose=verbose)
+
+        # calculate total, wear, and non-wear time
+        calc_weartime(_data, sf=meta_dict['sf'], meta_dict=meta_dict, verbose=verbose)
+
+        _data['ENMO'] = calculate_enmo(_data, verbose=verbose) * 1000
+
+        if verbose:
+            print(f"Preprocessed accelerometer data")
+
+    else:
+        raise ValueError("Data type must be either 'enmo', 'accelerometer' or 'alternative_count'")
+    
+    return _data

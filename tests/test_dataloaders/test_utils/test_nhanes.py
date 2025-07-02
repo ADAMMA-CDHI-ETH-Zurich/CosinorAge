@@ -24,9 +24,9 @@ def sample_nhanes_df():
     )
     
     data = {
-        'X': np.random.normal(0, 1, len(index)),
-        'Y': np.random.normal(0, 1, len(index)),
-        'Z': np.random.normal(0, 1, len(index)),
+        'x': np.random.normal(0, 1, len(index)),
+        'y': np.random.normal(0, 1, len(index)),
+        'z': np.random.normal(0, 1, len(index)),
         'wear': np.ones(len(index)),
         'sleep': np.zeros(len(index)),
         'paxpredm': np.ones(len(index)),
@@ -155,9 +155,9 @@ def test_filter_and_preprocess_nhanes_data(sample_nhanes_df):
     assert isinstance(result, pd.DataFrame)
     assert 'ENMO' in result.columns
     assert 'n_days' in meta_dict
-    assert all(col in result.columns for col in ['X_raw', 'Y_raw', 'Z_raw'])
+    assert all(col in result.columns for col in ['x_raw', 'y_raw', 'z_raw'])
     # Check MIMS to mg conversion
-    assert np.allclose(result['X'], sample_nhanes_df['X'] / 9.81, rtol=1e-10)
+    assert np.allclose(result['x'], sample_nhanes_df['x'] / 9.81, rtol=1e-10)
 
 def test_resample_nhanes_data(sample_nhanes_df):
     # Create gaps in the data
@@ -184,9 +184,9 @@ def test_resample_nhanes_data_with_gaps():
     # Create sample data with gaps
     index = pd.date_range('2023-01-01', periods=100, freq='2min')
     data = pd.DataFrame({
-        'X': np.random.normal(0, 1, len(index)),
-        'Y': np.random.normal(0, 1, len(index)),
-        'Z': np.random.normal(0, 1, len(index)),
+        'x': np.random.normal(0, 1, len(index)),
+        'y': np.random.normal(0, 1, len(index)),
+        'z': np.random.normal(0, 1, len(index)),
         'wear': np.ones(len(index)),
         'sleep': np.zeros(len(index)),
         'paxpredm': np.ones(len(index))

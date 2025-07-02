@@ -177,10 +177,10 @@ class TestGalaxyDataHandler:
             # Create a DataFrame with at least 4 consecutive days
             timestamps = pd.date_range('2024-01-01', periods=4*1440, freq='1min')
             df = pd.DataFrame({
-                'TIMESTAMP': timestamps,
+                'timestamp': timestamps,
                 'ENMO': [1, 2, 3, 4] * (1440)
             })
-            df = df.set_index('TIMESTAMP')
+            df = df.set_index('timestamp')
             mock_pd_read_csv.return_value = df.reset_index().copy()
             mock_read.return_value = df.reset_index().copy()
             mock_filter.return_value = df.copy()
@@ -247,13 +247,13 @@ class TestGalaxyDataHandler:
         # This should be the DataFrame after column renaming and processing
         processed_df = df.copy()
         processed_df = processed_df.rename(columns={
-            'unix_timestamp_in_ms': 'TIMESTAMP',
-            'acceleration_x': 'X',
-            'acceleration_y': 'Y',
-            'acceleration_z': 'Z'
+            'unix_timestamp_in_ms': 'timestamp',
+            'acceleration_x': 'x',
+            'acceleration_y': 'y',
+            'acceleration_z': 'z'
         })
-        processed_df['TIMESTAMP'] = pd.to_datetime(processed_df['TIMESTAMP'], unit='ms')
-        processed_df.set_index('TIMESTAMP', inplace=True)
+        processed_df['timestamp'] = pd.to_datetime(processed_df['timestamp'], unit='ms')
+        processed_df.set_index('timestamp', inplace=True)
         processed_df.drop(columns=['effective_time_frame', 'sensor_body_location'], inplace=True)
         processed_df = processed_df.fillna(0)
         processed_df.sort_index(inplace=True)
