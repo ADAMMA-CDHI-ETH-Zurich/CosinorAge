@@ -35,7 +35,7 @@ def read_generic_xD_data(
     data_type: str,
     meta_dict: dict,
     n_dimensions: int,
-    time_format: str = "unix",
+    time_format: str = "unix-ms",
     time_column: str = "timestamp",
     data_columns: Optional[list] = None,
     verbose: bool = False,
