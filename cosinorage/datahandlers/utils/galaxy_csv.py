@@ -3,15 +3,15 @@
 # CosinorAge: Prediction of biological age based on accelerometer data
 # using the CosinorAge method proposed by Shim, Fleisch and Barata
 # (https://www.nature.com/articles/s41746-024-01111-x)
-# 
+#
 # Authors: Jacob Leo Oskar Hunecke
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #         http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,19 +19,20 @@
 # limitations under the License.
 ##########################################################################
 
-import pandas as pd
 from typing import Optional
 
+import pandas as pd
+
+from .filtering import filter_consecutive_days, filter_incomplete_days
 from .frequency_detection import detect_frequency_from_timestamps
-from .filtering import filter_incomplete_days, filter_consecutive_days
 
 
 def read_galaxy_csv_data(
-    galaxy_file_path: str, 
-    meta_dict: dict, 
-    time_column: str = 'timestamp', 
-    data_columns: Optional[list] = None, 
-    verbose: bool = False
+    galaxy_file_path: str,
+    meta_dict: dict,
+    time_column: str = "timestamp",
+    data_columns: Optional[list] = None,
+    verbose: bool = False,
 ) -> pd.DataFrame:
     """
     Read ENMO data from Galaxy Watch CSV file.
@@ -77,7 +78,7 @@ def read_galaxy_csv_data(
     Examples
     --------
     >>> import pandas as pd
-    >>> 
+    >>>
     >>> # Load ENMO data from Galaxy Watch CSV file
     >>> meta_dict = {}
     >>> data = read_galaxy_csv_data(
@@ -98,42 +99,44 @@ def read_galaxy_csv_data(
 
     # Set default data_columns if not provided
     if data_columns is None:
-        data_columns = ['enmo']
+        data_columns = ["enmo"]
 
     # Rename columns to standard format
-    column_mapping = {time_column: 'timestamp'}
+    column_mapping = {time_column: "timestamp"}
     for i, col in enumerate(data_columns):
         if i == 0:  # First column should be ENMO
-            column_mapping[col] = 'ENMO'
-    
+            column_mapping[col] = "ENMO"
+
     data = data.rename(columns=column_mapping)
-    
+
     # Convert UTC timestamps to local time
-    data['timestamp'] = pd.to_datetime(data['timestamp']).dt.tz_localize(None)
-    data.set_index('timestamp', inplace=True)
+    data["timestamp"] = pd.to_datetime(data["timestamp"]).dt.tz_localize(None)
+    data.set_index("timestamp", inplace=True)
 
     data = data.fillna(0)
     data.sort_index(inplace=True)
 
     if verbose:
-        print(f"Loaded {data.shape[0]} ENMO data records from {galaxy_file_path}")
+        print(
+            f"Loaded {data.shape[0]} ENMO data records from {galaxy_file_path}"
+        )
 
-    meta_dict['raw_n_datapoints'] = data.shape[0]
-    meta_dict['raw_start_datetime'] = data.index.min()
-    meta_dict['raw_end_datetime'] = data.index.max()
-    meta_dict['sf'] = detect_frequency_from_timestamps(pd.Series(data.index))
-    meta_dict['raw_data_frequency'] = f'{meta_dict["sf"]:.1f}Hz'
-    meta_dict['raw_data_type'] = 'ENMO'
-    meta_dict['raw_data_unit'] = 'mg'
+    meta_dict["raw_n_datapoints"] = data.shape[0]
+    meta_dict["raw_start_datetime"] = data.index.min()
+    meta_dict["raw_end_datetime"] = data.index.max()
+    meta_dict["sf"] = detect_frequency_from_timestamps(pd.Series(data.index))
+    meta_dict["raw_data_frequency"] = f'{meta_dict["sf"]:.1f}Hz'
+    meta_dict["raw_data_type"] = "ENMO"
+    meta_dict["raw_data_unit"] = "mg"
 
     return data
 
 
 def filter_galaxy_csv_data(
-    data: pd.DataFrame, 
-    meta_dict: dict = {}, 
-    verbose: bool = False, 
-    preprocess_args: dict = {}
+    data: pd.DataFrame,
+    meta_dict: dict = {},
+    verbose: bool = False,
+    preprocess_args: dict = {},
 ) -> pd.DataFrame:
     """
     Filter Galaxy Watch ENMO data by removing incomplete days and selecting longest consecutive sequence.
@@ -171,11 +174,11 @@ def filter_galaxy_csv_data(
     Examples
     --------
     >>> import pandas as pd
-    >>> 
+    >>>
     >>> # Create sample ENMO data
     >>> dates = pd.date_range('2023-01-01', periods=10000, freq='min')
     >>> data = pd.DataFrame({'ENMO': np.random.randn(10000)}, index=dates)
-    >>> 
+    >>>
     >>> # Filter the data
     >>> meta_dict = {'sf': 1/60}  # 1 sample per minute
     >>> preprocess_args = {'required_daily_coverage': 0.8}
@@ -188,49 +191,59 @@ def filter_galaxy_csv_data(
     _data = data.copy()
 
     # filter out sparse days
-    required_points_per_day = preprocess_args.get('required_daily_coverage', 0.5) * 1440
+    required_points_per_day = (
+        preprocess_args.get("required_daily_coverage", 0.5) * 1440
+    )
     n_old = _data.shape[0]
-    _data = filter_incomplete_days(_data, data_freq=meta_dict['sf'], expected_points_per_day=required_points_per_day)
+    _data = filter_incomplete_days(
+        _data,
+        data_freq=meta_dict["sf"],
+        expected_points_per_day=required_points_per_day,
+    )
     if verbose:
-        print(f"Filtered out {n_old - _data.shape[0]}/{n_old} ENMO records due to incomplete daily coverage")
+        print(
+            f"Filtered out {n_old - _data.shape[0]}/{n_old} ENMO records due to incomplete daily coverage"
+        )
 
     # filter for longest consecutive sequence of days
     n_old = _data.shape[0]
     _data = filter_consecutive_days(_data)
     if verbose:
-        print(f"Filtered out {n_old - _data.shape[0]}/{n_old} ENMO records due to filtering for longest consecutive sequence of days")
+        print(
+            f"Filtered out {n_old - _data.shape[0]}/{n_old} ENMO records due to filtering for longest consecutive sequence of days"
+        )
 
     # resample to minute-level
-    _data = _data.resample('1min').interpolate(method='linear').bfill()
+    _data = _data.resample("1min").interpolate(method="linear").bfill()
     n_old = _data.shape[0]
     if verbose:
         print(f"Resampled {n_old} to {_data.shape[0]} timestamps")
 
     # filter out first and last day if it is incomplete (not 1440 samples)
     n_old = _data.shape[0]
-    
+
     # Get the first and last day
     first_day = _data.index[0].date()
     last_day = _data.index[-1].date()
-    
+
     # Filter out first day if incomplete
     if len(_data[_data.index.date == first_day]) != 1440:
         _data = _data[_data.index.date > first_day]
-    
+
     # Filter out last day if incomplete
     if len(_data[_data.index.date == last_day]) != 1440:
         _data = _data[_data.index.date < last_day]
-    
+
     if verbose:
-        print(f"Filtered out {n_old - _data.shape[0]}/{n_old} ENMO records due to filtering out first and last day")
+        print(
+            f"Filtered out {n_old - _data.shape[0]}/{n_old} ENMO records due to filtering out first and last day"
+        )
 
     return _data
 
 
 def resample_galaxy_csv_data(
-    data: pd.DataFrame, 
-    meta_dict: dict = {}, 
-    verbose: bool = False
+    data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False
 ) -> pd.DataFrame:
     """
     Ensure we have minute-level data across the whole timeseries.
@@ -263,12 +276,12 @@ def resample_galaxy_csv_data(
     Examples
     --------
     >>> import pandas as pd
-    >>> 
+    >>>
     >>> # Create sample ENMO data with irregular intervals
-    >>> dates = pd.to_datetime(['2023-01-01 00:00:00', '2023-01-01 00:01:30', 
+    >>> dates = pd.to_datetime(['2023-01-01 00:00:00', '2023-01-01 00:01:30',
     ...                         '2023-01-01 00:03:00', '2023-01-01 00:04:30'])
     >>> data = pd.DataFrame({'ENMO': [0.1, 0.2, 0.3, 0.4]}, index=dates)
-    >>> 
+    >>>
     >>> # Resample to minute level
     >>> meta_dict = {}
     >>> resampled_data = resample_galaxy_csv_data(data, meta_dict=meta_dict, verbose=True)
@@ -278,7 +291,7 @@ def resample_galaxy_csv_data(
     _data = data.copy()
 
     n_old = _data.shape[0]
-    _data = _data.resample('1min').interpolate(method='linear').bfill()
+    _data = _data.resample("1min").interpolate(method="linear").bfill()
     if verbose:
         print(f"Resampled {n_old} to {_data.shape[0]} timestamps")
 
@@ -286,10 +299,10 @@ def resample_galaxy_csv_data(
 
 
 def preprocess_galaxy_csv_data(
-    data: pd.DataFrame, 
-    preprocess_args: dict = {}, 
-    meta_dict: dict = {}, 
-    verbose: bool = False
+    data: pd.DataFrame,
+    preprocess_args: dict = {},
+    meta_dict: dict = {},
+    verbose: bool = False,
 ) -> pd.DataFrame:
     """
     Preprocess Galaxy Watch ENMO data including rescaling, calibration, noise removal, and wear detection.
@@ -326,11 +339,11 @@ def preprocess_galaxy_csv_data(
     Examples
     --------
     >>> import pandas as pd
-    >>> 
+    >>>
     >>> # Create sample ENMO data
     >>> dates = pd.date_range('2023-01-01', periods=1440, freq='min')
     >>> data = pd.DataFrame({'ENMO': np.random.uniform(0, 0.1, 1440)}, index=dates)
-    >>> 
+    >>>
     >>> # Preprocess the data
     >>> meta_dict = {}
     >>> preprocess_args = {}
@@ -343,7 +356,7 @@ def preprocess_galaxy_csv_data(
     _data = data.copy()
 
     # wear detection - not implemented for enmo data yet (current algorithm relies on accelerometer data)
-    _data['wear'] = -1
+    _data["wear"] = -1
 
     if verbose:
         print(f"Preprocessed ENMO data")

@@ -3,15 +3,15 @@
 # CosinorAge: Prediction of biological age based on accelerometer data
 # using the CosinorAge method proposed by Shim, Fleisch and Barata
 # (https://www.nature.com/articles/s41746-024-01111-x)
-# 
+#
 # Authors: Jacob Leo Oskar Hunecke
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #         http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,10 +23,7 @@ import numpy as np
 import pandas as pd
 
 
-def calculate_enmo(
-    data: pd.DataFrame, 
-    verbose: bool = False
-) -> pd.DataFrame:
+def calculate_enmo(data: pd.DataFrame, verbose: bool = False) -> pd.DataFrame:
     """
     Calculate the Euclidean Norm Minus One (ENMO) metric from accelerometer data.
 
@@ -38,7 +35,7 @@ def calculate_enmo(
     data : pd.DataFrame
         DataFrame containing accelerometer data with columns:
         - 'x': X-axis acceleration values
-        - 'y': Y-axis acceleration values  
+        - 'y': Y-axis acceleration values
         - 'z': Z-axis acceleration values
         All values should be in g units (1g = 9.81 m/s²).
     verbose : bool, default=False
@@ -62,14 +59,14 @@ def calculate_enmo(
     --------
     >>> import pandas as pd
     >>> import numpy as np
-    >>> 
+    >>>
     >>> # Create sample accelerometer data
     >>> data = pd.DataFrame({
     ...     'x': [0.1, 0.2, 0.3],
     ...     'y': [0.1, 0.2, 0.3],
     ...     'z': [1.0, 1.1, 1.2]  # Close to 1g (gravity)
     ... })
-    >>> 
+    >>>
     >>> # Calculate ENMO
     >>> enmo_values = calculate_enmo(data, verbose=True)
     >>> print(f"ENMO values: {enmo_values}")
@@ -80,7 +77,7 @@ def calculate_enmo(
         return pd.DataFrame()
 
     try:
-        _acc_vectors = data[['x', 'y', 'z']].values
+        _acc_vectors = data[["x", "y", "z"]].values
         _enmo_vals = np.linalg.norm(_acc_vectors, axis=1) - 1
         _enmo_vals = np.maximum(_enmo_vals, 0)
     except Exception as e:
@@ -94,9 +91,7 @@ def calculate_enmo(
 
 
 def calculate_minute_level_enmo(
-    data: pd.DataFrame, 
-    meta_dict: dict = {}, 
-    verbose: bool = False
+    data: pd.DataFrame, meta_dict: dict = {}, verbose: bool = False
 ) -> pd.DataFrame:
     """
     Resample high-frequency ENMO data to minute-level by averaging over each minute.
@@ -139,14 +134,14 @@ def calculate_minute_level_enmo(
     Examples
     --------
     >>> import pandas as pd
-    >>> 
+    >>>
     >>> # Create sample high-frequency ENMO data
     >>> dates = pd.date_range('2023-01-01 00:00:00', periods=3600, freq='S')  # 1 hour of second-level data
     >>> data = pd.DataFrame({
     ...     'ENMO': np.random.uniform(0, 0.1, 3600),
     ...     'wear': np.random.choice([0, 1], 3600)
     ... }, index=dates)
-    >>> 
+    >>>
     >>> # Resample to minute level
     >>> meta_dict = {'sf': 1}  # 1 Hz sampling frequency
     >>> minute_data = calculate_minute_level_enmo(data, meta_dict=meta_dict, verbose=True)
@@ -155,27 +150,31 @@ def calculate_minute_level_enmo(
     """
 
     # Get sampling frequency from meta_dict or use default
-    sf = meta_dict.get('sf', 25)  # Default to 25Hz if not specified
-    
-    if sf < 1/60:
+    sf = meta_dict.get("sf", 25)  # Default to 25Hz if not specified
+
+    if sf < 1 / 60:
         raise ValueError("Sampling frequency must be at least 1 minute")
 
     if data.empty:
         return pd.DataFrame()
 
-    try:    
-        minute_level_enmo_df = data['ENMO'].resample('min').mean().to_frame(name='ENMO')
+    try:
+        minute_level_enmo_df = (
+            data["ENMO"].resample("min").mean().to_frame(name="ENMO")
+        )
         # check if data has a wear column
-        if 'wear' in data.columns:
-            minute_level_enmo_df['wear'] = data['wear'].resample('min').mean()
-        
+        if "wear" in data.columns:
+            minute_level_enmo_df["wear"] = data["wear"].resample("min").mean()
+
     except Exception as e:
         print(f"Error resampling ENMO data: {e}")
         minute_level_enmo_df = pd.DataFrame()
 
     minute_level_enmo_df.index = pd.to_datetime(minute_level_enmo_df.index)
-    
+
     if verbose:
-        print(f"Aggregated ENMO values at the minute level leading to {minute_level_enmo_df.shape[0]} records")
+        print(
+            f"Aggregated ENMO values at the minute level leading to {minute_level_enmo_df.shape[0]} records"
+        )
 
     return minute_level_enmo_df

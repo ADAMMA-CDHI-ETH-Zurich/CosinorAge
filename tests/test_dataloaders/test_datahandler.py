@@ -1,6 +1,8 @@
-import pytest
 import pandas as pd
+import pytest
+
 from cosinorage.datahandlers.datahandler import DataHandler
+
 
 class TestDataHandler:
     @pytest.fixture
@@ -30,15 +32,14 @@ class TestDataHandler:
     def test_save_data_with_data(self, data_handler, tmp_path):
         """Test save_data successfully saves data"""
         # Create sample data
-        test_data = pd.DataFrame({
-            'column1': [1, 2, 3],
-            'column2': ['a', 'b', 'c']
-        })
+        test_data = pd.DataFrame(
+            {"column1": [1, 2, 3], "column2": ["a", "b", "c"]}
+        )
         data_handler.ml_data = test_data
-        
+
         output_path = tmp_path / "test_output.csv"
         data_handler.save_data(str(output_path))
-        
+
         # Verify file was created and contains correct data
         assert output_path.exists()
         saved_data = pd.read_csv(str(output_path))
@@ -65,10 +66,10 @@ class TestDataHandler:
     def test_get_data_with_loaded_data(self, data_handler):
         """Test getter methods with sample data"""
         # Create sample data
-        raw_data = pd.DataFrame({'raw': [1, 2, 3]})
-        sf_data = pd.DataFrame({'sf': [4, 5, 6]})
-        ml_data = pd.DataFrame({'ml': [7, 8, 9]})
-        meta_dict = {'key': 'value'}
+        raw_data = pd.DataFrame({"raw": [1, 2, 3]})
+        sf_data = pd.DataFrame({"sf": [4, 5, 6]})
+        ml_data = pd.DataFrame({"ml": [7, 8, 9]})
+        meta_dict = {"key": "value"}
 
         # Set data
         data_handler.raw_data = raw_data

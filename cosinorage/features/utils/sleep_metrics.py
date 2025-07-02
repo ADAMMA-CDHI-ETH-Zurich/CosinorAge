@@ -3,15 +3,15 @@
 # CosinorAge: Prediction of biological age based on accelerometer data
 # using the CosinorAge method proposed by Shim, Fleisch and Barata
 # (https://www.nature.com/articles/s41746-024-01111-x)
-# 
+#
 # Authors: Jacob Leo Oskar Hunecke
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #         http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,16 +19,20 @@
 # limitations under the License.
 ##########################################################################
 
-import pandas as pd
-import numpy as np
-from skdh.sleep.sleep_classification import compute_sleep_predictions
-from skdh.sleep.endpoints import WakeAfterSleepOnset, TotalSleepTime, PercentTimeAsleep, NumberWakeBouts, SleepOnsetLatency
-
-from typing import List
 from itertools import tee
+from typing import List
+
+import numpy as np
+import pandas as pd
+from skdh.sleep.endpoints import (NumberWakeBouts, PercentTimeAsleep,
+                                  SleepOnsetLatency, TotalSleepTime,
+                                  WakeAfterSleepOnset)
+from skdh.sleep.sleep_classification import compute_sleep_predictions
 
 
-def apply_sleep_wake_predictions(data: pd.DataFrame, sleep_params: dict) -> pd.DataFrame:
+def apply_sleep_wake_predictions(
+    data: pd.DataFrame, sleep_params: dict
+) -> pd.DataFrame:
     """
     Apply sleep-wake prediction to accelerometer data using ENMO values.
 
@@ -69,13 +73,13 @@ def apply_sleep_wake_predictions(data: pd.DataFrame, sleep_params: dict) -> pd.D
     --------
     >>> import pandas as pd
     >>> import numpy as np
-    >>> 
+    >>>
     >>> # Create sample ENMO data
     >>> timestamps = pd.date_range('2023-01-01', periods=1440, freq='min')  # One day
     >>> data = pd.DataFrame({
     ...     'ENMO': np.random.uniform(0, 0.1, 1440)  # Random activity levels
     ... }, index=timestamps)
-    >>> 
+    >>>
     >>> # Apply sleep-wake predictions
     >>> sleep_params = {'sleep_ck_sf': 0.0025, 'sleep_rescore': True}
     >>> sleep_predictions = apply_sleep_wake_predictions(data, sleep_params)
@@ -83,22 +87,25 @@ def apply_sleep_wake_predictions(data: pd.DataFrame, sleep_params: dict) -> pd.D
     """
     if "ENMO" not in data.columns:
         raise ValueError(f"Column ENMO not found in the DataFrame.")
-    
+
     data_ = data.copy()
     # make sf higher
     sf = sleep_params.get("sleep_ck_sf", 0.0025)
     rescore = sleep_params.get("sleep_rescore", True)
 
     result = compute_sleep_predictions(data_["ENMO"], sf=sf, rescore=rescore)
-    data_['sleep'] = pd.DataFrame(result, columns=['sleep']).set_index(data_.index)['sleep']
+    data_["sleep"] = pd.DataFrame(result, columns=["sleep"]).set_index(
+        data_.index
+    )["sleep"]
 
-    return data_['sleep']
+    return data_["sleep"]
+
 
 def WASO(data: pd.DataFrame) -> List[int]:
     """
     Calculate Wake After Sleep Onset (WASO) for each 24-hour cycle.
 
-    WASO represents the total time spent awake after the first sleep onset 
+    WASO represents the total time spent awake after the first sleep onset
     until the final wake time. It's a key metric for sleep quality assessment.
 
     Parameters
@@ -125,13 +132,13 @@ def WASO(data: pd.DataFrame) -> List[int]:
     Examples
     --------
     >>> import pandas as pd
-    >>> 
+    >>>
     >>> # Create sample sleep data for one day
     >>> dates = pd.date_range('2023-01-01', periods=1440, freq='min')
     >>> # Simulate sleep pattern with some wake periods
     >>> sleep_pattern = [0] * 480 + [1] * 30 + [0] * 60 + [1] * 20 + [0] * 810  # Sleep with wake periods
     >>> data = pd.DataFrame({'sleep': sleep_pattern}, index=dates)
-    >>> 
+    >>>
     >>> # Calculate WASO
     >>> waso_values = WASO(data)
     >>> print(f"Wake After Sleep Onset: {waso_values[0]} minutes")
@@ -153,6 +160,7 @@ def WASO(data: pd.DataFrame) -> List[int]:
             waso.append(int(pred))
 
     return waso
+
 
 def TST(data: pd.DataFrame) -> List[int]:
     """
@@ -184,13 +192,13 @@ def TST(data: pd.DataFrame) -> List[int]:
     Examples
     --------
     >>> import pandas as pd
-    >>> 
+    >>>
     >>> # Create sample sleep data for one day
     >>> dates = pd.date_range('2023-01-01', periods=1440, freq='min')
     >>> # Simulate 8 hours of sleep
     >>> sleep_pattern = [1] * 480 + [0] * 960  # 8 hours sleep, 16 hours wake
     >>> data = pd.DataFrame({'sleep': sleep_pattern}, index=dates)
-    >>> 
+    >>>
     >>> # Calculate TST
     >>> tst_values = TST(data)
     >>> print(f"Total Sleep Time: {tst_values[0]} minutes ({tst_values[0]/60:.1f} hours)")
@@ -210,8 +218,9 @@ def TST(data: pd.DataFrame) -> List[int]:
             tst.append(0)
         else:
             tst.append(int(pred))
-    
+
     return tst
+
 
 def PTA(data: pd.DataFrame) -> List[float]:
     """
@@ -244,13 +253,13 @@ def PTA(data: pd.DataFrame) -> List[float]:
     Examples
     --------
     >>> import pandas as pd
-    >>> 
+    >>>
     >>> # Create sample sleep data for one day
     >>> dates = pd.date_range('2023-01-01', periods=1440, freq='min')
     >>> # Simulate 8 hours of sleep (33.3% of day)
     >>> sleep_pattern = [1] * 480 + [0] * 960  # 8 hours sleep, 16 hours wake
     >>> data = pd.DataFrame({'sleep': sleep_pattern}, index=dates)
-    >>> 
+    >>>
     >>> # Calculate PTA
     >>> pta_values = PTA(data)
     >>> print(f"Percent Time Asleep: {pta_values[0]:.3f} ({pta_values[0]*100:.1f}%)")
@@ -270,8 +279,9 @@ def PTA(data: pd.DataFrame) -> List[float]:
             pta.append(0)
         else:
             pta.append(float(pred))
-    
+
     return pta
+
 
 def NWB(data: pd.DataFrame) -> List[int]:
     """
@@ -304,13 +314,13 @@ def NWB(data: pd.DataFrame) -> List[int]:
     Examples
     --------
     >>> import pandas as pd
-    >>> 
+    >>>
     >>> # Create sample sleep data for one day
     >>> dates = pd.date_range('2023-01-01', periods=1440, freq='min')
     >>> # Simulate fragmented sleep with multiple wake bouts
     >>> sleep_pattern = [1] * 240 + [0] * 30 + [1] * 120 + [0] * 20 + [1] * 120 + [0] * 910
     >>> data = pd.DataFrame({'sleep': sleep_pattern}, index=dates)
-    >>> 
+    >>>
     >>> # Calculate NWB
     >>> nwb_values = NWB(data)
     >>> print(f"Number of Wake Bouts: {nwb_values[0]}")
@@ -330,8 +340,9 @@ def NWB(data: pd.DataFrame) -> List[int]:
             nwb.append(0)
         else:
             nwb.append(int(pred))
-    
+
     return nwb
+
 
 def SOL(data: pd.DataFrame) -> List[int]:
     """
@@ -364,13 +375,13 @@ def SOL(data: pd.DataFrame) -> List[int]:
     Examples
     --------
     >>> import pandas as pd
-    >>> 
+    >>>
     >>> # Create sample sleep data for one day
     >>> dates = pd.date_range('2023-01-01', periods=1440, freq='min')
     >>> # Simulate 30 minutes to fall asleep
     >>> sleep_pattern = [0] * 30 + [1] * 1410  # 30 min wake, then sleep
     >>> data = pd.DataFrame({'sleep': sleep_pattern}, index=dates)
-    >>> 
+    >>>
     >>> # Calculate SOL
     >>> sol_values = SOL(data)
     >>> print(f"Sleep Onset Latency: {sol_values[0]} minutes")
@@ -388,14 +399,15 @@ def SOL(data: pd.DataFrame) -> List[int]:
             sol.append(0)
         else:
             sol.append(int(pred))
-    
+
     return sol
+
 
 def SRI(data: pd.DataFrame) -> float:
     """
     Calculate Sleep Regularity Index (SRI) for the entire dataset.
 
-    SRI quantifies the day-to-day similarity of sleep-wake patterns. It ranges from -100 
+    SRI quantifies the day-to-day similarity of sleep-wake patterns. It ranges from -100
     (completely irregular) to +100 (perfectly regular).
 
     Parameters
@@ -424,14 +436,14 @@ def SRI(data: pd.DataFrame) -> float:
     Examples
     --------
     >>> import pandas as pd
-    >>> 
+    >>>
     >>> # Create sample multi-day sleep data
     >>> dates = pd.date_range('2023-01-01', periods=4320, freq='min')  # 3 days
     >>> # Simulate consistent sleep pattern
     >>> sleep_pattern = [1] * 480 + [0] * 960  # 8 hours sleep, 16 hours wake
     >>> sleep_data = sleep_pattern * 3  # Repeat for 3 days
     >>> data = pd.DataFrame({'sleep': sleep_data}, index=dates)
-    >>> 
+    >>>
     >>> # Calculate SRI
     >>> sri_value = SRI(data)
     >>> print(f"Sleep Regularity Index: {sri_value:.1f}")
@@ -440,7 +452,7 @@ def SRI(data: pd.DataFrame) -> float:
 
     if data.empty:
         return np.nan
-    
+
     data_ = data.copy()
     data_ = data_.sort_index()
 
@@ -449,7 +461,7 @@ def SRI(data: pd.DataFrame) -> float:
 
     if M < 2:  # Need at least 2 days for SRI
         return np.nan
-    
+
     daily_groups = data_.groupby(data_.index.date)
     sri = 0
 
@@ -458,11 +470,17 @@ def SRI(data: pd.DataFrame) -> float:
         next(b, None)
         return zip(a, b)
 
-    for (date_prev, day_data_prev), (date_next, day_data_next) in overlapping_pairs(daily_groups):
+    for (date_prev, day_data_prev), (
+        date_next,
+        day_data_next,
+    ) in overlapping_pairs(daily_groups):
         # check for concordance of sleep states between consecutive days
-        concordance = (day_data_prev["sleep"].reset_index(drop=True) == day_data_next["sleep"].reset_index(drop=True)).sum()
-        sri += concordance 
+        concordance = (
+            day_data_prev["sleep"].reset_index(drop=True)
+            == day_data_next["sleep"].reset_index(drop=True)
+        ).sum()
+        sri += concordance
 
-    sri = float(-100 + 200/(M*(N-1)) * sri)
-    
+    sri = float(-100 + 200 / (M * (N - 1)) * sri)
+
     return sri
