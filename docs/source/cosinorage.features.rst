@@ -15,6 +15,9 @@ Classes
 .. autoclass:: cosinorage.features.features.WearableFeatures
    :members:
 
+.. autoclass:: cosinorage.features.bulk_features.BulkWearableFeatures
+   :members:
+
 Utility Functions
 -----------------
 

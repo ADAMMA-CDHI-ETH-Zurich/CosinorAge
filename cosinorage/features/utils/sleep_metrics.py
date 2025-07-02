@@ -146,8 +146,11 @@ def WASO(data: pd.DataFrame) -> List[int]:
     for date, day_data in daily_groups:
         # Sort by timestamp within the group
         day_data = day_data.sort_index()
-
-        waso.append(int(w.predict(np.array(day_data["sleep"]))))
+        pred = w.predict(np.array(day_data["sleep"]))
+        if pd.isna(pred):
+            waso.append(0)
+        else:
+            waso.append(int(pred))
 
     return waso
 
@@ -202,7 +205,11 @@ def TST(data: pd.DataFrame) -> List[int]:
     for date, day_data in daily_groups:
         day_data = day_data.sort_index()
 
-        tst.append(int(t.predict(np.array(day_data["sleep"]))))
+        pred = t.predict(np.array(day_data["sleep"]))
+        if pd.isna(pred):
+            tst.append(0)
+        else:
+            tst.append(int(pred))
     
     return tst
 
@@ -258,7 +265,11 @@ def PTA(data: pd.DataFrame) -> List[float]:
         # Sort by timestamp within the group
         day_data = day_data.sort_index()
 
-        pta.append(float(p.predict(np.array(day_data["sleep"]))))
+        pred = p.predict(np.array(day_data["sleep"]))
+        if pd.isna(pred):
+            pta.append(0)
+        else:
+            pta.append(float(pred))
     
     return pta
 
@@ -314,7 +325,11 @@ def NWB(data: pd.DataFrame) -> List[int]:
     for date, day_data in daily_groups:
         day_data = day_data.sort_index()
 
-        nwb.append(int(n.predict(np.array(day_data["sleep"]))))
+        pred = n.predict(np.array(day_data["sleep"]))
+        if pd.isna(pred):
+            nwb.append(0)
+        else:
+            nwb.append(int(pred))
     
     return nwb
 
@@ -368,8 +383,11 @@ def SOL(data: pd.DataFrame) -> List[int]:
 
     for date, day_data in daily_groups:
         day_data = day_data.sort_index()
-
-        sol.append(int(s.predict(np.array(day_data["sleep"]))))
+        pred = s.predict(np.array(day_data["sleep"]))
+        if pd.isna(pred):
+            sol.append(0)
+        else:
+            sol.append(int(pred))
     
     return sol
 
