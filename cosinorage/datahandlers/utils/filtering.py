@@ -3,15 +3,15 @@
 # CosinorAge: Prediction of biological age based on accelerometer data
 # using the CosinorAge method proposed by Shim, Fleisch and Barata
 # (https://www.nature.com/articles/s41746-024-01111-x)
-# 
+#
 # Authors: Jacob Leo Oskar Hunecke
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #         http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,16 +19,17 @@
 # limitations under the License.
 ##########################################################################
 
-import pandas as pd
-import numpy as np
-from typing import List, Optional
 from datetime import datetime, timedelta
+from typing import List, Optional
+
+import numpy as np
+import pandas as pd
 
 
 def filter_incomplete_days(
-    df: pd.DataFrame, 
-    data_freq: float, 
-    expected_points_per_day: Optional[int] = None
+    df: pd.DataFrame,
+    data_freq: float,
+    expected_points_per_day: Optional[int] = None,
 ) -> pd.DataFrame:
     """
     Filter out data from incomplete days to ensure 24-hour data periods.
@@ -63,11 +64,11 @@ def filter_incomplete_days(
     Examples
     --------
     >>> import pandas as pd
-    >>> 
+    >>>
     >>> # Create sample data with some incomplete days
     >>> dates = pd.date_range('2023-01-01', periods=5000, freq='min')
     >>> data = pd.DataFrame({'value': np.random.randn(5000)}, index=dates)
-    >>> 
+    >>>
     >>> # Filter incomplete days (expecting 1440 points per day for minute data)
     >>> filtered_data = filter_incomplete_days(data, data_freq=1/60, expected_points_per_day=1440)
     >>> print(f"Original days: {len(data.index.date.unique())}")
@@ -83,29 +84,28 @@ def filter_incomplete_days(
         # Extract the date from each timestamp
         _df = df.copy()
         # timestamp is index
-        _df['DATE'] = _df.index.date
+        _df["DATE"] = _df.index.date
 
         # Count data points for each day
-        daily_counts = _df.groupby('DATE').size()
+        daily_counts = _df.groupby("DATE").size()
 
         # Identify complete days based on expected number of data points
         complete_days = daily_counts[
-            daily_counts >= expected_points_per_day].index
+            daily_counts >= expected_points_per_day
+        ].index
 
         # Filter the DataFrame to include only rows from complete days
-        filtered_df = _df[_df['DATE'].isin(complete_days)]
+        filtered_df = _df[_df["DATE"].isin(complete_days)]
 
         # Drop the helper 'DATE' column before returning
-        return filtered_df.drop(columns=['DATE'])
+        return filtered_df.drop(columns=["DATE"])
 
     except Exception as e:
         print(f"Error filtering incomplete days: {e}")
         return pd.DataFrame()
 
 
-def filter_consecutive_days(
-    df: pd.DataFrame
-) -> pd.DataFrame:
+def filter_consecutive_days(df: pd.DataFrame) -> pd.DataFrame:
     """
     Filter DataFrame to retain only the longest sequence of consecutive days.
 
@@ -139,12 +139,12 @@ def filter_consecutive_days(
     Examples
     --------
     >>> import pandas as pd
-    >>> 
+    >>>
     >>> # Create sample data with gaps
-    >>> dates = pd.to_datetime(['2023-01-01', '2023-01-02', '2023-01-03', 
+    >>> dates = pd.to_datetime(['2023-01-01', '2023-01-02', '2023-01-03',
     ...                         '2023-01-05', '2023-01-06', '2023-01-07'])
     >>> data = pd.DataFrame({'value': np.random.randn(len(dates))}, index=dates)
-    >>> 
+    >>>
     >>> # Filter to longest consecutive sequence
     >>> filtered_data = filter_consecutive_days(data)
     >>> print(f"Original dates: {data.index.date.tolist()}")
@@ -160,9 +160,7 @@ def filter_consecutive_days(
     return df
 
 
-def largest_consecutive_sequence(
-    dates: List[datetime]
-) -> List[datetime]:
+def largest_consecutive_sequence(dates: List[datetime]) -> List[datetime]:
     """
     Find the longest sequence of consecutive dates in a list.
 
@@ -192,7 +190,7 @@ def largest_consecutive_sequence(
     Examples
     --------
     >>> from datetime import datetime
-    >>> 
+    >>>
     >>> # Example with gaps in dates
     >>> dates = [
     ...     datetime(2023, 1, 1), datetime(2023, 1, 2), datetime(2023, 1, 3),
@@ -201,7 +199,7 @@ def largest_consecutive_sequence(
     >>> consecutive = largest_consecutive_sequence(dates)
     >>> print(f"Longest consecutive sequence: {consecutive}")
     >>> # Output: [datetime(2023, 1, 5), datetime(2023, 1, 6), datetime(2023, 1, 7)]
-    >>> 
+    >>>
     >>> # Example with single date
     >>> single_date = [datetime(2023, 1, 1)]
     >>> result = largest_consecutive_sequence(single_date)
@@ -210,23 +208,25 @@ def largest_consecutive_sequence(
     """
     if len(dates) == 0:  # Handle empty list
         return []
-    
+
     # Sort and remove duplicates
     dates = sorted(set(dates))
     longest_sequence = []
     current_sequence = [dates[0]]
-    
+
     for i in range(1, len(dates)):
-        if dates[i] - dates[i - 1] == timedelta(days=1):  # Check for consecutive days
+        if dates[i] - dates[i - 1] == timedelta(
+            days=1
+        ):  # Check for consecutive days
             current_sequence.append(dates[i])
         else:
             # Update longest sequence if current is longer
             if len(current_sequence) > len(longest_sequence):
                 longest_sequence = current_sequence
             current_sequence = [dates[i]]  # Start a new sequence
-    
+
     # Final check after loop
     if len(current_sequence) > len(longest_sequence):
         longest_sequence = current_sequence
-    
+
     return longest_sequence

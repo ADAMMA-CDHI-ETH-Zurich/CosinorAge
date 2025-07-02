@@ -3,15 +3,15 @@
 # CosinorAge: Prediction of biological age based on accelerometer data
 # using the CosinorAge method proposed by Shim, Fleisch and Barata
 # (https://www.nature.com/articles/s41746-024-01111-x)
-# 
+#
 # Authors: Jacob Leo Oskar Hunecke
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #         http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,16 +19,17 @@
 # limitations under the License.
 ##########################################################################
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from scipy.signal import butter, filtfilt
 
+
 def remove_noise(
-    data: pd.DataFrame, 
-    sf: float, 
-    filter_type: str = 'lowpass', 
-    filter_cutoff: float = 2, 
-    verbose: bool = False
+    data: pd.DataFrame,
+    sf: float,
+    filter_type: str = "lowpass",
+    filter_cutoff: float = 2,
+    verbose: bool = False,
 ) -> pd.DataFrame:
     """
     Remove noise from accelerometer data using a Butterworth filter.
@@ -85,7 +86,7 @@ def remove_noise(
     --------
     >>> import pandas as pd
     >>> import numpy as np
-    >>> 
+    >>>
     >>> # Create sample accelerometer data with noise
     >>> timestamps = pd.date_range('2023-01-01', periods=1000, freq='40ms')
     >>> data = pd.DataFrame({
@@ -93,25 +94,33 @@ def remove_noise(
     ...     'y': np.random.normal(0, 0.1, 1000) + 0.3*np.cos(2*np.pi*0.05*np.arange(1000)),
     ...     'z': np.random.normal(1, 0.1, 1000)  # Gravity component
     ... }, index=timestamps)
-    >>> 
+    >>>
     >>> # Remove high-frequency noise with lowpass filter
-    >>> filtered_data = remove_noise(data, sf=25, filter_type='lowpass', 
+    >>> filtered_data = remove_noise(data, sf=25, filter_type='lowpass',
     ...                              filter_cutoff=2, verbose=True)
-    >>> 
+    >>>
     >>> # Remove low-frequency drift with highpass filter
-    >>> filtered_data = remove_noise(data, sf=25, filter_type='highpass', 
+    >>> filtered_data = remove_noise(data, sf=25, filter_type='highpass',
     ...                              filter_cutoff=0.1, verbose=True)
     """
-    if (filter_type == 'bandpass' or filter_type == 'bandstop') and (type(filter_cutoff) != list or len(filter_cutoff) != 2):
-        raise ValueError('Bandpass and bandstop filters require a list of two cutoff frequencies.')
+    if (filter_type == "bandpass" or filter_type == "bandstop") and (
+        type(filter_cutoff) != list or len(filter_cutoff) != 2
+    ):
+        raise ValueError(
+            "Bandpass and bandstop filters require a list of two cutoff frequencies."
+        )
 
-    if (filter_type == 'highpass' or filter_type == 'lowpass') and type(filter_cutoff) not in [float, int]:
-        raise ValueError('Highpass and lowpass filters require a single cutoff frequency.')
+    if (filter_type == "highpass" or filter_type == "lowpass") and type(
+        filter_cutoff
+    ) not in [float, int]:
+        raise ValueError(
+            "Highpass and lowpass filters require a single cutoff frequency."
+        )
 
     if data.empty:
         raise ValueError("Dataframe is empty.")
 
-    if not all(col in data.columns for col in ['x', 'y', 'z']):
+    if not all(col in data.columns for col in ["x", "y", "z"]):
         raise KeyError("Dataframe must contain 'x', 'y' and 'z' columns.")
 
     def butter_lowpass_filter(data, cutoff, sf, btype, order=2):
@@ -126,11 +135,17 @@ def remove_noise(
     _data = data.copy()
 
     cutoff = filter_cutoff
-    _data['x'] = butter_lowpass_filter(_data['x'], cutoff, sf, btype=filter_type)
-    _data['y'] = butter_lowpass_filter(_data['y'], cutoff, sf, btype=filter_type)
-    _data['z'] = butter_lowpass_filter(_data['z'], cutoff, sf, btype=filter_type)
+    _data["x"] = butter_lowpass_filter(
+        _data["x"], cutoff, sf, btype=filter_type
+    )
+    _data["y"] = butter_lowpass_filter(
+        _data["y"], cutoff, sf, btype=filter_type
+    )
+    _data["z"] = butter_lowpass_filter(
+        _data["z"], cutoff, sf, btype=filter_type
+    )
 
     if verbose:
-        print('Noise removal done')
+        print("Noise removal done")
 
-    return _data[['x', 'y', 'z']]
+    return _data[["x", "y", "z"]]

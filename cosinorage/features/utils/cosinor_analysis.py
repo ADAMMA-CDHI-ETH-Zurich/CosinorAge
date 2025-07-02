@@ -3,15 +3,15 @@
 # CosinorAge: Prediction of biological age based on accelerometer data
 # using the CosinorAge method proposed by Shim, Fleisch and Barata
 # (https://www.nature.com/articles/s41746-024-01111-x)
-# 
+#
 # Authors: Jacob Leo Oskar Hunecke
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #         http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,11 +19,9 @@
 # limitations under the License.
 ##########################################################################
 
-import pandas as pd
 import numpy as np
-from statsmodels.formula.api import ols
-from scipy import optimize
-from CosinorPy import cosinor1 
+import pandas as pd
+from CosinorPy import cosinor1
 
 
 def cosinor_multiday(df: pd.DataFrame) -> pd.DataFrame:
@@ -52,31 +50,37 @@ def cosinor_multiday(df: pd.DataFrame) -> pd.DataFrame:
         If data length is not a multiple of 1440 (minutes in a day)
     """
     # Ensure the DataFrame contains the required columns
-    if 'ENMO' not in df.columns or not pd.api.types.is_datetime64_any_dtype(df.index):
-        raise ValueError("The DataFrame must have a Timestamp index and an 'ENMO' column.")
+    if "ENMO" not in df.columns or not pd.api.types.is_datetime64_any_dtype(
+        df.index
+    ):
+        raise ValueError(
+            "The DataFrame must have a Timestamp index and an 'ENMO' column."
+        )
 
     # Ensure the data length is consistent
     total_minutes = len(df)
     dim = 1440  # Number of data points in a day
     if total_minutes % dim != 0:
-        raise ValueError("Data length is not a multiple of a day (1440 minutes or adjusted for the window size).")
+        raise ValueError(
+            "Data length is not a multiple of a day (1440 minutes or adjusted for the window size)."
+        )
 
     time_minutes = np.arange(1, total_minutes + 1)
-    df['time'] = time_minutes 
+    df["time"] = time_minutes
 
-    results = fit_cosinor(df['time'], df['ENMO'], period=1440)
-    
-    mesor = results['MESOR']
-    amplitude = results['amplitude']
-    acrophase = results['acrophase']
-    fitted_vals_df = results['fitted_values']
+    results = fit_cosinor(df["time"], df["ENMO"], period=1440)
 
-    # shifted by 2pi to make it match the gt cosinorage predictions 
+    mesor = results["MESOR"]
+    amplitude = results["amplitude"]
+    acrophase = results["acrophase"]
+    fitted_vals_df = results["fitted_values"]
+
+    # shifted by 2pi to make it match the gt cosinorage predictions
     if acrophase > 0:
-        acrophase -= 2*np.pi
+        acrophase -= 2 * np.pi
 
-    acrophase_time = float(-(acrophase+2*np.pi)/(2*np.pi)*24)+24
-    
+    acrophase_time = float(-(acrophase + 2 * np.pi) / (2 * np.pi) * 24) + 24
+
     """
     # Add cosine and sine components
     df['cos'] = np.cos(2 * np.pi * df['time'] / 1440)
@@ -98,13 +102,18 @@ def cosinor_multiday(df: pd.DataFrame) -> pd.DataFrame:
     acrophase_time *= 60
 
     # Convert the results into a DataFrame
-    return {'mesor': mesor, 'amplitude': amplitude, 'acrophase': acrophase, 'acrophase_time': acrophase_time}, fitted_vals_df
+    return {
+        "mesor": mesor,
+        "amplitude": amplitude,
+        "acrophase": acrophase,
+        "acrophase_time": acrophase_time,
+    }, fitted_vals_df
 
 
 def cosinor_model(t, M, A, phi, tau):
     """
     Cosinor model function with counterclockwise acrophase.
-    
+
     This function implements the standard cosinor model for fitting periodic data.
     The model assumes a cosine function with adjustable amplitude, phase, and period.
 
@@ -120,7 +129,7 @@ def cosinor_model(t, M, A, phi, tau):
         Acrophase in radians (counterclockwise orientation).
     tau : float
         Period of the rhythm in the same units as t.
-        
+
     Returns
     -------
     array-like
@@ -136,16 +145,16 @@ def cosinor_model(t, M, A, phi, tau):
     Examples
     --------
     >>> import numpy as np
-    >>> 
+    >>>
     >>> # Create time points (24 hours in minutes)
     >>> t = np.arange(0, 1440, 1)  # 0 to 1440 minutes
-    >>> 
+    >>>
     >>> # Define cosinor parameters
     >>> M = 0.5    # MESOR
     >>> A = 0.3    # Amplitude
     >>> phi = 0    # Acrophase (peak at midnight)
     >>> tau = 1440 # Period (24 hours in minutes)
-    >>> 
+    >>>
     >>> # Generate fitted values
     >>> fitted = cosinor_model(t, M, A, phi, tau)
     >>> print(f"Peak value: {fitted.max():.3f}")
@@ -154,10 +163,11 @@ def cosinor_model(t, M, A, phi, tau):
     # Note the negative sign before phi for counterclockwise orientation
     return M + A * np.cos(2 * np.pi * t / tau + phi)
 
+
 def fit_cosinor(time, data, period=24):
     """
     Fit cosinor model to time series data.
-    
+
     This function fits a cosinor model to time series data using the CosinorPy library.
     It estimates the MESOR, amplitude, and acrophase parameters that best describe
     the periodic pattern in the data.
@@ -171,7 +181,7 @@ def fit_cosinor(time, data, period=24):
     period : float, default=24
         Known period of the rhythm in the same units as time.
         For circadian rhythms, typically 24 hours or 1440 minutes.
-        
+
     Returns
     -------
     dict
@@ -192,11 +202,11 @@ def fit_cosinor(time, data, period=24):
     --------
     >>> import numpy as np
     >>> import pandas as pd
-    >>> 
+    >>>
     >>> # Create sample circadian data
     >>> time = np.arange(0, 1440, 1)  # 24 hours in minutes
     >>> data = 0.5 + 0.3 * np.cos(2 * np.pi * time / 1440 + np.pi/4) + 0.1 * np.random.randn(1440)
-    >>> 
+    >>>
     >>> # Fit cosinor model
     >>> results = fit_cosinor(time, data, period=24)
     >>> print(f"MESOR: {results['MESOR']:.3f}")
@@ -204,13 +214,15 @@ def fit_cosinor(time, data, period=24):
     >>> print(f"Acrophase: {results['acrophase']:.3f} radians")
     """
 
-    fit, _, _, statistics = cosinor1.fit_cosinor(time, data, period=24*60, plot_on=False)
+    fit, _, _, statistics = cosinor1.fit_cosinor(
+        time, data, period=24 * 60, plot_on=False
+    )
 
     results = {
-        'MESOR': statistics['values'][0],
-        'amplitude': statistics['values'][1],
-        'acrophase': statistics['values'][2],
-        'fitted_values': fit.fittedvalues
+        "MESOR": statistics["values"][0],
+        "amplitude": statistics["values"][1],
+        "acrophase": statistics["values"][2],
+        "fitted_values": fit.fittedvalues,
     }
 
     return results

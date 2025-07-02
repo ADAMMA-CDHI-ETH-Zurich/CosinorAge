@@ -3,15 +3,15 @@
 # CosinorAge: Prediction of biological age based on accelerometer data
 # using the CosinorAge method proposed by Shim, Fleisch and Barata
 # (https://www.nature.com/articles/s41746-024-01111-x)
-# 
+#
 # Authors: Jacob Leo Oskar Hunecke
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #         http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,6 +33,7 @@ def clock(func):
     Returns:
         function: The decorated function.
     """
+
     def inner(*args, **kwargs):
         start = time.time()
         result = func(*args, **kwargs)
@@ -42,9 +43,10 @@ def clock(func):
 
     return inner
 
+
 ################################## !!!! ##################################
 # whenever you implement a new datahandler for a new datasource, check
-# the documentation of the source, e.g., the smartwatch, to make sure 
+# the documentation of the source, e.g., the smartwatch, to make sure
 # what units the data is in and scale accordingly.
 ################################## !!!! ##################################
 
@@ -85,7 +87,9 @@ class DataHandler:
         self.meta_dict = {}
 
     def __load_data(self, verbose: bool = False):
-        raise NotImplementedError("The load_data method should be implemented by subclasses")
+        raise NotImplementedError(
+            "The load_data method should be implemented by subclasses"
+        )
 
     def save_data(self, output_path: str):
         """
@@ -99,7 +103,9 @@ class DataHandler:
                 will be saved.
         """
         if self.ml_data is None:
-            raise ValueError("Data has not been loaded. Please call `load_data()` first.")
+            raise ValueError(
+                "Data has not been loaded. Please call `load_data()` first."
+            )
 
         self.ml_data.to_csv(output_path, index=False)
 
@@ -120,7 +126,9 @@ class DataHandler:
             pd.DataFrame: A DataFrame containing the accelerometer data.
         """
         if self.sf_data is None:
-            raise ValueError("Data has not been loaded. Please call `load_data()` first.")
+            raise ValueError(
+                "Data has not been loaded. Please call `load_data()` first."
+            )
 
         return self.sf_data
 
@@ -132,7 +140,9 @@ class DataHandler:
             pd.DataFrame: A DataFrame containing the minute-level ENMO values.
         """
         if self.ml_data is None:
-            raise ValueError("Data has not been loaded. Please call `load_data()` first.")
+            raise ValueError(
+                "Data has not been loaded. Please call `load_data()` first."
+            )
 
         return self.ml_data
 
@@ -144,5 +154,3 @@ class DataHandler:
             dict: A dictionary containing the metadata.
         """
         return self.meta_dict
-
-    

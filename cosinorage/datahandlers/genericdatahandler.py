@@ -3,15 +3,15 @@
 # CosinorAge: Prediction of biological age based on accelerometer data
 # using the CosinorAge method proposed by Shim, Fleisch and Barata
 # (https://www.nature.com/articles/s41746-024-01111-x)
-# 
+#
 # Authors: Jacob Leo Oskar Hunecke
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #         http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,23 +19,23 @@
 # limitations under the License.
 ##########################################################################
 
-import os
-from typing import Union, Optional
+from typing import Optional
 
-from .utils.calc_enmo import calculate_minute_level_enmo
-from .utils.generic import read_generic_xD_data, filter_generic_data, resample_generic_data, preprocess_generic_data
 from .datahandler import DataHandler, clock
+from .utils.calc_enmo import calculate_minute_level_enmo
+from .utils.generic import (filter_generic_data, preprocess_generic_data,
+                            read_generic_xD_data, resample_generic_data)
 
 
 class GenericDataHandler(DataHandler):
     """
     Generic data handler for processing accelerometer and ENMO data from CSV files.
-    
+
     This class provides a flexible interface for loading and processing various types of
     accelerometer data, including ENMO (Euclidean Norm Minus One), raw accelerometer
     data (x, y, z), and alternative count data. It supports automatic data filtering,
     resampling, preprocessing, and ENMO calculation.
-    
+
     Parameters
     ----------
     file_path : str
@@ -58,7 +58,7 @@ class GenericDataHandler(DataHandler):
         Additional preprocessing arguments to pass to the filtering and preprocessing functions.
     verbose : bool, default=False
         Whether to print progress information during data loading and processing.
-    
+
     Attributes
     ----------
     raw_data : pd.DataFrame
@@ -69,11 +69,11 @@ class GenericDataHandler(DataHandler):
         Minute-level ENMO data calculated from the processed data.
     meta_dict : dict
         Metadata dictionary containing information about the data processing.
-    
+
     Examples
     --------
     Load ENMO data from a CSV file:
-    
+
     >>> handler = GenericDataHandler(
     ...     file_path='data/enmo_data.csv',
     ...     data_type='enmo',
@@ -82,9 +82,9 @@ class GenericDataHandler(DataHandler):
     ... )
     >>> raw_data = handler.get_raw_data()
     >>> ml_data = handler.get_ml_data()
-    
+
     Load accelerometer data from a CSV file:
-    
+
     >>> handler = GenericDataHandler(
     ...     file_path='data/accel_data.csv',
     ...     data_type='accelerometer',
@@ -93,7 +93,7 @@ class GenericDataHandler(DataHandler):
     ... )
     >>> raw_data = handler.get_raw_data()
     >>> ml_data = handler.get_ml_data()
-    
+
     Notes
     -----
     The data processing pipeline includes:
@@ -102,79 +102,110 @@ class GenericDataHandler(DataHandler):
     3. Resampling to minute-level data
     4. Preprocessing (wear detection, noise removal, etc.)
     5. Calculating minute-level ENMO values
-    
+
     The class automatically handles column mapping and timestamp processing.
     """
-    def __init__(self, 
-                 file_path: str, 
-                 data_format: str = 'csv', 
-                 data_type: str = 'accelerometer',
-                 time_format: str = 'unix',
-                 time_column: str = 'timestamp', 
-                 data_columns: Optional[list] = None,
-                 preprocess_args: dict = {},
-                 verbose: bool = False):
+
+    def __init__(
+        self,
+        file_path: str,
+        data_format: str = "csv",
+        data_type: str = "accelerometer",
+        time_format: str = "unix",
+        time_column: str = "timestamp",
+        data_columns: Optional[list] = None,
+        preprocess_args: dict = {},
+        verbose: bool = False,
+    ):
 
         super().__init__()
-        
-        if data_format not in ['csv']:
+
+        if data_format not in ["csv"]:
             raise ValueError("Data format must be either 'csv'")
-        
-        if data_type not in ['enmo', 'accelerometer', 'alternative_count']:
-            raise ValueError("Data type must be either 'enmo', 'accelerometer' or 'alternative_count'")
-        
-        if time_format not in ['unix', 'datetime']:
+
+        if data_type not in ["enmo", "accelerometer", "alternative_count"]:
+            raise ValueError(
+                "Data type must be either 'enmo', 'accelerometer' or 'alternative_count'"
+            )
+
+        if time_format not in ["unix", "datetime"]:
             raise ValueError("time_format must be either 'unix' or 'datetime'")
 
-        if data_type == 'enmo':
-            default_data_columns = ['enmo']
-        elif data_type == 'accelerometer':
-            default_data_columns = ['x', 'y', 'z']
-        elif data_type == 'alternative_count':
-            default_data_columns = ['counts']
+        if data_type == "enmo":
+            default_data_columns = ["enmo"]
+        elif data_type == "accelerometer":
+            default_data_columns = ["x", "y", "z"]
+        elif data_type == "alternative_count":
+            default_data_columns = ["counts"]
         else:
-            raise ValueError("Data type must be either 'enmo', 'accelerometer' or 'alternative_count'")
+            raise ValueError(
+                "Data type must be either 'enmo', 'accelerometer' or 'alternative_count'"
+            )
 
         self.file_path = file_path
         self.data_format = data_format
         self.data_type = data_type
         self.time_format = time_format
         self.time_column = time_column
-        self.data_columns = data_columns if data_columns is not None else default_data_columns
-        self.preprocess_args = preprocess_args  
+        self.data_columns = (
+            data_columns if data_columns is not None else default_data_columns
+        )
+        self.preprocess_args = preprocess_args
 
-        self.meta_dict['datasource'] = 'Generic'
-        self.meta_dict['data_format'] = 'CSV'
-        self.meta_dict['time_format'] = time_format
-        self.meta_dict['raw_data_type'] = 'ENMO' if data_type == 'enmo' else 'Accelerometer' if data_type == 'accelerometer' else 'Alternative Count' if data_type == 'alternative_count' else 'Unknown'
-        self.meta_dict['time_column'] = time_column
-        self.meta_dict['data_columns'] = data_columns
+        self.meta_dict["datasource"] = "Generic"
+        self.meta_dict["data_format"] = "CSV"
+        self.meta_dict["time_format"] = time_format
+        self.meta_dict["raw_data_type"] = (
+            "ENMO"
+            if data_type == "enmo"
+            else (
+                "Accelerometer"
+                if data_type == "accelerometer"
+                else (
+                    "Alternative Count"
+                    if data_type == "alternative_count"
+                    else "Unknown"
+                )
+            )
+        )
+        self.meta_dict["time_column"] = time_column
+        self.meta_dict["data_columns"] = data_columns
 
         self.__load_data(verbose=verbose)
 
-
     @clock
     def __load_data(self, verbose: bool = False):
-        if self.data_format == 'csv':
+        if self.data_format == "csv":
             # Determine number of dimensions based on data type
-            n_dimensions = 3 if self.data_type == 'accelerometer' else 1
-            
+            n_dimensions = 3 if self.data_type == "accelerometer" else 1
+
             # Load and process data
             self.raw_data = read_generic_xD_data(
-                self.file_path, self.data_type, meta_dict=self.meta_dict, n_dimensions=n_dimensions,
-                time_format=self.time_format, time_column=self.time_column, 
-                data_columns=self.data_columns, verbose=verbose
+                self.file_path,
+                self.data_type,
+                meta_dict=self.meta_dict,
+                n_dimensions=n_dimensions,
+                time_format=self.time_format,
+                time_column=self.time_column,
+                data_columns=self.data_columns,
+                verbose=verbose,
             )
             self.sf_data = filter_generic_data(
-                self.raw_data, self.data_type, self.meta_dict, 
-                verbose=verbose, preprocess_args=self.preprocess_args
+                self.raw_data,
+                self.data_type,
+                self.meta_dict,
+                verbose=verbose,
+                preprocess_args=self.preprocess_args,
             )
             self.sf_data = resample_generic_data(
                 self.sf_data, self.data_type, self.meta_dict, verbose=verbose
             )
             self.sf_data = preprocess_generic_data(
-                self.sf_data, self.data_type, preprocess_args=self.preprocess_args,
-                meta_dict=self.meta_dict, verbose=verbose
+                self.sf_data,
+                self.data_type,
+                preprocess_args=self.preprocess_args,
+                meta_dict=self.meta_dict,
+                verbose=verbose,
             )
             self.ml_data = calculate_minute_level_enmo(
                 self.sf_data, self.meta_dict, verbose=verbose

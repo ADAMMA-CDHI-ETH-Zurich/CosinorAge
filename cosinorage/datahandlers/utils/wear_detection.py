@@ -3,15 +3,15 @@
 # CosinorAge: Prediction of biological age based on accelerometer data
 # using the CosinorAge method proposed by Shim, Fleisch and Barata
 # (https://www.nature.com/articles/s41746-024-01111-x)
-# 
+#
 # Authors: Jacob Leo Oskar Hunecke
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #         http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,20 +19,20 @@
 # limitations under the License.
 ##########################################################################
 
-import pandas as pd
 import numpy as np
-from typing import Tuple
+import pandas as pd
 from skdh.preprocessing import AccelThresholdWearDetection
 
+
 def detect_wear_periods(
-    data: pd.DataFrame, 
-    sf: float, 
-    sd_crit: float, 
-    range_crit: float, 
-    window_length: int, 
-    window_skip: int, 
-    meta_dict: dict = {}, 
-    verbose: bool = False
+    data: pd.DataFrame,
+    sf: float,
+    sd_crit: float,
+    range_crit: float,
+    window_length: int,
+    window_skip: int,
+    meta_dict: dict = {},
+    verbose: bool = False,
 ) -> pd.DataFrame:
     """
     Detect periods of device wear using acceleration thresholds.
@@ -85,7 +85,7 @@ def detect_wear_periods(
     --------
     >>> import pandas as pd
     >>> import numpy as np
-    >>> 
+    >>>
     >>> # Create sample accelerometer data
     >>> timestamps = pd.date_range('2023-01-01', periods=1000, freq='40ms')
     >>> data = pd.DataFrame({
@@ -93,7 +93,7 @@ def detect_wear_periods(
     ...     'y': np.random.normal(0, 0.1, 1000),
     ...     'z': np.random.normal(1, 0.1, 1000)  # Gravity component
     ... }, index=timestamps)
-    >>> 
+    >>>
     >>> # Detect wear periods
     >>> wear_data = detect_wear_periods(
     ...     data, sf=25, sd_crit=0.013, range_crit=0.05,
@@ -103,30 +103,34 @@ def detect_wear_periods(
     """
     _data = data.copy()
 
-    time = np.array(_data.index.astype('int64') // 10 ** 9)
+    time = np.array(_data.index.astype("int64") // 10**9)
     acc = np.array(_data[["x", "y", "z"]]).astype(np.float64) / 1000
 
-    #wear_predictor = CountWearDetection()
-    wear_predictor = AccelThresholdWearDetection(sd_crit=sd_crit, range_crit=range_crit, window_length=window_length, window_skip=window_skip)
-    ranges = wear_predictor.predict(time=time, accel=acc, fs=sf)['wear']
+    # wear_predictor = CountWearDetection()
+    wear_predictor = AccelThresholdWearDetection(
+        sd_crit=sd_crit,
+        range_crit=range_crit,
+        window_length=window_length,
+        window_skip=window_skip,
+    )
+    ranges = wear_predictor.predict(time=time, accel=acc, fs=sf)["wear"]
 
     wear_array = np.zeros(len(data.index))
     for start, end in ranges:
-        wear_array[start:end + 1] = 1
+        wear_array[start : end + 1] = 1
 
-    _data['wear'] = pd.DataFrame(wear_array, columns=['wear']).set_index(data.index)
+    _data["wear"] = pd.DataFrame(wear_array, columns=["wear"]).set_index(
+        data.index
+    )
 
     if verbose:
-        print('Wear detection done')
+        print("Wear detection done")
 
-    return _data[['wear']]
+    return _data[["wear"]]
 
 
 def calc_weartime(
-    data: pd.DataFrame, 
-    sf: float, 
-    meta_dict: dict, 
-    verbose: bool
+    data: pd.DataFrame, sf: float, meta_dict: dict, verbose: bool
 ) -> None:
     """
     Calculate total, wear, and non-wear time from accelerometer data.
@@ -166,13 +170,13 @@ def calc_weartime(
     --------
     >>> import pandas as pd
     >>> import numpy as np
-    >>> 
+    >>>
     >>> # Create sample data with wear detection
     >>> timestamps = pd.date_range('2023-01-01', periods=1000, freq='40ms')
     >>> data = pd.DataFrame({
     ...     'wear': np.random.choice([0, 1], 1000, p=[0.3, 0.7])  # 70% wear time
     ... }, index=timestamps)
-    >>> 
+    >>>
     >>> # Calculate wear time statistics
     >>> meta_dict = {}
     >>> calc_weartime(data, sf=25, meta_dict=meta_dict, verbose=True)
@@ -183,9 +187,11 @@ def calc_weartime(
     _data = data.copy()
 
     total = float((_data.index[-1] - _data.index[0]).total_seconds())
-    wear = float((_data['wear'].sum()) * (1 / sf))
+    wear = float((_data["wear"].sum()) * (1 / sf))
     nonwear = float((total - wear))
 
-    meta_dict.update({'total_time': total, 'wear_time': wear, 'non-wear_time': nonwear})
+    meta_dict.update(
+        {"total_time": total, "wear_time": wear, "non-wear_time": nonwear}
+    )
     if verbose:
-        print('Wear time calculated') 
+        print("Wear time calculated")
