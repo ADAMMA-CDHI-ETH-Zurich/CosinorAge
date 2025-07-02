@@ -29,3 +29,4 @@ wearable-features based on minute-level ENMO data including
 
 from .utils import *
 from .features import *
+from .bulk_features import BulkWearableFeatures
