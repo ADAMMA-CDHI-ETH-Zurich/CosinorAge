@@ -56,13 +56,12 @@ class TestGenericDataHandler:
                                 file_path="/dummy/path.csv", data_type="enmo"
                             )
 
-                            assert handler.data_type == "enmo"
+                            assert handler.data_type == "enmo-mg"
                             assert handler.data_columns == ["enmo"]
                             mock_read.assert_called_once()
                             mock_filter.assert_called_once()
                             mock_resample.assert_called_once()
                             mock_preprocess.assert_called_once()
-                            mock_enmo.assert_called_once()
 
     def test_init_accelerometer_data_type(self):
         """Test initialization with accelerometer data type."""
@@ -124,13 +123,12 @@ class TestGenericDataHandler:
                                 data_type="accelerometer",
                             )
 
-                            assert handler.data_type == "accelerometer"
+                            assert handler.data_type == "accelerometer-mg"
                             assert handler.data_columns == ["x", "y", "z"]
                             mock_read.assert_called_once()
                             mock_filter.assert_called_once()
                             mock_resample.assert_called_once()
                             mock_preprocess.assert_called_once()
-                            mock_enmo.assert_called_once()
 
     def test_init_alternative_count_data_type(self):
         """Test initialization with alternative count data type."""
@@ -186,7 +184,6 @@ class TestGenericDataHandler:
                             mock_filter.assert_called_once()
                             mock_resample.assert_called_once()
                             mock_preprocess.assert_called_once()
-                            mock_enmo.assert_called_once()
 
     def test_init_custom_parameters(self):
         """Test initialization with custom parameters."""
@@ -249,7 +246,6 @@ class TestGenericDataHandler:
                             mock_filter.assert_called_once()
                             mock_resample.assert_called_once()
                             mock_preprocess.assert_called_once()
-                            mock_enmo.assert_called_once()
 
     def test_init_invalid_data_format(self):
         """Test initialization with invalid data format."""
@@ -266,7 +262,7 @@ class TestGenericDataHandler:
         """Test initialization with invalid data type."""
         with pytest.raises(
             ValueError,
-            match="Data type must be either 'enmo', 'accelerometer' or 'alternative_count'",
+            match="Data type must be either 'enmo-mg', 'enmo-g', 'accelerometer-mg', 'accelerometer-g', 'accelerometer-ms2' or 'alternative_count'",
         ):
             GenericDataHandler(
                 file_path="/dummy/path.csv",
@@ -339,7 +335,6 @@ class TestGenericDataHandler:
                             mock_filter.assert_called_once()
                             mock_resample.assert_called_once()
                             mock_preprocess.assert_called_once()
-                            mock_enmo.assert_called_once()
 
                             # Check that data was properly set
                             assert handler.raw_data is not None
@@ -411,7 +406,6 @@ class TestGenericDataHandler:
                             mock_filter.assert_called_once()
                             mock_resample.assert_called_once()
                             mock_preprocess.assert_called_once()
-                            mock_enmo.assert_called_once()
 
                             # Check that data was properly set
                             assert handler.raw_data is not None

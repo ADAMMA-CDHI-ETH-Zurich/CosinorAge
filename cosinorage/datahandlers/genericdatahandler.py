@@ -123,6 +123,12 @@ class GenericDataHandler(DataHandler):
         if data_format not in ["csv"]:
             raise ValueError("Data format must be either 'csv'")
 
+        # Handle legacy data types for backward compatibility
+        if data_type == "enmo":
+            data_type = "enmo-mg"
+        elif data_type == "accelerometer":
+            data_type = "accelerometer-mg"
+        
         if data_type not in ["enmo-mg", "enmo-g", "accelerometer-mg", "accelerometer-g", "accelerometer-ms2", "alternative_count"]:
             raise ValueError(
                 "Data type must be either 'enmo-mg', 'enmo-g', 'accelerometer-mg', 'accelerometer-g', 'accelerometer-ms2' or 'alternative_count'"

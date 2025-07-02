@@ -125,7 +125,8 @@ def test_activity_metrics_invalid_data_format():
     """Test behavior with invalid data format"""
     dates = pd.date_range("2023-01-01", periods=1440, freq="min")
     values = np.ones(1440) * 0.2
-    data = pd.DataFrame({"enmo": values}, index=dates)
+    # Create data without the required 'enmo' column
+    data = pd.DataFrame({"invalid_column": values}, index=dates)
 
     with pytest.raises(KeyError):
         activity_metrics(data)
