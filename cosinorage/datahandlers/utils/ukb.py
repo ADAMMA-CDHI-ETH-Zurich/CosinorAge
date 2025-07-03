@@ -396,7 +396,7 @@ def resample_ukb_data(
     """
     _data = data.copy()
 
-    _data = _data.resample("1min").interpolate(method="linear").bfill()
+    _data = _data.resample("1min").mean().interpolate(method="linear").bfill()
     if verbose:
         print(f"Resampled {data.shape[0]} to {_data.shape[0]} timestamps")
 

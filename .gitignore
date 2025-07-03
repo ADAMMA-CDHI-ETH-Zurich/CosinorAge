@@ -54,10 +54,10 @@ Desktop.ini
 /data/
 /examples/ukb_example.ipynb
 /examples/ukb_cosinorage.py
+/examples/galaxy_unified_example.py
 /joss/
 /experiments/
 cosinor_results*
-/dist/
 
 # Data files
 *.pkl

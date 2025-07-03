@@ -419,7 +419,7 @@ def resample_nhanes_data(
     """
     _data = data.copy()
 
-    _data = _data.resample("1min").interpolate(method="linear").bfill()
+    _data = _data.resample("1min").mean().interpolate(method="linear").bfill()
     _data["sleep"] = _data["sleep"].round(0)
     _data["wear"] = _data["wear"].round(0)
 

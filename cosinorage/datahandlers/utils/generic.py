@@ -405,7 +405,7 @@ def resample_generic_data(
     
     # Resample to minute level
     n_old = _data.shape[0]
-    _data = _data.resample("1min").interpolate(method="linear").bfill()
+    _data = _data.resample("1min").mean().interpolate(method="linear").bfill()
     if verbose:
         print(f"Resampled {n_old} to {_data.shape[0]} timestamps")
 

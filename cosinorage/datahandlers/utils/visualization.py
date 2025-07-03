@@ -72,7 +72,6 @@ def plot_orig_enmo(
     >>> # Plot without wear highlighting
     >>> plot_orig_enmo(handler, resample='1H', wear=False)
     """
-    # _data = self.acc_df.resample('5min').mean().reset_index(inplace=False)
     _data = (
         acc_handler.get_sf_data()
         .resample(f"{resample}")
