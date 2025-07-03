@@ -123,6 +123,7 @@ def read_generic_xD_data(
     - Populates metadata dictionary with data information
     """
 
+    
     if n_dimensions not in [1, 3]:
         raise ValueError("n_dimensions must be either 1 or 3")
 
