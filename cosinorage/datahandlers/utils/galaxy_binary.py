@@ -108,7 +108,7 @@ def read_galaxy_binary_data(
     meta_dict["raw_start_datetime"] = data.index.min()
     meta_dict["raw_end_datetime"] = data.index.max()
     meta_dict["sf"] = detect_frequency_from_timestamps(data.index)
-    meta_dict["raw_data_frequency"] = f'{meta_dict["sf"]:.1f}Hz'
+    meta_dict["raw_data_frequency"] = f'{meta_dict["sf"]:.3g}Hz'
     meta_dict["raw_data_unit"] = "Custom"
 
     return data
