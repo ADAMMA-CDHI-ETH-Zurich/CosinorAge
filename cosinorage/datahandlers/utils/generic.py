@@ -189,9 +189,9 @@ def read_generic_xD_data(
     meta_dict["raw_start_datetime"] = data.index.min()
     meta_dict["raw_end_datetime"] = data.index.max()
     meta_dict["sf"] = detect_frequency_from_timestamps(pd.Series(data.index))
-    meta_dict["raw_data_frequency"] = f'{meta_dict["sf"]:.1f}Hz'
+    meta_dict["raw_data_frequency"] = f'{meta_dict["sf"]:.3g}Hz'
     meta_dict["raw_data_unit"] = (
-        "counts" if data_type == "alternative_count" else "mg"
+        "counts" if data_type == "alternative_count" else "mg" if data_type in ["enmo-mg", "accelerometer-mg"] else "g" if data_type in ["enmo-g", "accelerometer-g"] else "ms2" if data_type in ["accelerometer-ms2"] else "unknown"
     )
 
     return data
