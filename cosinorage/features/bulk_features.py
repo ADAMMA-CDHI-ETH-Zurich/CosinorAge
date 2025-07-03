@@ -69,7 +69,7 @@ Statistical measures provided:
     - mode, skewness, kurtosis
 """
 
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -101,10 +101,19 @@ class BulkWearableFeatures:
         compute_distributions (bool, optional): Whether to compute statistical distributions
             across all features. If False, only individual features are computed.
             Defaults to True.
+        cosinor_age_inputs (List[dict], optional): List of dictionaries containing age and
+            gender information for CosinorAge computation. Each dictionary should contain:
+            - 'age': Chronological age (float)
+            - 'gender': Gender ('male', 'female', or 'unknown', optional, defaults to 'unknown')
+            - 'gt_cosinor_age': Ground truth cosinor age (float, optional)
+            Must be the same length as handlers if provided. If all dictionaries contain
+            'gt_cosinor_age', a 'cosinor_age_prediction_error' feature will be computed.
+            Defaults to None.
 
     Attributes:
         handlers (List[DataHandler]): List of DataHandler instances provided during initialization
         features_args (dict): Arguments for feature computation
+        cosinor_age_inputs (List[dict]): List of age/gender dictionaries for CosinorAge computation
         individual_features (List[dict]): List of feature dictionaries for each handler.
             Failed computations are represented as None.
         distribution_stats (dict): Statistical distributions across all features.
@@ -123,10 +132,21 @@ class BulkWearableFeatures:
         ...     handler.load_data()
         ...     handlers.append(handler)
         >>>
-        >>> # Compute bulk features
-        >>> bulk = BulkWearableFeatures(handlers, compute_distributions=True)
+        >>> # Define age and gender information for CosinorAge computation
+        >>> cosinor_age_inputs = [
+        ...     {"age": 25.5, "gender": "female", "gt_cosinor_age": 26.2},
+        ...     {"age": 30.2, "gender": "male", "gt_cosinor_age": 31.1},
+        ...     {"age": 28.0, "gender": "unknown", "gt_cosinor_age": 27.8}
+        ... ]
         >>>
-        >>> # Get statistical summary
+        >>> # Compute bulk features with CosinorAge
+        >>> bulk = BulkWearableFeatures(
+        ...     handlers, 
+        ...     compute_distributions=True,
+        ...     cosinor_age_inputs=cosinor_age_inputs
+        ... )
+        >>>
+        >>> # Get statistical summary (includes CosinorAge features)
         >>> stats = bulk.get_distribution_stats()
         >>> print(f"Computed features for {len(stats)} feature types")
         >>>
@@ -140,7 +160,8 @@ class BulkWearableFeatures:
         self,
         handlers: List[DataHandler],
         features_args: dict = {},
-        compute_distributions: bool = True,
+        cosinor_age_inputs: Optional[List[dict]] = None,
+        compute_distributions: bool = True
     ):
         """Initialize BulkWearableFeatures with multiple DataHandler instances.
 
@@ -163,9 +184,31 @@ class BulkWearableFeatures:
 
         self.handlers = handlers
         self.features_args = features_args
+        self.cosinor_age_inputs = cosinor_age_inputs
         self.individual_features = []
         self.distribution_stats = {}
         self.failed_handlers = []
+
+        # Validate cosinor_age_inputs if provided
+        if self.cosinor_age_inputs is not None:
+            if len(self.cosinor_age_inputs) != len(self.handlers):
+                raise ValueError(
+                    f"cosinor_age_inputs length ({len(self.cosinor_age_inputs)}) "
+                    f"must match handlers length ({len(self.handlers)})"
+                )
+            for i, input_dict in enumerate(self.cosinor_age_inputs):
+                if not isinstance(input_dict, dict) or 'age' not in input_dict:
+                    raise ValueError(
+                        f"cosinor_age_inputs[{i}] must be a dictionary with 'age' key"
+                    )
+            
+            # Check if all handlers have gt_cosinor_age for prediction error computation
+            self.compute_prediction_error = all(
+                'gt_cosinor_age' in input_dict and input_dict['gt_cosinor_age'] is not None
+                for input_dict in self.cosinor_age_inputs
+            )
+        else:
+            self.compute_prediction_error = False
 
         self.__run(compute_distributions)
 
@@ -174,7 +217,8 @@ class BulkWearableFeatures:
 
         This method processes each handler sequentially, computing features using
         the WearableFeatures class. Failed computations are logged and stored
-        for later inspection.
+        for later inspection. If cosinor_age_inputs is provided, CosinorAge features
+        are also computed and added to the individual features.
 
         Args:
             compute_distributions (bool): Whether to compute statistical distributions
@@ -195,9 +239,80 @@ class BulkWearableFeatures:
                 self.failed_handlers.append((i, str(e)))
                 self.individual_features.append(None)
 
+        # Compute CosinorAge features if inputs are provided
+        if self.cosinor_age_inputs is not None:
+            self.__compute_cosinorage_features()
+
         # Compute distributions if requested and we have successful computations
         if compute_distributions and len(self.individual_features) > 0:
             self.__compute_distributions()
+
+    def __compute_cosinorage_features(self):
+        """Compute CosinorAge features for all handlers with valid age inputs.
+
+        This method creates records for CosinorAge computation and adds the resulting
+        features to the individual_features list. Only handlers with successful
+        feature computations will have CosinorAge features added.
+        """
+        # Import here to avoid circular import
+        from ..bioages import CosinorAge
+        
+        # Type assertion since we know cosinor_age_inputs is not None when this method is called
+        assert self.cosinor_age_inputs is not None
+        
+        # Create records for CosinorAge computation
+        records = []
+        for i, (handler, age_input) in enumerate(zip(self.handlers, self.cosinor_age_inputs)):
+            if self.individual_features[i] is not None:  # Only process successful computations
+                record = {
+                    "handler": handler,
+                    "age": age_input["age"],
+                    "gender": age_input.get("gender", "unknown"),
+                    "gt_cosinor_age": age_input.get("gt_cosinor_age", None)
+                }
+                records.append((i, record))
+
+        if not records:
+            print("No valid records found for CosinorAge computation")
+            return
+
+        try:
+            # Compute CosinorAge for all valid records
+            cosinorage_computer = CosinorAge([record for _, record in records])
+            predictions = cosinorage_computer.get_predictions()
+
+            # Add CosinorAge features to individual_features
+            for (original_index, _), prediction in zip(records, predictions):
+                cosinorage_features = {
+                    "cosinorage": prediction["cosinorage"],
+                    "cosinorage_advance": prediction["cosinorage_advance"],
+                }
+                
+                # Add prediction error if ground truth is available
+                if self.compute_prediction_error:
+                    gt_cosinor_age = self.cosinor_age_inputs[original_index]["gt_cosinor_age"]
+                    cosinorage_features["cosinor_age_prediction_error"] = (
+                        prediction["cosinorage"] - gt_cosinor_age
+                    )
+                
+                # Add to existing features
+                self.individual_features[original_index]["cosinorage"] = cosinorage_features
+
+        except Exception as e:
+            print(f"Failed to compute CosinorAge features: {str(e)}")
+            # Add empty cosinorage features to all successful computations
+            for i, features in enumerate(self.individual_features):
+                if features is not None:
+                    cosinorage_features = {
+                        "cosinorage": None,
+                        "cosinorage_advance": None,
+                    }
+                    
+                    # Add prediction error if ground truth is available
+                    if self.compute_prediction_error:
+                        cosinorage_features["cosinor_age_prediction_error"] = None
+                    
+                    features["cosinorage"] = cosinorage_features
 
     def __compute_distributions(self):
         """Compute statistical distributions across all features.
@@ -270,9 +385,13 @@ class BulkWearableFeatures:
                                 )
                                 for x in feature_value
                             ):
-                                row[f"{category}_{feature_name}"] = np.mean(
-                                    feature_value
-                                )
+                                # Special handling for cosinorage category to avoid duplication
+                                if category == "cosinorage":
+                                    row[feature_name] = np.mean(feature_value)
+                                else:
+                                    row[f"{category}_{feature_name}"] = np.mean(
+                                        feature_value
+                                    )
                             else:
                                 # Skip non-numeric lists (e.g., Timestamps)
                                 continue
@@ -280,7 +399,11 @@ class BulkWearableFeatures:
                             feature_value,
                             (int, float, np.number, np.floating, np.integer),
                         ):
-                            row[f"{category}_{feature_name}"] = feature_value
+                            # Special handling for cosinorage category to avoid duplication
+                            if category == "cosinorage":
+                                row[feature_name] = feature_value
+                            else:
+                                row[f"{category}_{feature_name}"] = feature_value
                         else:
                             # Skip non-numeric features
                             continue

@@ -49,10 +49,7 @@ class TestDataHandler:
         """Test get_raw_data returns None when no data loaded"""
         assert data_handler.get_raw_data() is None
 
-    def test_get_sf_data_without_loading(self, data_handler):
-        """Test get_sf_data raises error when data not loaded"""
-        with pytest.raises(ValueError, match="Data has not been loaded"):
-            data_handler.get_sf_data()
+
 
     def test_get_ml_data_without_loading(self, data_handler):
         """Test get_ml_data raises error when data not loaded"""
@@ -79,6 +76,5 @@ class TestDataHandler:
 
         # Test getters
         pd.testing.assert_frame_equal(data_handler.get_raw_data(), raw_data)
-        pd.testing.assert_frame_equal(data_handler.get_sf_data(), sf_data)
         pd.testing.assert_frame_equal(data_handler.get_ml_data(), ml_data)
         assert data_handler.get_meta_data() == meta_dict

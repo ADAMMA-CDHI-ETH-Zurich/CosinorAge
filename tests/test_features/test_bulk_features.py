@@ -314,6 +314,148 @@ class TestBulkWearableFeatures(unittest.TestCase):
             if feature_stats["count"] > 1:
                 self.assertEqual(feature_stats["std"], 0)
 
+    def test_cosinorage_features_with_ground_truth(self):
+        """Test BulkWearableFeatures with CosinorAge and ground truth."""
+        # Define age and gender information with ground truth
+        cosinor_age_inputs = [
+            {"age": 25.5, "gender": "female", "gt_cosinor_age": 26.2},
+            {"age": 30.2, "gender": "male", "gt_cosinor_age": 31.1},
+            {"age": 28.0, "gender": "unknown", "gt_cosinor_age": 27.8}
+        ]
+
+        bulk_features = BulkWearableFeatures(
+            handlers=self.handlers,
+            compute_distributions=True,
+            cosinor_age_inputs=cosinor_age_inputs
+        )
+
+        # Get individual features
+        individual_features = bulk_features.get_individual_features()
+        self.assertEqual(len(individual_features), 3)
+
+        # Check that CosinorAge features were added
+        for i, features in enumerate(individual_features):
+            if features is not None:
+                self.assertIn("cosinorage", features)
+                cosinorage_feat = features["cosinorage"]
+                
+                # Check for expected CosinorAge features
+                self.assertIn("cosinorage", cosinorage_feat)
+                self.assertIn("cosinorage_advance", cosinorage_feat)
+                self.assertIn("cosinor_age_prediction_error", cosinorage_feat)
+                
+                # Check that prediction error is reasonable
+                self.assertIsInstance(cosinorage_feat["cosinor_age_prediction_error"], (int, float))
+
+        # Check distribution stats
+        stats = bulk_features.get_distribution_stats()
+        cosinorage_features = [k for k in stats.keys() if k in ['cosinorage', 'cosinorage_advance', 'cosinor_age_prediction_error']]
+        self.assertGreaterEqual(len(cosinorage_features), 3)
+
+        # Check that feature names are correct (not duplicated)
+        incorrect_names = [name for name in stats.keys() if name.startswith('cosinorage_cosinorage')]
+        self.assertEqual(len(incorrect_names), 0)
+
+    def test_cosinorage_features_without_ground_truth(self):
+        """Test BulkWearableFeatures with CosinorAge but without ground truth."""
+        # Define age and gender information without ground truth
+        cosinor_age_inputs = [
+            {"age": 25.5, "gender": "female"},
+            {"age": 30.2, "gender": "male"},
+            {"age": 28.0, "gender": "unknown"}
+        ]
+
+        bulk_features = BulkWearableFeatures(
+            handlers=self.handlers,
+            compute_distributions=True,
+            cosinor_age_inputs=cosinor_age_inputs
+        )
+
+        # Get individual features
+        individual_features = bulk_features.get_individual_features()
+        self.assertEqual(len(individual_features), 3)
+
+        # Check that CosinorAge features were added but no prediction error
+        for i, features in enumerate(individual_features):
+            if features is not None:
+                self.assertIn("cosinorage", features)
+                cosinorage_feat = features["cosinorage"]
+                
+                # Check for expected CosinorAge features
+                self.assertIn("cosinorage", cosinorage_feat)
+                self.assertIn("cosinorage_advance", cosinorage_feat)
+                
+                # Check that prediction error is NOT present
+                self.assertNotIn("cosinor_age_prediction_error", cosinorage_feat)
+
+        # Check distribution stats
+        stats = bulk_features.get_distribution_stats()
+        cosinorage_features = [k for k in stats.keys() if k in ['cosinorage', 'cosinorage_advance']]
+        self.assertGreaterEqual(len(cosinorage_features), 2)
+
+    def test_cosinorage_features_validation(self):
+        """Test validation of cosinor_age_inputs parameter."""
+        # Test with mismatched length
+        cosinor_age_inputs = [
+            {"age": 25.5, "gender": "female"},
+            {"age": 30.2, "gender": "male"}
+        ]  # Only 2 inputs for 3 handlers
+
+        with self.assertRaises(ValueError):
+            BulkWearableFeatures(
+                handlers=self.handlers,
+                cosinor_age_inputs=cosinor_age_inputs
+            )
+
+        # Test with missing age key
+        cosinor_age_inputs = [
+            {"gender": "female"},  # Missing age
+            {"age": 30.2, "gender": "male"},
+            {"age": 28.0, "gender": "unknown"}
+        ]
+
+        with self.assertRaises(ValueError):
+            BulkWearableFeatures(
+                handlers=self.handlers,
+                cosinor_age_inputs=cosinor_age_inputs
+            )
+
+    def test_cosinorage_features_feature_names(self):
+        """Test that CosinorAge feature names are correct and not duplicated."""
+        cosinor_age_inputs = [
+            {"age": 25.5, "gender": "female", "gt_cosinor_age": 26.2},
+            {"age": 30.2, "gender": "male", "gt_cosinor_age": 31.1},
+            {"age": 28.0, "gender": "unknown", "gt_cosinor_age": 27.8}
+        ]
+
+        bulk_features = BulkWearableFeatures(
+            handlers=self.handlers,
+            compute_distributions=True,
+            cosinor_age_inputs=cosinor_age_inputs
+        )
+
+        # Get distribution stats
+        stats = bulk_features.get_distribution_stats()
+        
+        # Check for correct feature names
+        expected_cosinorage_features = ['cosinorage', 'cosinorage_advance', 'cosinor_age_prediction_error']
+        for feature in expected_cosinorage_features:
+            self.assertIn(feature, stats)
+        
+        # Check for incorrect duplicated names
+        incorrect_names = [name for name in stats.keys() if name.startswith('cosinorage_cosinorage')]
+        self.assertEqual(len(incorrect_names), 0)
+
+        # Get summary dataframe
+        summary_df = bulk_features.get_summary_dataframe()
+        cosinorage_rows = summary_df[summary_df['feature'].isin(expected_cosinorage_features)]
+        self.assertEqual(len(cosinorage_rows), 3)
+
+        # Get correlation matrix
+        corr_matrix = bulk_features.get_feature_correlation_matrix()
+        cosinorage_cols = [col for col in corr_matrix.columns if col in expected_cosinorage_features]
+        self.assertEqual(len(cosinorage_cols), 3)
+
 
 if __name__ == "__main__":
     unittest.main()

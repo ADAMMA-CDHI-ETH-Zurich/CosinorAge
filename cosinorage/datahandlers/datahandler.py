@@ -118,20 +118,6 @@ class DataHandler:
         """
         return self.raw_data
 
-    def get_sf_data(self):
-        """
-        Retrieve the accelerometer data.
-
-        Returns:
-            pd.DataFrame: A DataFrame containing the accelerometer data.
-        """
-        if self.sf_data is None:
-            raise ValueError(
-                "Data has not been loaded. Please call `load_data()` first."
-            )
-
-        return self.sf_data
-
     def get_ml_data(self):
         """
         Retrieve the minute-level ENMO values.

@@ -467,7 +467,6 @@ class TestGenericDataHandler:
 
                             # Check that DataHandler methods are available
                             assert hasattr(handler, "get_raw_data")
-                            assert hasattr(handler, "get_sf_data")
                             assert hasattr(handler, "get_ml_data")
 
     def test_metadata_population(self):
