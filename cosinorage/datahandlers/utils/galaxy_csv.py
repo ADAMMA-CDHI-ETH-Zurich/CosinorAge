@@ -214,7 +214,7 @@ def filter_galaxy_csv_data(
         )
 
     # resample to minute-level
-    _data = _data.resample("1min").interpolate(method="linear").bfill()
+    _data = _data.resample("1min").mean().interpolate(method="linear").bfill()
     n_old = _data.shape[0]
     if verbose:
         print(f"Resampled {n_old} to {_data.shape[0]} timestamps")
@@ -291,7 +291,7 @@ def resample_galaxy_csv_data(
     _data = data.copy()
 
     n_old = _data.shape[0]
-    _data = _data.resample("1min").interpolate(method="linear").bfill()
+    _data = _data.resample("1min").mean().interpolate(method="linear").bfill()
     if verbose:
         print(f"Resampled {n_old} to {_data.shape[0]} timestamps")
 

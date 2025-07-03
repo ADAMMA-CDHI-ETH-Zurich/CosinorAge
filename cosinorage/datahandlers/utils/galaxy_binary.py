@@ -186,7 +186,7 @@ def resample_galaxy_binary_data(
     _data = data.copy()
 
     n_old = _data.shape[0]
-    _data = _data.resample("40ms").interpolate(method="linear").bfill()
+    _data = _data.resample("40ms").mean().interpolate(method="linear").bfill()
     if verbose:
         print(f"Resampled {n_old} to {_data.shape[0]} timestamps")
 
