@@ -154,7 +154,7 @@ def filter_consecutive_days(df: pd.DataFrame) -> pd.DataFrame:
     days = largest_consecutive_sequence(days)
 
     if len(days) < 1:
-        raise ValueError("Less than 2 consecutive days found")
+        raise ValueError("Less than 1 day found")
 
     df = df[pd.Index(df.index.date).isin(days)]
     return df
