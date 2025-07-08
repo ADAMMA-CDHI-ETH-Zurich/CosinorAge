@@ -19,6 +19,8 @@
 # limitations under the License.
 ##########################################################################
 
+__version__ = "1.0.1"
+
 from . import bioages, datahandlers, features
 
-__all__ = ["datahandlers", "bioages", "features"]
+__all__ = ["datahandlers", "bioages", "features", "__version__"]
