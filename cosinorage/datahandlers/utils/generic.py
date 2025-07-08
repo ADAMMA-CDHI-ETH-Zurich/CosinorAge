@@ -511,47 +511,56 @@ def preprocess_generic_data(
             _data[["x", "y", "z"]] = _data[["x", "y", "z"]] / 9.81
 
         # calibration
-        sphere_crit = preprocess_args.get("autocalib_sphere_crit", 1)
-        sd_criter = preprocess_args.get("autocalib_sd_criter", 0.3)
-        _data[["x", "y", "z"]] = calibrate_accelerometer(
-            _data,
-            sphere_crit=sphere_crit,
-            sd_criteria=sd_criter,
-            meta_dict=meta_dict,
-            verbose=verbose,
-        )
+        try:
+            sphere_crit = preprocess_args.get("autocalib_sphere_crit", 1)
+            sd_criter = preprocess_args.get("autocalib_sd_criter", 0.3)
+            _data[["x", "y", "z"]] = calibrate_accelerometer(
+                _data,
+                sphere_crit=sphere_crit,
+                sd_criteria=sd_criter,
+                meta_dict=meta_dict,
+                verbose=verbose,
+            )
+        except:
+            print("Calibration failed, skipping calibration")
 
         # noise removal
-        type = preprocess_args.get("filter_type", "highpass")
-        cutoff = preprocess_args.get("filter_cutoff", 15)
-        _data[["x", "y", "z"]] = remove_noise(
-            _data,
-            sf=meta_dict["sf"],
-            filter_type=type,
-            filter_cutoff=cutoff,
-            verbose=verbose,
-        )
+        try:
+            type = preprocess_args.get("filter_type", "highpass")
+            cutoff = preprocess_args.get("filter_cutoff", 15)
+            _data[["x", "y", "z"]] = remove_noise(
+                _data,
+                sf=meta_dict["sf"],
+                filter_type=type,
+                filter_cutoff=cutoff,
+                verbose=verbose,
+            )
+        except:
+            print("Noise removal failed, skipping noise removal")
 
         # wear detection
-        sd_crit = preprocess_args.get("wear_sd_crit", 0.00013)
-        range_crit = preprocess_args.get("wear_range_crit", 0.00067)
-        window_length = preprocess_args.get("wear_window_length", 30)
-        window_skip = preprocess_args.get("wear_window_skip", 7)
-        _data["wear"] = detect_wear_periods(
-            _data,
-            meta_dict["sf"],
-            sd_crit,
-            range_crit,
-            window_length,
-            window_skip,
-            meta_dict=meta_dict,
-            verbose=verbose,
-        )
+        try:
+            sd_crit = preprocess_args.get("wear_sd_crit", 0.00013)
+            range_crit = preprocess_args.get("wear_range_crit", 0.00067)
+            window_length = preprocess_args.get("wear_window_length", 30)
+            window_skip = preprocess_args.get("wear_window_skip", 7)
+            _data["wear"] = detect_wear_periods(
+                _data,
+                meta_dict["sf"],
+                sd_crit,
+                range_crit,
+                window_length,
+                window_skip,
+                meta_dict=meta_dict,
+                    verbose=verbose,
+                )
 
-        # calculate total, wear, and non-wear time
-        calc_weartime(
-            _data, sf=meta_dict["sf"], meta_dict=meta_dict, verbose=verbose
-        )
+            # calculate total, wear, and non-wear time
+            calc_weartime(
+                _data, sf=meta_dict["sf"], meta_dict=meta_dict, verbose=verbose
+            )
+        except:
+            print("Wear time calculation failed, skipping wear time calculation")
 
         _data["enmo"] = calculate_enmo(_data, verbose=verbose) * 1000
 
