@@ -22,10 +22,7 @@
 from typing import Optional
 
 import pandas as pd
-<<<<<<< HEAD
-=======
 import pytz
->>>>>>> dc6f0f6 (added timezone support)
 
 from .calc_enmo import calculate_enmo
 from .filtering import filter_consecutive_days, filter_incomplete_days
@@ -41,10 +38,7 @@ def read_generic_xD_data(
     n_dimensions: int,
     time_format: str = "unix-ms",
     time_column: str = "timestamp",
-<<<<<<< HEAD
-=======
     time_zone: Optional[str] = None,
->>>>>>> dc6f0f6 (added timezone support)
     data_columns: Optional[list] = None,
     verbose: bool = False,
 ) -> pd.DataFrame:
@@ -170,23 +164,6 @@ def read_generic_xD_data(
         raise ValueError("n_dimensions must be either 1 or 3")
 
     data = data.rename(columns=column_mapping)
-<<<<<<< HEAD
-    if time_format == "unix-s":
-        data["timestamp"] = pd.to_datetime(
-            data["timestamp"], unit="s"
-        ).dt.tz_localize(None)
-    elif time_format == "unix-ms":
-        data["timestamp"] = pd.to_datetime(
-            data["timestamp"], unit="ms"
-        ).dt.tz_localize(None)
-    elif time_format == "datetime":
-        data["timestamp"] = pd.to_datetime(
-            data["timestamp"]
-        ).dt.tz_localize(None)
-    else:
-        raise ValueError("time_format must be either 'unix-s', 'unix-ms' or 'datetime'")
-
-=======
 
     if time_zone is not None and time_zone not in pytz.all_timezones:
         raise ValueError("time_zone must be a valid timezone, e.g., 'Europe/Zurich' or 'America/New_York'")
@@ -214,7 +191,6 @@ def read_generic_xD_data(
     # drop timezone info (make naive, but keep local time)
     data["timestamp"] = data["timestamp"].dt.tz_localize(None)
 
->>>>>>> dc6f0f6 (added timezone support)
     data.set_index("timestamp", inplace=True)
 
     data = data.fillna(0)
