@@ -113,6 +113,10 @@ class GenericDataHandler(DataHandler):
         data_type: str = "accelerometer-mg",
         time_format: str = "unix-ms",
         time_column: str = "timestamp",
+<<<<<<< HEAD
+=======
+        time_zone: Optional[str] = None,
+>>>>>>> dc6f0f6 (added timezone support)
         data_columns: Optional[list] = None,
         preprocess_args: dict = {},
         verbose: bool = False,
@@ -153,6 +157,10 @@ class GenericDataHandler(DataHandler):
         self.data_type = data_type
         self.time_format = time_format
         self.time_column = time_column
+<<<<<<< HEAD
+=======
+        self.time_zone = time_zone
+>>>>>>> dc6f0f6 (added timezone support)
         self.data_columns = (
             data_columns if data_columns is not None else default_data_columns
         )
@@ -193,6 +201,10 @@ class GenericDataHandler(DataHandler):
                 n_dimensions=n_dimensions,
                 time_format=self.time_format,
                 time_column=self.time_column,
+<<<<<<< HEAD
+=======
+                time_zone=self.time_zone,
+>>>>>>> dc6f0f6 (added timezone support)
                 data_columns=self.data_columns,
                 verbose=verbose,
             )
