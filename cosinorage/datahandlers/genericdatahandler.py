@@ -177,6 +177,7 @@ class GenericDataHandler(DataHandler):
             )
         )
         self.meta_dict["time_column"] = time_column
+        self.meta_dict["time_zone"] = time_zone
         self.meta_dict["data_columns"] = data_columns
 
         self.__load_data(verbose=verbose)
