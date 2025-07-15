@@ -118,6 +118,20 @@ class DataHandler:
         """
         return self.raw_data
 
+    def get_sf_data(self):
+        """
+        Retrieve the filtered data.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the filtered data.
+        """
+        try:
+            return self.sf_data
+        except:
+            raise ValueError(
+                "No sf_data available."
+            )
+
     def get_ml_data(self):
         """
         Retrieve the minute-level ENMO values.

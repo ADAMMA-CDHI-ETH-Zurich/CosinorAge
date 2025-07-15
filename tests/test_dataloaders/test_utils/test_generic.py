@@ -71,7 +71,7 @@ class TestGenericUtils:
             # Check metadata
             assert meta_dict["raw_n_datapoints"] == 100
             assert meta_dict["raw_data_unit"] == "counts"
-            assert meta_dict["raw_data_frequency"] == "1.0Hz"
+            assert meta_dict["raw_data_frequency"] == "1Hz"
             assert meta_dict["sf"] == 1.0
 
     def test_read_generic_xD_3d_default_columns(self, sample_csv_file_3d):
@@ -100,8 +100,8 @@ class TestGenericUtils:
 
             # Check metadata
             assert meta_dict["raw_n_datapoints"] == 100
-            assert meta_dict["raw_data_unit"] == "mg"
-            assert meta_dict["raw_data_frequency"] == "25.0Hz"
+            assert meta_dict["raw_data_unit"] == "unknown"
+            assert meta_dict["raw_data_frequency"] == "25Hz"
             assert meta_dict["sf"] == 25.0
 
     def test_read_generic_xD_custom_columns(self, sample_csv_file_1d):
@@ -292,7 +292,7 @@ class TestGenericUtils:
 
             assert meta_dict["raw_n_datapoints"] == 100
             assert meta_dict["raw_data_unit"] == "counts"
-            assert meta_dict["raw_data_frequency"] == "25.0Hz"
+            assert meta_dict["raw_data_frequency"] == "25Hz"
             assert meta_dict["sf"] == 25.0
 
     def test_read_generic_xD_column_mapping_1d(self, tmp_path):

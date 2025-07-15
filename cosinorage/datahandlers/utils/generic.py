@@ -180,7 +180,7 @@ def read_generic_xD_data(
     elif time_format == "datetime":
         data["timestamp"] = pd.to_datetime(
             data["timestamp"], utc=True
-        ).dt.tz_localize("UTC")
+        ).dt.tz_convert("UTC")
     else:
         raise ValueError("time_format must be either 'unix-s', 'unix-ms' or 'datetime'")
 
@@ -379,6 +379,9 @@ def resample_generic_data(
     >>> print(f"Resampled frequency: {len(resampled_data)} points")
     """
     _data = data.copy()
+
+    # floor index to seconds
+    _data.index = _data.index.floor("s")
 
     # Ensure first day starts at 00:00 and last day ends at 23:59 by extrapolating if needed
     n_old = _data.shape[0]
