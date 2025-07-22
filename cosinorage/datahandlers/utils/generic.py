@@ -125,7 +125,6 @@ def read_generic_xD_data(
     - Populates metadata dictionary with data information
     """
 
-    
     if n_dimensions not in [1, 3]:
         raise ValueError("n_dimensions must be either 1 or 3")
 
@@ -136,7 +135,8 @@ def read_generic_xD_data(
             )
 
     if time_format not in ["unix-ms", "unix-s", "datetime"]:
-        raise ValueError("time_format must be either 'unix-ms', 'unix-s' or 'datetime'")
+        raise ValueError(
+            "time_format must be either 'unix-ms', 'unix-s' or 'datetime'")
 
     data = pd.read_csv(file_path)
 
@@ -166,7 +166,8 @@ def read_generic_xD_data(
     data = data.rename(columns=column_mapping)
 
     if time_zone is not None and time_zone not in pytz.all_timezones:
-        raise ValueError("time_zone must be a valid timezone, e.g., 'Europe/Zurich' or 'America/New_York'")
+        raise ValueError(
+            "time_zone must be a valid timezone, e.g., 'Europe/Zurich' or 'America/New_York'")
 
     # convert timestamp to UTC datetime
     if time_format == "unix-s":
@@ -182,7 +183,8 @@ def read_generic_xD_data(
             data["timestamp"], utc=True
         ).dt.tz_convert("UTC")
     else:
-        raise ValueError("time_format must be either 'unix-s', 'unix-ms' or 'datetime'")
+        raise ValueError(
+            "time_format must be either 'unix-s', 'unix-ms' or 'datetime'")
 
     # convert datetime to timezone
     if time_zone is not None:
@@ -205,7 +207,8 @@ def read_generic_xD_data(
     meta_dict["sf"] = detect_frequency_from_timestamps(pd.Series(data.index))
     meta_dict["raw_data_frequency"] = f'{meta_dict["sf"]:.3g}Hz'
     meta_dict["raw_data_unit"] = (
-        "counts" if data_type == "alternative_count" else "mg" if data_type in ["enmo-mg", "accelerometer-mg"] else "g" if data_type in ["enmo-g", "accelerometer-g"] else "ms2" if data_type in ["accelerometer-ms2"] else "unknown"
+        "counts" if data_type == "alternative_count" else "mg" if data_type in ["enmo-mg", "accelerometer-mg"] else "g" if data_type in [
+            "enmo-g", "accelerometer-g"] else "ms2" if data_type in ["accelerometer-ms2"] else "unknown"
     )
 
     return data
@@ -276,7 +279,19 @@ def filter_generic_data(
     _data = data.copy()
 
     # filter out first and last day
-    # TODO: only filter out if first or last day are incomplete
+    # TODO: only filter out if first or last day are incomplete (floor to only keep seconds and then the first timestamp 
+    # needs to be 00:00:00 and for the last day the last timestamp needs to be 23:59:59)
+    """
+    # floor index to seconds
+    temp_index = _data.index.floor("s")
+
+    # check if first or last day are incomplete
+    if temp_index.date.min() != temp_index.date.min().replace(hour=0, minute=0, second=0):
+        _data = _data.loc[_data.index.date != temp_index.date.min()]
+    if temp_index.date.max() != temp_index.date.max().replace(hour=23, minute=59, second=59):
+        _data = _data.loc[_data.index.date != temp_index.date.max()]
+    """
+
     n_old = _data.shape[0]
     _data = _data.loc[
         (_data.index.date != _data.index.date.min())
@@ -289,11 +304,12 @@ def filter_generic_data(
 
     # filter out sparse days
     required_points_per_day = (
-        preprocess_args.get("required_daily_coverage", 0.5) # required daily coverage (0.5 = 50%)
-        * meta_dict["sf"] # sampling frequency in Hz (points per second)
-        * 60 # seconds per minute
-        * 60 # minutes per hour
-        * 24 # hours per day
+        # required daily coverage (0.5 = 50%)
+        preprocess_args.get("required_daily_coverage", 0.5)
+        * meta_dict["sf"]  # sampling frequency in Hz (points per second)
+        * 60  # seconds per minute
+        * 60  # minutes per hour
+        * 24  # hours per day
     )
     n_old = _data.shape[0]
     _data = filter_incomplete_days(
@@ -386,15 +402,17 @@ def resample_generic_data(
 
     # Ensure first day starts at 00:00 and last day ends at 23:59 by extrapolating if needed
     n_old = _data.shape[0]
-    
+
     # Get the first and last dates and ensure proper day boundaries
     first_datetime = _data.index.min()
     last_datetime = _data.index.max()
-    
+
     # Create day boundaries: first day starts at 00:00, last day ends at 23:59
-    first_day_start = first_datetime.replace(hour=0, minute=0, second=0, microsecond=0)
-    last_day_end = last_datetime.replace(hour=23, minute=59, second=59, microsecond=999999)
-    
+    first_day_start = first_datetime.replace(
+        hour=0, minute=0, second=0, microsecond=0)
+    last_day_end = last_datetime.replace(
+        hour=23, minute=59, second=59, microsecond=999999)
+
     # Check if we need to extrapolate at the beginning
     if first_datetime > first_day_start:
         # Create a complete day range from 00:00 to 23:59
@@ -403,24 +421,26 @@ def resample_generic_data(
             end=last_day_end,
             freq='1min'
         )
-        
+
         # Reindex the data to include the complete day range and forward fill
         _data = _data.resample("1min").mean()
         _data = _data.reindex(complete_day_range)
         _data = _data.interpolate(method="linear").ffill().bfill()
-        
+
         if verbose:
-            print(f"Extrapolated data to ensure first day starts at 00:00 and last day ends at 23:59: {_data.shape[0] - n_old} records added")
+            print(
+                f"Extrapolated data to ensure first day starts at 00:00 and last day ends at 23:59: {_data.shape[0] - n_old} records added")
     else:
         # Filter to ensure first day starts at 00:00 and last day ends at 23:59
         _data = _data.loc[
             (_data.index >= first_day_start) &
             (_data.index <= last_day_end)
         ]
-        
+
         if verbose:
-            print(f"Filtered to ensure first day starts at 00:00 and last day ends at 23:59: {n_old - _data.shape[0]}/{n_old} records removed")
-    
+            print(
+                f"Filtered to ensure first day starts at 00:00 and last day ends at 23:59: {n_old - _data.shape[0]}/{n_old} records removed")
+
     # Resample to minute level
     n_old = _data.shape[0]
     _data = _data.resample("1min").mean().interpolate(method="linear").bfill()
@@ -570,8 +590,8 @@ def preprocess_generic_data(
                 window_length,
                 window_skip,
                 meta_dict=meta_dict,
-                    verbose=verbose,
-                )
+                verbose=verbose,
+            )
 
             # calculate total, wear, and non-wear time
             calc_weartime(
@@ -586,7 +606,7 @@ def preprocess_generic_data(
         raise ValueError(
             "Data type must be either 'enmo-mg', 'enmo-g', 'accelerometer-mg', 'accelerometer-g', 'accelerometer-ms2' or 'alternative_count'"
         )
-    
+
     if verbose:
         print(f"Preprocessed {data_type} data")
 
