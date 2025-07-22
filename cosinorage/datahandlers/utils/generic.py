@@ -276,6 +276,7 @@ def filter_generic_data(
     _data = data.copy()
 
     # filter out first and last day
+    # TODO: only filter out if first or last day are incomplete
     n_old = _data.shape[0]
     _data = _data.loc[
         (_data.index.date != _data.index.date.min())
