@@ -66,7 +66,7 @@ Features computed include:
 Statistical measures provided:
     - count, mean, std, min, max, median
     - q25, q75, iqr (interquartile range)
-    - mode, skewness, kurtosis
+    - mode, skewness
 """
 
 from typing import Dict, List, Optional
@@ -446,7 +446,6 @@ class BulkWearableFeatures:
                 - iqr: Interquartile range (q75 - q25)
                 - mode: Most frequent value (if available)
                 - skewness: Distribution skewness (if available)
-                - kurtosis: Distribution kurtosis (if available)
         """
         stats = {}
 
@@ -486,13 +485,11 @@ class BulkWearableFeatures:
             except:
                 column_stats["mode"] = float("nan")
 
-            # Compute skewness and kurtosis
+            # Compute skewness
             try:
                 column_stats["skewness"] = float(pd.Series(values).skew())
-                column_stats["kurtosis"] = float(pd.Series(values).kurtosis())
             except:
                 column_stats["skewness"] = float("nan")
-                column_stats["kurtosis"] = float("nan")
 
             stats[column] = column_stats
 
@@ -532,7 +529,7 @@ class BulkWearableFeatures:
                 Values are dictionaries containing statistical measures:
                 - count, mean, std, min, max, median
                 - q25, q75, iqr (interquartile range)
-                - mode, skewness, kurtosis
+                - mode, skewness
 
         Example:
             >>> stats = bulk.get_distribution_stats()
@@ -568,7 +565,7 @@ class BulkWearableFeatures:
         Returns:
             pd.DataFrame: Summary DataFrame with features as rows and statistics as columns.
                 Columns include: feature, count, mean, std, min, max, median, q25, q75,
-                iqr, mode, skewness, kurtosis. Empty DataFrame if no distributions
+                iqr, mode, skewness. Empty DataFrame if no distributions
                 were computed.
 
         Example:
@@ -627,5 +624,9 @@ class BulkWearableFeatures:
         if len(numeric_columns) < 2:
             return pd.DataFrame()
 
+        # only keep rows where all features are not nan
+        flattened_df = flattened_df.dropna(subset=numeric_columns)
+
         correlation_matrix = flattened_df[numeric_columns].corr()
+
         return correlation_matrix
