@@ -286,10 +286,18 @@ def filter_generic_data(
     temp_index = _data.index.floor("s")
 
     # check if first or last day are incomplete
-    if temp_index.date.min() != temp_index.date.min().replace(hour=0, minute=0, second=0):
-        _data = _data.loc[_data.index.date != temp_index.date.min()]
-    if temp_index.date.max() != temp_index.date.max().replace(hour=23, minute=59, second=59):
-        _data = _data.loc[_data.index.date != temp_index.date.max()]
+    first_day_start = temp_index.date.min()
+    last_day_end = temp_index.date.max()
+    
+    # Check if first day starts at midnight (00:00:00)
+    first_day_data = _data[_data.index.date == first_day_start]
+    if len(first_day_data) > 0 and first_day_data.index.min().time() != pd.Timestamp('00:00:00').time():
+        _data = _data.loc[_data.index.date != first_day_start]
+    
+    # Check if last day ends at 23:59:59
+    last_day_data = _data[_data.index.date == last_day_end]
+    if len(last_day_data) > 0 and last_day_data.index.max().time() != pd.Timestamp('23:59:59').time():
+        _data = _data.loc[_data.index.date != last_day_end]
 
     """
     n_old = _data.shape[0]
