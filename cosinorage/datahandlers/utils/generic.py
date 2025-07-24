@@ -282,12 +282,11 @@ def filter_generic_data(
     # TODO: only filter out if first or last day are incomplete (floor to only keep seconds and then the first timestamp 
     # needs to be 00:00:00 and for the last day the last timestamp needs to be 23:59:59)
     
-    # floor index to seconds
-    temp_index = _data.index.floor("s")
+    n_old = _data.shape[0]
 
     # check if first or last day are incomplete
-    first_day_start = temp_index.date.min()
-    last_day_end = temp_index.date.max()
+    first_day_start = _data.index.floor("s").date.min()
+    last_day_end = _data.index.floor("s").date.max()
     
     # Check if first day starts at midnight (00:00:00)
     first_day_data = _data[_data.index.date == first_day_start]
@@ -300,7 +299,6 @@ def filter_generic_data(
         _data = _data.loc[_data.index.date != last_day_end]
 
     """
-    n_old = _data.shape[0]
     _data = _data.loc[
         (_data.index.date != _data.index.date.min())
         & (_data.index.date != _data.index.date.max())
