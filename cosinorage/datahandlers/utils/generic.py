@@ -281,7 +281,7 @@ def filter_generic_data(
     # filter out first and last day
     # TODO: only filter out if first or last day are incomplete (floor to only keep seconds and then the first timestamp 
     # needs to be 00:00:00 and for the last day the last timestamp needs to be 23:59:59)
-    """
+    
     # floor index to seconds
     temp_index = _data.index.floor("s")
 
@@ -290,16 +290,18 @@ def filter_generic_data(
         _data = _data.loc[_data.index.date != temp_index.date.min()]
     if temp_index.date.max() != temp_index.date.max().replace(hour=23, minute=59, second=59):
         _data = _data.loc[_data.index.date != temp_index.date.max()]
-    """
 
+    """
     n_old = _data.shape[0]
     _data = _data.loc[
         (_data.index.date != _data.index.date.min())
         & (_data.index.date != _data.index.date.max())
     ]
+    """
+
     if verbose:
         print(
-            f"Filtered out {n_old - _data.shape[0]}/{n_old} {data_type} records due to filtering out first and last day"
+            f"Filtered out {n_old - _data.shape[0]}/{n_old} {data_type} records due to filtering out first and/or last day"
         )
 
     # filter out sparse days

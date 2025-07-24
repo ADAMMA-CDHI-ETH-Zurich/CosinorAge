@@ -190,7 +190,7 @@ class BulkWearableFeatures:
         self.failed_handlers = []
 
         # Validate cosinor_age_inputs if provided
-        if self.cosinor_age_inputs is not None:
+        if self.cosinor_age_inputs is not None and len(self.cosinor_age_inputs) > 0:
             if len(self.cosinor_age_inputs) != len(self.handlers):
                 raise ValueError(
                     f"cosinor_age_inputs length ({len(self.cosinor_age_inputs)}) "
