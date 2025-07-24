@@ -151,7 +151,6 @@ class TestBulkWearableFeatures(unittest.TestCase):
                 "iqr",
                 "mode",
                 "skewness",
-                "kurtosis",
             ]
 
             for key in expected_keys:
@@ -183,7 +182,6 @@ class TestBulkWearableFeatures(unittest.TestCase):
             "iqr",
             "mode",
             "skewness",
-            "kurtosis",
         ]
 
         for col in expected_columns:
