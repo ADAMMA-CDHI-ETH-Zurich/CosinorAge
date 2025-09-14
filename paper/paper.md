@@ -8,14 +8,17 @@ tags:
   - wearables
 authors:
   - name: Jinjoo Shim
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0003-0226-7369
     corresponding: true
     affiliation: "1, 2"
   - name: Jacob Hunecke
+    orcid: 0000-0003-2579-7637
     affiliation: 2
   - name: Elgar Fleisch
+    orcid: 0000-0002-4842-1117
     affiliation: "2, 3"
   - name: Filipe Barata
+    orcid: 0000-0002-3905-2380
     affiliation: 2
 affiliations:
  - name: Department of Biostatistics, Harvard University, Cambridge, MA, USA
