@@ -242,7 +242,7 @@ The `CosinorAge` object can be used to compute CosinorAge. It is capable of proc
 ```python
 records = [
     {'handler': data_handler, 
-     'age': 40, 
+     'age': 51, 
      'gender': 'male'
     }
 ]
@@ -251,7 +251,7 @@ cosinor_age = CosinorAge(records)
 cosinor_age.get_predictions()
 ```
 
-The plot below visualizes the CosinorAge advance of a patient, showing a CosinorAge of approximately 56 years, which is higher than the patient's chronological age of 53.
+The plot below visualizes the CosinorAge advance of a patient, showing a CosinorAge of approximately 54 years, which is higher than the patient's chronological age of 51.
 
 ![CosinorAge Prediction](docs/figs/cosinorage.png)
 
