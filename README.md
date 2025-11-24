@@ -214,7 +214,7 @@ dashboard(features)
 
 #### Circadian Rhythm Analysis - Cosinor Analysis
 
-The `WearableFeatures` module performs a cosinor analysis to determine the acrophase, amplitude, and MESOR of the ENMO signal over a multiday period (see below).
+The `WearableFeatures` module performs a cosinor analysis to determine the acrophase, amplitude, and MESOR of the ENMO signal over a multiday period (see below). The example shown below is based on an individual from the NHANES study.
 
 ![Cosinor Analysis](docs/figs/cosinor_plot.png)
 
