@@ -419,7 +419,7 @@ def resample_nhanes_data(
     """
     _data = data.copy()
 
-    _data = _data.resample("1min").mean().interpolate(method="linear").bfill()
+    _data = _data.resample("1min").mean(numeric_only=True).interpolate(method="linear").bfill()
     _data["sleep"] = _data["sleep"].round(0)
     _data["wear"] = _data["wear"].round(0)
 
@@ -577,5 +577,7 @@ def calculate_measure_time(row):
     >>> # Output: 1900-01-01 08:31:40 (base time + 100 seconds)
     """
     base_time = datetime.strptime(row["day1_start_time"], "%H:%M:%S")
+    base_time = base_time.replace(year=2012, month=1, day=1)
+
     measure_time = base_time + timedelta(seconds=row["paxssnmp"] / 80)
     return measure_time
