@@ -2,7 +2,7 @@
 
 [![Documentation Status](https://readthedocs.org/projects/cosinorage/badge/?version=latest)](https://cosinorage.readthedocs.io/en/latest/)
 [![PyPI version](https://badge.fury.io/py/cosinorage.svg)](https://badge.fury.io/py/cosinorage)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![GitHub Actions](https://github.com/jlohunecke/CosinorAge/workflows/CosinorAge/badge.svg)](https://github.com/jlohunecke/CosinorAge/actions)
 [![DOI](https://zenodo.org/badge/DOI/10.1038/s41746-024-01111-x.svg)](https://doi.org/10.1038/s41746-024-01111-x)
@@ -13,32 +13,51 @@ An open-source Python package for estimating biological age based on circadian r
 ## Getting Started
 
 ### Prerequisites
-- Python >= 3.9
+- Python **3.11** (recommended; see [Python version notes](#python-version-notes) below)
 - pip (Python package installer)
 - git
+
+> **Where to run commands:** Run all `pip`, `git`, and `python -m venv` commands below in a terminal — on Windows, use **PowerShell** or **Command Prompt**; on macOS/Linux, use **Terminal**. The Python code examples further down belong in a `.py` script, a Jupyter notebook, or an IDE such as VS Code — not in the terminal directly.
+
+### Python version notes
+
+We recommend **Python 3.11** (e.g. 3.11.9). Installation may fail on **Python 3.13+** because some dependencies (notably `claid` and its `grpcio` requirement) do not yet support the latest Python releases.
+
+On **Windows**, enabling [long path support](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry#enable-long-paths-in-windows-10-version-1607-and-later) can be required when installing `claid`.
 
 ### Installation Steps
 
 #### Option 1: Quick Installation via pip (Recommended)
+
+From your terminal:
+
 ```bash
 pip install cosinorage
 ```
+
+For full functionality (wear detection, sleep analysis, cosinor fitting, dashboards), also install:
+
+```bash
+pip install claid scikit-digital-health CosinorPy seaborn pytz
+```
+
+If `pip install cosinorage` fails, try installing with Python 3.11 in a fresh virtual environment (see Option 2, steps 2–3) before running the commands above.
 
 #### Option 2: Manual Installation from Source
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/yourusername/cosinorage.git
-   cd cosinorage
+   git clone https://github.com/ADAMMA-CDHI-ETH-Zurich/CosinorAge.git
+   cd CosinorAge
    ```
 
 2. **Set Up Virtual Environment**
    ```bash
-   # Create a new virtual environment
+   # Create a new virtual environment (requires Python 3.11)
    python -m venv venv
 
    # Activate the virtual environment
-   # On Windows:
+   # On Windows (PowerShell):
    venv\Scripts\activate
    # On macOS/Linux:
    source venv/bin/activate
@@ -60,7 +79,7 @@ pip install cosinorage
    ```
 
 ### Quick Start
-After installation, you can start using the package:
+After installation, save the following code as a Python script (e.g. `quickstart.py`) or run it in a Jupyter notebook / VS Code, then execute it with `python quickstart.py`:
 
 ```python
 import cosinorage

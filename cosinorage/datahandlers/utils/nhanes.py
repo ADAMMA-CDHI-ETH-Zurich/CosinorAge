@@ -253,6 +253,9 @@ def read_nhanes_data(
     min_x.set_index("timestamp", inplace=True)
     min_x = min_x[["x", "y", "z", "wear", "sleep", "paxpredm"]]
 
+    for col in ["x", "y", "z", "paxpredm"]:
+        min_x[col] = pd.to_numeric(min_x[col], errors="coerce")
+
     meta_dict["raw_n_datapoints"] = min_x.shape[0]
     meta_dict["raw_start_datetime"] = min_x.index.min()
     meta_dict["raw_end_datetime"] = min_x.index.max()
@@ -418,10 +421,48 @@ def resample_nhanes_data(
     >>> print(f"Resampled data points: {len(resampled_data)}")
     """
     _data = data.copy()
+    _data.index = pd.to_datetime(_data.index)
 
-    _data = _data.resample("1min").mean(numeric_only=True).interpolate(method="linear").bfill()
-    _data["sleep"] = _data["sleep"].round(0)
-    _data["wear"] = _data["wear"].round(0)
+    continuous_cols = [
+        c
+        for c in ["x", "y", "z", "x_raw", "y_raw", "z_raw", "enmo"]
+        if c in _data.columns
+    ]
+    categorical_cols = [
+        c for c in ["wear", "sleep", "paxpredm"] if c in _data.columns
+    ]
+
+    for col in continuous_cols + categorical_cols:
+        _data[col] = pd.to_numeric(_data[col], errors="coerce")
+
+    resampled_parts = []
+    if continuous_cols:
+        resampled_parts.append(
+            _data[continuous_cols]
+            .resample("1min")
+            .mean()
+            .interpolate(method="linear")
+            .bfill()
+        )
+    if categorical_cols:
+        categorical = (
+            _data[categorical_cols]
+            .resample("1min")
+            .mean()
+            .interpolate(method="linear")
+            .bfill()
+        )
+        categorical[categorical_cols] = categorical[categorical_cols].round(0)
+        resampled_parts.append(categorical)
+
+    if not resampled_parts:
+        raise ValueError("No resampleable columns found in NHANES data")
+
+    _data = (
+        resampled_parts[0]
+        if len(resampled_parts) == 1
+        else pd.concat(resampled_parts, axis=1)
+    )
 
     if verbose:
         print(f"Resampled {data.shape[0]} to {_data.shape[0]} timestamps")
