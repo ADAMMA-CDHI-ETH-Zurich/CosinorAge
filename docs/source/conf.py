@@ -24,7 +24,7 @@ if os.environ.get("READTHEDOCS", "") == "True":
 project = 'CosinorAge'
 copyright = '2025, Jacob Leo Oskar Hunecke'
 author = 'Jacob Leo Oskar Hunecke'
-release = '1.0.5'
+release = '1.0.7'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -39,6 +39,21 @@ extensions = [
 templates_path = ['_templates']
 exclude_patterns = []
 
+# Heavy runtime deps are mocked so docs build without claid/skdh/CosinorPy.
+autodoc_mock_imports = [
+    'claid',
+    'claid.data_collection',
+    'claid.data_collection.load',
+    'claid.data_collection.load.load_sensor_data',
+    'skdh',
+    'skdh.preprocessing',
+    'skdh.sleep',
+    'skdh.sleep.endpoints',
+    'skdh.sleep.sleep_classification',
+    'CosinorPy',
+    'CosinorPy.cosinor1',
+]
+
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -46,7 +61,7 @@ exclude_patterns = []
 
 html_theme = 'furo'
 html_static_path = ['_static']
-html_title = 'CosinorAge 1.0.5 Documentation'
+html_title = 'CosinorAge 1.0.7 Documentation'
 
 autosummary_generate = True
 
