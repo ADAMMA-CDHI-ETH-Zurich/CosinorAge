@@ -229,7 +229,7 @@ features = WearableFeatures(smartwatch_handler)
 features.run()
 ```
 
-In the following sections the different wearable features are described ion detail. To genereate all the visulaizations at once you can run the following function.
+In the following sections the different wearable features are described in detail. To generate all the visualizations at once you can run the following function.
 
 ```python
 dashboard(features)
@@ -241,7 +241,7 @@ The `WearableFeatures` module performs a cosinor analysis to determine the acrop
 
 ![Cosinor Analysis](docs/figs/cosinor_plot.png)
 
-#### Circadian Rhythm Analysis - Non-parametric Analsis
+#### Circadian Rhythm Analysis - Non-parametric Analysis
 
 In addition, the module performs non-parametric analyses of the circadian rhythm, generating various metrics, including L5, M10, IS, IV, and RA. For a more detailed description of these metrics, please refer to the documentation. Below, you can see an example of the visualized results.
 
@@ -251,7 +251,7 @@ In addition, the module performs non-parametric analyses of the circadian rhythm
 
 ![RA](docs/figs/RA_plot.png)
 
-#### Sleep Analyis
+#### Sleep Analysis
 
 The module is also capable of predicting sleep phases based on the provided ENMO signal. Using the predicted sleep phases, various metrics—including TST, WASO, PTA, NWB, and SOL—are computed. Exemplary results are visualized below.
 
