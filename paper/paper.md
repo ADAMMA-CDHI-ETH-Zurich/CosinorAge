@@ -88,7 +88,7 @@ The Web interface is organized into several sections:
 
 The Calculator tab offers a user-friendly interface, as illustrated in Figure 3. **CosinorAge Calculator** supports BYOD via batch CSV uploads from either single or multiple individuals, with automatic file structure preview for validation (subject to file size limits). Users can configure device type, timestamp format, time zone, and select parameters for analysis. When multi-individual mode is selected, the summary dashboard presents descriptive statistics for all extracted features, a feature correlation matrix, and visual summaries of each metric at the population level.
 
-![Data upload interface & summary dashboard.](figures/calc.png)
+![Data upload interface and summary dashboard.](figures/calc.png)
 
 # Research Impact Statement
 
@@ -96,7 +96,7 @@ The Calculator tab offers a user-friendly interface, as illustrated in Figure 3.
 
 The software supports research-grade actigraphy, large epidemiological datasets (e.g., UK Biobank and NHANES), and consumer smartwatch data, facilitating cross-device and cross-study analyses. Recent validation work has demonstrated comparability between research-grade accelerometers and consumer smartwatches for circadian rhythm assessment [@wu2025comp], highlighting the translational potential of the platform. By combining open-source implementation, standardized preprocessing, and biological age estimation, `CosinorAge` provides a reusable research tool for studying aging trajectories, intervention effects, and digital biomarkers across diverse populations.
 
-![Minute-level activity data collected using a Samsung Galaxy smartwatch from a 45-year-old female over 7 days was analyzed using the `CosinorAge` Python package. The blue lines display ENMO activity intensity, while the red curve indicates the cosinor model fit. Based on the recorded activity pattern, the predicted biological age is 49.0 years.](figures/timeseries_CA.png)
+![Minute-level activity data collected using a Samsung Galaxy smartwatch from a 45-year-old female over 7 days was analyzed using the `CosinorAge` Python package. The blue lines display ENMO activity intensity, while the red curve indicates the cosinor model fit. Based on the recorded activity pattern, the predicted biological age is 49.0 years.](figures/timeseries.png)
 
 # AI Usage Disclosure
 
