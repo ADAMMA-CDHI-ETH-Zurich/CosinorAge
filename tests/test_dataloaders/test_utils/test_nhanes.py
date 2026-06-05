@@ -204,6 +204,31 @@ def test_read_nhanes_data_missing_seqn():
         read_nhanes_data("dummy_dir")
 
 
+def test_resample_nhanes_data_with_string_columns():
+    # NHANES SAS exports may yield object-dtype accelerometer values
+    index = pd.date_range("2023-01-01", periods=10, freq="2min")
+    data = pd.DataFrame(
+        {
+            "x": ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0"],
+            "y": ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0"],
+            "z": ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0"],
+            "wear": np.ones(len(index)),
+            "sleep": np.zeros(len(index)),
+            "paxpredm": np.ones(len(index)),
+        },
+        index=index,
+    )
+
+    result = resample_nhanes_data(data)
+
+    assert np.issubdtype(result["x"].dtype, np.floating)
+    assert np.issubdtype(result["y"].dtype, np.floating)
+    assert np.issubdtype(result["z"].dtype, np.floating)
+    assert result["x"].notna().all()
+    assert all(result["wear"].isin([0, 1]))
+    assert all(result["sleep"].isin([0, 1]))
+
+
 def test_resample_nhanes_data_with_gaps():
     # Create sample data with gaps
     index = pd.date_range("2023-01-01", periods=100, freq="2min")
