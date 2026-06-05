@@ -66,8 +66,12 @@ After installation, you can start using the package:
 import cosinorage
 from cosinorage.datahandlers import GalaxyDataHandler
 
-# Initialize a data handler
-handler = GalaxyDataHandler(galaxy_file_dir='path/to/your/data')
+# Initialize a data handler using the sample CSV included in the repository
+handler = GalaxyDataHandler(
+    galaxy_file_path='data/smartwatch/sample1.csv',
+    data_format='csv',
+    verbose=True,
+)
 
 # Compute features
 from cosinorage.features import WearableFeatures, dashboard
@@ -133,7 +137,7 @@ The NHANESDataHandler is used to load and preprocess data from the NHANES study.
 It is expected that for a specific version of the dataset (e.g., G or H) three files are present: PAXDAY_&lt;version&gt;.xpt, PAXMIN_&lt;version&gt;.xpt and PAXHD_&lt;version&gt;.xpt. The files follow a very specific format, containing a wide range of different data fields. Thus, please use the files as they are provided by NHANES - they can be downloaded via this [link](https://wwwn.cdc.gov/nchs/nhanes/search/datapage.aspx?Component=Examination). The data can then be loaded into the corresponding NHANESDataHandler object as follows.
 
 ```python
-nhanes_handler = NHANESDataHandler(nhanes_file_dir='../data/nhanes/', person_id=62164, verbose=True)
+nhanes_handler = NHANESDataHandler(nhanes_file_dir='../data/nhanes/', seqn=62164, verbose=True)
 ```
 
 #### UKBDataHandler
