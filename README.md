@@ -159,6 +159,9 @@ It is expected that for a specific version of the dataset (e.g., G or H) three f
 nhanes_handler = NHANESDataHandler(nhanes_file_dir='../data/nhanes/', seqn=62164, verbose=True)
 ```
 
+> [!NOTE]
+> **Loading time:** `PAXMIN_*.xpt` files contain minute-level accelerometer data for the entire NHANES cohort. Even when you request a single participant (`seqn`), the handler must scan the full file chunk by chunk. Depending on hardware and the NHANES cycle, this step commonly takes several minutes (sometimes 20–60 minutes on slower systems). This is expected behavior. With `verbose=True`, a single progress bar labelled `Reading minute-level data (version …)` shows chunk processing; it may appear stuck at 0% briefly while the first large chunk is read.
+
 #### UKBDataHandler
 
 The UKBDataHandler is used to load and preprocess data from the UK Biobank. The data is expected to be located in a directory with the following structure - however, please note that the data is not publicly available:
@@ -229,7 +232,7 @@ features = WearableFeatures(smartwatch_handler)
 features.run()
 ```
 
-In the following sections the different wearable features are described ion detail. To genereate all the visulaizations at once you can run the following function.
+In the following sections the different wearable features are described in detail. To generate all the visualizations at once you can run the following function.
 
 ```python
 dashboard(features)
@@ -241,7 +244,7 @@ The `WearableFeatures` module performs a cosinor analysis to determine the acrop
 
 ![Cosinor Analysis](docs/figs/cosinor_plot.png)
 
-#### Circadian Rhythm Analysis - Non-parametric Analsis
+#### Circadian Rhythm Analysis - Non-parametric Analysis
 
 In addition, the module performs non-parametric analyses of the circadian rhythm, generating various metrics, including L5, M10, IS, IV, and RA. For a more detailed description of these metrics, please refer to the documentation. Below, you can see an example of the visualized results.
 
@@ -251,7 +254,7 @@ In addition, the module performs non-parametric analyses of the circadian rhythm
 
 ![RA](docs/figs/RA_plot.png)
 
-#### Sleep Analyis
+#### Sleep Analysis
 
 The module is also capable of predicting sleep phases based on the provided ENMO signal. Using the predicted sleep phases, various metrics—including TST, WASO, PTA, NWB, and SOL—are computed. Exemplary results are visualized below.
 
@@ -261,6 +264,27 @@ The module is also capable of predicting sleep phases based on the provided ENMO
 ### CosinorAge Prediction
 
 The `CosinorAge` object can be used to compute CosinorAge. It is capable of processing multiple datahandlers at the same time.
+
+Each record must include the participant's **chronological age** and **gender** (`'male'`, `'female'`, or `'unknown'`). These are not stored in the accelerometer files themselves; you need to obtain them from the appropriate source for your dataset (e.g. NHANES demographic files, study questionnaires, or electronic health records).
+
+**NHANES example:** download the demographic file for the same cycle as the accelerometer data (e.g. `DEMO_G.xpt` for cycle G) from the [NHANES data portal](https://wwwn.cdc.gov/nchs/nhanes/search/datapage.aspx?Component=Demographics), then look up age and sex for your `SEQN`:
+
+```python
+import pandas as pd
+
+demo = pd.read_sas('path/to/DEMO_G.xpt')
+row = demo[demo['SEQN'].astype(int) == 62177].iloc[0]
+age = int(row['RIDAGEYR'])
+gender = 'male' if row['RIAGENDR'] == 1 else 'female' if row['RIAGENDR'] == 2 else 'unknown'
+
+records = [
+    {'handler': nhanes_handler, 'age': age, 'gender': gender}
+]
+cosinor_age = CosinorAge(records)
+cosinor_age.get_predictions()
+```
+
+For other data sources, provide age and gender from the corresponding metadata in the same way:
 
 ```python
 records = [

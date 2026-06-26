@@ -157,7 +157,7 @@ def test_calculate_measure_time():
     result = calculate_measure_time(row)
 
     # Assertions
-    expected = datetime.strptime("08:00:01", "%H:%M:%S")
+    expected = datetime(2012, 1, 1, 8, 0, 1)
     assert result == expected
 
 
