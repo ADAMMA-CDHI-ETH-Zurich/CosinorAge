@@ -87,6 +87,8 @@ def read_nhanes_data(
     - Filters for complete days (288 epochs per day)
     - Converts column names to lowercase for consistency
     - Removes byte-encoded data using remove_bytes function
+    - Minute-level loading scans the full cohort PAXMIN file; expect several
+      minutes of runtime and a single progress bar while chunks are read
 
     Examples
     --------
@@ -109,6 +111,8 @@ def read_nhanes_data(
     if seqn is None:
         raise ValueError("The seqn is required for nhanes data")
 
+    target_seqn = int(seqn)
+
     # list all files in directory starting with PAX
     pax_files = [f for f in os.listdir(file_dir) if f.startswith("PAX")]
     # for each file starting with PAXDAY check if PAXHD and PAXMIN are present
@@ -121,10 +125,12 @@ def read_nhanes_data(
                 and f"PAXMIN_{version}.xpt" in pax_files
             ):
                 if (
-                    seqn
+                    target_seqn
                     in pd.read_sas(f"{file_dir}/PAXDAY_{version}.xpt")[
                         "SEQN"
-                    ].unique()
+                    ]
+                    .astype(int)
+                    .unique()
                 ):
                     versions.append(version)
 
@@ -140,11 +146,11 @@ def read_nhanes_data(
     day_x = pd.DataFrame()
     for version in tqdm(versions, desc="Reading day-level files"):
         curr = pd.read_sas(f"{file_dir}/PAXDAY_{version}.xpt")
-        curr = curr[curr["SEQN"] == seqn]
+        curr = curr[curr["SEQN"].astype(int) == target_seqn]
         day_x = pd.concat([day_x, curr], ignore_index=True)
 
     if day_x.empty:
-        raise ValueError(f"No day-level data found for person {seqn}")
+        raise ValueError(f"No day-level data found for person {target_seqn}")
 
     # rename columns
     day_x = day_x.rename(columns=str.lower)
@@ -166,17 +172,32 @@ def read_nhanes_data(
     day_x = day_x.groupby("seqn").filter(lambda x: len(x) >= 4)
 
     # read all minute-level files
-    min_x = pd.DataFrame()
-    for version in tqdm(versions, desc="Reading minute-level files"):
-        itr_x = pd.read_sas(
-            f"{file_dir}/PAXMIN_{version}.xpt", chunksize=100000
-        )
+    min_chunks = []
+    for version in versions:
+        min_path = f"{file_dir}/PAXMIN_{version}.xpt"
+        if verbose:
+            print(
+                f"Scanning {min_path} for SEQN {target_seqn}. "
+                "PAXMIN files contain minute-level data for the full NHANES "
+                "cohort, so this step can take several minutes even though "
+                "only one participant is extracted. Progress is shown below."
+            )
+        itr_x = pd.read_sas(min_path, chunksize=100000)
         for chunk in tqdm(
-            itr_x, desc=f"Processing chunks for version {version}"
+            itr_x, desc=f"Reading minute-level data (version {version})"
         ):
+            chunk = chunk[chunk["SEQN"].astype(int) == target_seqn]
+            if chunk.empty:
+                continue
             curr = clean_data(chunk, day_x)
-            curr = curr[curr["SEQN"] == seqn]
-            min_x = pd.concat([min_x, curr], ignore_index=True)
+            if not curr.empty:
+                min_chunks.append(curr)
+
+    min_x = (
+        pd.concat(min_chunks, ignore_index=True)
+        if min_chunks
+        else pd.DataFrame()
+    )
 
     min_x = min_x.rename(columns=str.lower)
     min_x = remove_bytes(min_x)
@@ -188,7 +209,7 @@ def read_nhanes_data(
     head_x = pd.DataFrame()
     for version in tqdm(versions, desc="Reading header files"):
         curr = pd.read_sas(f"{file_dir}/PAXHD_{version}.xpt")
-        curr = curr[curr["SEQN"] == seqn]
+        curr = curr[curr["SEQN"].astype(int) == target_seqn]
         head_x = pd.concat([head_x, curr], ignore_index=True)
 
     head_x = head_x.rename(columns=str.lower)

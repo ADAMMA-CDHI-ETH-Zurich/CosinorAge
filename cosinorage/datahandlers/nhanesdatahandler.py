@@ -32,6 +32,11 @@ class NHANESDataHandler(DataHandler):
 
     This class handles loading, filtering, and processing of NHANES accelerometer data.
 
+    Notes
+    -----
+    Minute-level loading reads the full cohort ``PAXMIN_*.xpt`` file and can take
+    several minutes (or longer on slow storage). Use ``verbose=True`` to see progress.
+
     Attributes
     ----------
     nhanes_file_dir : str
