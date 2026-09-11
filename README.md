@@ -141,7 +141,7 @@ The GalaxyDataHandler is used to load and preprocess data from the Galaxy Smartw
 
 ![Samsung Galaxy Smartwatch Data Directory Structure](docs/figs/Smartwatch_data.png)
 
-For each day a seperate subdirectory is expected to be present - within each day's subdirectory, the data is expected to be located in seperate hourly .binary files (file names need to start with "acceleration_data"). The binary files need to have the following 4 columns: unix_timestamp_in_ms, acceleration_x, acceleration_y, acceleration_z. The data can then be loaded into the corresponding GalaxyDataHandler object as follows.
+For each day a separate subdirectory is expected to be present - within each day's subdirectory, the data is expected to be located in separate hourly .binary files (file names need to start with "acceleration_data"). The binary files need to have the following 4 columns: unix_timestamp_in_ms, acceleration_x, acceleration_y, acceleration_z. The data can then be loaded into the corresponding GalaxyDataHandler object as follows.
 
 ```python
 galaxy_handler = GalaxyDataHandler(gw_file_dir='../data/smartwatch/GalaxyWatch_Case1/', preprocess=True, preprocess_args=preprocess_args, verbose=True)
