@@ -38,5 +38,14 @@ setup(
             "furo",
             "pandas",
         ],
+        "test": [
+            "pytest",
+        ],
+        "dev": [
+            "pytest",
+            "flake8",
+            "build",
+            "twine",
+        ],
     },
 )
