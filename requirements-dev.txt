@@ -1,0 +1,5 @@
+# Development and test extras (also available as: pip install -e ".[test]" or pip install -e ".[dev]")
+pytest
+flake8
+build
+twine

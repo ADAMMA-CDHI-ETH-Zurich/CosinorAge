@@ -14,16 +14,26 @@ An open-source Python package for estimating biological age based on circadian r
 
 ### Prerequisites
 - Python **3.11** (recommended; see [Python version notes](#python-version-notes) below)
-- pip (Python package installer)
+- pip (Python package installer), or [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) / [Miniforge](https://github.com/conda-forge/miniforge)
 - git
 
-> **Where to run commands:** Run all `pip`, `git`, and `python -m venv` commands below in a terminal — on Windows, use **PowerShell** or **Command Prompt**; on macOS/Linux, use **Terminal**. The Python code examples further down belong in a `.py` script, a Jupyter notebook, or an IDE such as VS Code — not in the terminal directly.
+> **Where to run commands:** Run all `pip`, `conda`, `git`, and `python -m venv` commands below in a terminal — on Windows, use **PowerShell** or **Command Prompt**; on macOS/Linux, use **Terminal**. The Python code examples further down belong in a `.py` script, a Jupyter notebook, or an IDE such as VS Code — not in the terminal directly.
 
 ### Python version notes
 
 We recommend **Python 3.11** (e.g. 3.11.9). Installation may fail on **Python 3.13+** because some dependencies (notably `claid` and its `grpcio` requirement) do not yet support the latest Python releases.
 
 On **Windows**, enabling [long path support](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry#enable-long-paths-in-windows-10-version-1607-and-later) can be required when installing `claid`.
+
+On **macOS**, `lightgbm` (pulled in via `requirements.txt` / `scikit-digital-health`) needs OpenMP. If import or install fails with a missing `libomp.dylib`, install OpenMP first:
+
+```bash
+# conda (recommended if you already use a conda environment)
+conda install -c conda-forge llvm-openmp
+
+# Homebrew
+brew install libomp
+```
 
 ### Installation Steps
 
@@ -41,9 +51,22 @@ For full functionality (wear detection, sleep analysis, cosinor fitting, dashboa
 pip install claid scikit-digital-health CosinorPy seaborn pytz
 ```
 
-If `pip install cosinorage` fails, try installing with Python 3.11 in a fresh virtual environment (see Option 2, steps 2–3) before running the commands above.
+If `pip install cosinorage` fails, try installing with Python 3.11 in a fresh virtual environment (see Option 2 or Option 3) before running the commands above.
 
-#### Option 2: Manual Installation from Source
+#### Option 2: Conda environment (recommended for pinning Python 3.11)
+
+```bash
+conda create --name cosinorage_env python=3.11
+conda activate cosinorage_env
+pip install cosinorage
+pip install claid scikit-digital-health CosinorPy seaborn pytz
+```
+
+On macOS, if LightGBM fails to load, also run `conda install -c conda-forge llvm-openmp` (see [Python version notes](#python-version-notes)).
+
+To install from source instead of PyPI, clone the repository, keep the conda environment activated, then follow Option 3 from step 3.
+
+#### Option 3: Manual Installation from Source
 
 1. **Clone the Repository**
    ```bash
@@ -63,6 +86,8 @@ If `pip install cosinorage` fails, try installing with Python 3.11 in a fresh vi
    source venv/bin/activate
    ```
 
+   Alternatively, create the environment with conda: `conda create --name cosinorage_env python=3.11` then `conda activate cosinorage_env`.
+
 3. **Install Dependencies**
    ```bash
    # Upgrade pip
@@ -78,6 +103,13 @@ If `pip install cosinorage` fails, try installing with Python 3.11 in a fresh vi
    pip install -e .
    ```
 
+   To also install test tools (`pytest`):
+
+   ```bash
+   pip install -e ".[test]"
+   # or: pip install -r requirements-dev.txt
+   ```
+
 ### Quick Start
 After installation, save the following code as a Python script (e.g. `quickstart.py`) or run it in a Jupyter notebook / VS Code, then execute it with `python quickstart.py`:
 
@@ -85,9 +117,9 @@ After installation, save the following code as a Python script (e.g. `quickstart
 import cosinorage
 from cosinorage.datahandlers import GalaxyDataHandler
 
-# Initialize a data handler using the sample CSV included in the repository
+# Initialize a data handler using the simulated sample CSV included in the repository
 handler = GalaxyDataHandler(
-    galaxy_file_path='data/smartwatch/sample1.csv',
+    galaxy_file_path='examples/data/sample_enmo.csv',
     data_format='csv',
     verbose=True,
 )
@@ -108,6 +140,8 @@ records = [
 predictions = CosinorAge(records)
 predictions.get_predictions()
 ```
+
+Run the script from the repository root so that the relative path resolves. `examples/data/sample_enmo.csv` contains seven days of **simulated** minute-level ENMO data (no participant data); it can be regenerated with `python examples/data/generate_sample_data.py`.
 
 For more detailed examples, please refer to the [examples](examples) directory.
 
@@ -312,9 +346,11 @@ Any kind of contribution is welcome! In order to make new data sources compatibl
 
 ### Implement and Execute Tests
 
-To make sure that the changes you made are not breaking the package, you should implement new and execute the new and old tests. To do so, go to the root directory of the repository and execute the following command to run the tests:
+To make sure that the changes you made are not breaking the package, you should implement new and execute the new and old tests. From the repository root, install the test extra (if you have not already) and run pytest:
 
 ```bash
+pip install -e ".[test]"
+# alternatively: pip install -r requirements-dev.txt
 pytest
 ```
 
