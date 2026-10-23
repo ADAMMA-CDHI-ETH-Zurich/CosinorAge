@@ -117,9 +117,9 @@ After installation, save the following code as a Python script (e.g. `quickstart
 import cosinorage
 from cosinorage.datahandlers import GalaxyDataHandler
 
-# Initialize a data handler using the sample CSV included in the repository
+# Initialize a data handler using the simulated sample CSV included in the repository
 handler = GalaxyDataHandler(
-    galaxy_file_path='data/smartwatch/sample1.csv',
+    galaxy_file_path='examples/data/sample_enmo.csv',
     data_format='csv',
     verbose=True,
 )
@@ -140,6 +140,8 @@ records = [
 predictions = CosinorAge(records)
 predictions.get_predictions()
 ```
+
+Run the script from the repository root so that the relative path resolves. `examples/data/sample_enmo.csv` contains seven days of **simulated** minute-level ENMO data (no participant data); it can be regenerated with `python examples/data/generate_sample_data.py`.
 
 For more detailed examples, please refer to the [examples](examples) directory.
 
