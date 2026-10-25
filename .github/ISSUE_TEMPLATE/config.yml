@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Questions and usage support
+    url: https://github.com/ADAMMA-CDHI-ETH-Zurich/CosinorAge/discussions
+    about: Ask questions about installing or using CosinorAge in GitHub Discussions.
+  - name: Documentation
+    url: https://cosinorage.readthedocs.io/
+    about: API reference and theoretical background.

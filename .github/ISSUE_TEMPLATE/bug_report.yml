@@ -1,0 +1,59 @@
+name: Bug report
+description: Report something that does not work as expected.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please **do not upload participant-level data** (e.g. UK Biobank, NHANES-linked or study data). If possible, reproduce the problem with the simulated sample in `examples/data/sample_enmo.csv`.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened, and what did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Minimal example
+      description: A short code snippet that reproduces the problem.
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    id: error
+    attributes:
+      label: Error message
+      description: The full traceback or output, if any.
+      render: text
+  - type: input
+    id: cosinorage-version
+    attributes:
+      label: CosinorAge version
+      description: "Output of `python -c \"import importlib.metadata as m; print(m.version('cosinorage'))\"`"
+    validations:
+      required: true
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      placeholder: e.g. 3.11.9
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: e.g. macOS 15, Ubuntu 24.04, Windows 11
+    validations:
+      required: true
+  - type: dropdown
+    id: install-method
+    attributes:
+      label: Installation method
+      options:
+        - pip install cosinorage
+        - conda environment + pip
+        - From source (pip install -e .)
+        - Other
