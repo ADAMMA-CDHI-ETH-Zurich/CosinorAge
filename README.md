@@ -338,7 +338,7 @@ The plot below visualizes the CosinorAge advance of a patient, showing a Cosinor
 
 ## Open Source Development
 
-The package is developed in an open-source manner. We welcome contributions to the package. 
+The package is developed in an open-source manner. We welcome contributions to the package; please read our [contributing guidelines](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md). Questions and usage support are handled in [GitHub Discussions](https://github.com/ADAMMA-CDHI-ETH-Zurich/CosinorAge/discussions), and bugs or feature requests can be reported via the [issue templates](https://github.com/ADAMMA-CDHI-ETH-Zurich/CosinorAge/issues/new/choose).
 
 ### Improve the Package
 
